@@ -69,6 +69,20 @@ function broadcastTasks(helper) {
   helper.sendSocketNotification("CHORES_DATA", visible);
 }
 
+function getNextDate(dateStr, recurring) {
+  const d = new Date(dateStr);
+  if (recurring === "weekly") {
+    d.setDate(d.getDate() + 7);
+  } else if (recurring === "monthly") {
+    d.setMonth(d.getMonth() + 1);
+  } else if (recurring === "yearly") {
+    d.setFullYear(d.getFullYear() + 1);
+  } else {
+    return null;
+  }
+  return d.toISOString().slice(0, 10);
+}
+
 module.exports = NodeHelper.create({
   start() {
     Log.log("MMM-Chores helper started...");
@@ -333,6 +347,7 @@ module.exports = NodeHelper.create({
         ...req.body,
         done: false,
         assignedTo: null,
+        recurring: req.body.recurring || "none",
       };
       tasks.push(newTask);
       saveData();
@@ -344,6 +359,8 @@ module.exports = NodeHelper.create({
       const task = tasks.find(t => t.id === id);
       if (!task) return res.status(404).json({ error: "Task not found" });
 
+      const prevDone = task.done;
+
       Object.entries(req.body).forEach(([key, val]) => {
         if (val === undefined || val === null) {
           delete task[key];
@@ -351,6 +368,23 @@ module.exports = NodeHelper.create({
           task[key] = val;
         }
       });
+
+      if (!prevDone && task.done && task.recurring && task.recurring !== "none") {
+        const nextDate = getNextDate(task.date, task.recurring);
+        if (nextDate) {
+          const newTask = {
+            id: Date.now(),
+            name: task.name,
+            date: nextDate,
+            assignedTo: task.assignedTo || null,
+            recurring: task.recurring,
+            done: false,
+            created: new Date().toISOString(),
+          };
+          tasks.push(newTask);
+        }
+      }
+
       saveData();
       broadcastTasks(self);
       res.json(task);

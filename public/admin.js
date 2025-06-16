@@ -643,9 +643,12 @@ function renderTasks() {
       await updateTask(task.id, updateObj);
     });
 
-    const span = document.createElement("span");
-    span.innerHTML = `<strong>${task.name}</strong> <small class="task-date">(${task.date})</small>`;
-    if (task.done) span.classList.add("task-done");
+  const span = document.createElement("span");
+  span.innerHTML = `<strong>${task.name}</strong> <small class="task-date">(${task.date})</small>`;
+  if (task.recurring && task.recurring !== "none") {
+    span.innerHTML += ` <span class="badge bg-info text-dark">${task.recurring}</span>`;
+  }
+  if (task.done) span.classList.add("task-done");
 
     left.appendChild(chk);
     left.appendChild(span);
@@ -844,6 +847,7 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
   e.preventDefault();
   const name = document.getElementById("taskName").value.trim();
   let date = document.getElementById("taskDate").value;
+  const recurring = document.getElementById("taskRecurring").value;
   if (!name) return;
   if (!date) date = new Date().toISOString().split("T")[0];
 
@@ -864,6 +868,7 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
     body: JSON.stringify({
       name,
       date,
+      recurring,
       created: iso,
       createdShort: stamp("C")
     })
