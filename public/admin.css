@@ -1,31 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
 :root {
+  --bg-grad: linear-gradient(135deg, #dfe9f3, #ffffff);
   --bg: #f5f7fa;
   --text: #212529;
   --hero-start: #4e74ff;
   --hero-end: #6f99ff;
-  --card-bg: #fff;
+  --card-bg: rgba(255,255,255,0.6);
   --field-bg: #fff;
-  --shadow: 0 6px 18px rgba(0,0,0,.05);
+  --shadow: 0 10px 25px rgba(0,0,0,.1);
   --list-hover: rgba(0,0,0,.03);
-  --border: #dee2e6;
+  --border: rgba(255,255,255,0.4);
+  --blur: 10px;
 }
 
 [data-theme="dark"] {
+  --bg-grad: linear-gradient(135deg, #232526, #414345);
   --bg: #121212;
   --text: #e9ecef;
   --hero-start: #343a40;
   --hero-end: #495057;
-  --card-bg: #1e1e1e;
+  --card-bg: rgba(30,30,30,0.6);
   --field-bg: #c4c4c4;
-  --shadow: 0 6px 18px rgba(0,0,0,.4);
+  --shadow: 0 10px 25px rgba(0,0,0,.4);
   --list-hover: rgba(255,255,255,.03);
-  --border: #444;
+  --border: rgba(255,255,255,0.1);
+  --blur: 10px;
 }
 
 /* Global */
 body {
-  background: var(--bg);
+  background: var(--bg-grad);
   color: var(--text);
+  font-family: 'Inter', sans-serif;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -39,9 +46,10 @@ h1, h2 {
 .hero {
   background: linear-gradient(135deg, var(--hero-start), var(--hero-end));
   color: #fff;
-  border-radius: .7rem;
+  border-radius: 1rem;
   padding: 1.5rem 2rem;
-  box-shadow: 0 8px 24px rgba(0,0,0,.12);
+  box-shadow: 0 12px 32px rgba(0,0,0,.15);
+  backdrop-filter: blur(calc(var(--blur) / 2));
   margin-bottom: 2rem;
 }
 
@@ -69,8 +77,8 @@ h1, h2 {
   font-weight: 600;
   font-size: 0.8rem;
   padding: 2px 6px;
-  border: 1px solid var(--text);
-  border-radius: 4px;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
   background: transparent;
   cursor: pointer;
   -webkit-appearance: none;
@@ -85,8 +93,8 @@ h1, h2 {
   background-image: none !important;
   background-color: transparent !important;
   padding-right: 0.5rem !important;
-  border: 1px solid var(--text);
-  border-radius: 4px;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
   -webkit-appearance: none !important;
   -moz-appearance: none !important;
   appearance: none !important;
@@ -103,9 +111,10 @@ h1, h2 {
 /* Cards */
 .card-shadow {
   background: var(--card-bg);
-  border: none;
-  border-radius: .7rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
   box-shadow: var(--shadow);
+  backdrop-filter: blur(var(--blur));
 }
 .card-shadow .card-header {
   background: var(--card-bg);
@@ -123,6 +132,7 @@ h1, h2 {
 .list-group-item {
   background: var(--card-bg);
   color: var(--text);
+  border: 1px solid transparent;
   transition: background .15s ease;
 }
 .list-group-item:hover {
@@ -135,6 +145,7 @@ h1, h2 {
   background: var(--field-bg);
   color: #000;
   border-color: var(--border);
+  border-radius: 0.5rem;
 }
 [data-theme="dark"] .form-control,
 [data-theme="dark"] .form-select {
@@ -184,6 +195,7 @@ h1, h2 {
   }
   .language-select {
     width: 70px;
+    border-radius: 0.5rem;
   }
 }
 
@@ -192,11 +204,11 @@ h1, h2 {
   table-layout: fixed;
   background: var(--card-bg);
   color: var(--text);
+  backdrop-filter: blur(var(--blur));
 }
 #taskCalendar th,
 #taskCalendar td {
   border-color: var(--border);
-
   background: var(--field-bg);
   color: #000;
 }
