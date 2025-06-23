@@ -28,6 +28,19 @@ let tasks = [];
 let people = [];
 let analyticsBoards = [];
 
+const DEFAULT_TITLES = [
+  "Junior",
+  "Apprentice",
+  "Journeyman",
+  "Experienced",
+  "Expert",
+  "Veteran",
+  "Master",
+  "Grandmaster",
+  "Legend",
+  "Mythic"
+];
+
 let settings = {
   language: "en",
   dateFormatting: "yyyy-mm-dd",
@@ -63,10 +76,40 @@ function saveData() {
   }
 }
 
+function computeLevel(config) {
+  const lvlConf = config.leveling || {};
+  if (lvlConf.enabled === false) return 1;
+  const years  = parseFloat(lvlConf.yearsToMaxLevel) || 1;
+  const perW   = parseFloat(lvlConf.choresPerWeekEstimate) || 1;
+  const max    = parseInt(lvlConf.maxLevel, 10) || 100;
+  const done   = tasks.filter(t => t.done).length;
+  const totalNeeded = years * 52 * perW;
+  const tasksPerLvl = totalNeeded / max;
+  let lvl = Math.floor(done / tasksPerLvl) + 1;
+  if (lvl < 1) lvl = 1;
+  if (lvl > max) lvl = max;
+  return lvl;
+}
+
+function getTitle(config, level) {
+  const arr = Array.isArray(config.levelTitles) && config.levelTitles.length === 10
+    ? config.levelTitles
+    : DEFAULT_TITLES;
+  const idx = Math.floor((level - 1) / 10);
+  return arr[idx] || arr[arr.length - 1];
+}
+
+function getLevelInfo(config) {
+  const level = computeLevel(config);
+  const title = getTitle(config, level);
+  return { level, title };
+}
+
 function broadcastTasks(helper) {
   const visible = tasks.filter(t => !t.deleted);
   helper.sendSocketNotification("TASKS_UPDATE", tasks);
   helper.sendSocketNotification("CHORES_DATA", visible);
+  helper.sendSocketNotification("LEVEL_INFO", getLevelInfo(helper.config || {}));
 }
 
 function getNextDate(dateStr, recurring) {

@@ -6,12 +6,31 @@ Module.register("MMM-Chores", {
     showPast: false,
     dateFormatting: "yyyy-mm-dd", // Standardformat, kan ändras i config
     textMirrorSize: "small",     // small, medium or large
-    useAI: true                   // hide AI features when false
+    useAI: true,                  // hide AI features when false
+    leveling: {
+      enabled: true,
+      yearsToMaxLevel: 3,
+      choresPerWeekEstimate: 4,
+      maxLevel: 100
+    },
+    levelTitles: [
+      "Junior",
+      "Apprentice",
+      "Journeyman",
+      "Experienced",
+      "Expert",
+      "Veteran",
+      "Master",
+      "Grandmaster",
+      "Legend",
+      "Mythic"
+    ]
   },
 
   start() {
     this.tasks = [];
     this.people = [];
+    this.levelInfo = null;
     this.sendSocketNotification("INIT_SERVER", this.config);
     this.scheduleUpdate();
   },
@@ -39,6 +58,15 @@ Module.register("MMM-Chores", {
     }
     if (notification === "SETTINGS_UPDATE") {
       Object.assign(this.config, payload);
+      this.updateDom();
+    }
+    if (notification === "LEVEL_INFO") {
+      const prevTitle = this.levelInfo ? this.levelInfo.title : null;
+      this.levelInfo = payload;
+      if (prevTitle && prevTitle !== payload.title) {
+        this.titleChangeMessage = `Congrats! You advanced from ${prevTitle} to ${payload.title}!`;
+        setTimeout(() => { this.titleChangeMessage = null; this.updateDom(); }, 5000);
+      }
       this.updateDom();
     }
   },
@@ -114,8 +142,19 @@ Module.register("MMM-Chores", {
 
     const header = document.createElement("div");
     header.className = "bright large";
-    header.innerHTML = "";
+    if (this.levelInfo) {
+      header.innerHTML = `Level ${this.levelInfo.level} – ${this.levelInfo.title}`;
+    } else {
+      header.innerHTML = "";
+    }
     wrapper.appendChild(header);
+
+    if (this.titleChangeMessage) {
+      const note = document.createElement("div");
+      note.className = "small bright";
+      note.innerHTML = this.titleChangeMessage;
+      wrapper.appendChild(note);
+    }
 
     // Filtrerar bort raderade tasks
     const visible = this.tasks.filter(t => !t.deleted && this.shouldShowTask(t));

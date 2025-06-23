@@ -47,12 +47,40 @@ in /MagicMirror/config/config.js
     showDays: 3,       // show tasks from today and the next 2 days (total 3 days)
     showPast: true,    // also show unfinished tasks from past days
     textMirrorSize: "small", // small, medium or large
-    dateFormatting: "MM-DD"  // Date format pattern to display task dates.
-                             // Use tokens like 'yyyy', 'mm', 'dd'.
-                             // Set to "" to hide the date completely.
+    dateFormatting: "MM-DD",  // Date format pattern to display task dates.
+                              // Use tokens like 'yyyy', 'mm', 'dd'.
+                              // Set to "" to hide the date completely.
+    leveling: {               // optional leveling system
+      enabled: true,
+      yearsToMaxLevel: 3,
+      choresPerWeekEstimate: 4,
+      maxLevel: 100
+    },
+    levelTitles: [            // titles for every 10 levels
+      "Junior",
+      "Apprentice",
+      "Journeyman",
+      "Experienced",
+      "Expert",
+      "Veteran",
+      "Master",
+      "Grandmaster",
+      "Legend",
+      "Mythic"
+    ]
   }
 },
 ```
+
+### Level titles
+
+For level **N** (1 ≤ N ≤ 100), the module chooses a title based on the ten-level
+interval that `N` belongs to. Level 1–10 uses the first entry in `levelTitles`,
+11–20 the second entry, and so on. The boundaries are inclusive, so level 10
+still uses the first title and 11 uses the second.
+
+Specify your own titles by providing a `levelTitles` array with exactly ten
+strings in the configuration. If omitted, the defaults shown above are used.
 
 ## Admin Interface
 
