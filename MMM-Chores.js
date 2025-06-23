@@ -144,14 +144,8 @@ Module.register("MMM-Chores", {
   getDom() {
     const wrapper = document.createElement("div");
 
-    const header = document.createElement("div");
-    header.className = "bright large";
-    if (this.levelInfo) {
-      header.innerHTML = `Level ${this.levelInfo.level} – ${this.levelInfo.title}`;
-    } else {
-      header.innerHTML = "";
-    }
-    wrapper.appendChild(header);
+    // Remove the large header showing the global level. Levels are displayed
+    // next to each person's name instead.
 
     if (this.titleChangeMessage) {
       const note = document.createElement("div");
