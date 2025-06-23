@@ -232,5 +232,5 @@ h1, h2 {
 
 /* Ensure level text remains visible on dark backgrounds */
 [data-theme="dark"] #peopleList small {
-  color: #fff;
+  color: #fff !important;
 }
