@@ -103,6 +103,10 @@ Module.register("MMM-Chores", {
     return p ? p.name : "";
   },
 
+  getPerson(id) {
+    return this.people.find(p => p.id === id) || null;
+  },
+
   toggleDone(task, done) {
     this.sendSocketNotification("USER_TOGGLE_CHORE", { id: task.id, done });
   },
@@ -186,11 +190,15 @@ Module.register("MMM-Chores", {
       li.appendChild(text);
 
       if (task.assignedTo) {
-        const person = this.getPersonName(task.assignedTo);
+        const p = this.getPerson(task.assignedTo);
         const assignedEl = document.createElement("span");
         assignedEl.className = "xsmall dimmed";
         assignedEl.style.marginLeft = "6px";
-        assignedEl.innerHTML = ` — ${person}`;
+        let html = ` — ${p ? p.name : ""}`;
+        if (p && p.level) {
+          html += ` <span class="lvl-badge">lvl${p.level}</span>`;
+        }
+        assignedEl.innerHTML = html;
         li.appendChild(assignedEl);
       }
 

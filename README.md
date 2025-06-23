@@ -82,6 +82,13 @@ still uses the first title and 11 uses the second.
 Specify your own titles by providing a `levelTitles` array with exactly ten
 strings in the configuration. If omitted, the defaults shown above are used.
 
+### Per-person levels
+
+Each person earns experience separately. Their current level and title are stored
+in `data.json` and shown next to the name in the admin interface. On the
+MagicMirror display the assigned person's name will include a small
+`lvlX` badge.
+
 ## Admin Interface
 
 Go to http://yourmirrorIP:5003/ #page will be reachable within same network.
