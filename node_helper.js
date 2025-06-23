@@ -337,9 +337,10 @@ module.exports = NodeHelper.create({
       res.json({ success: true });
     });
 
+    // Return all tasks. Filtering of deleted items is handled client-side so
+    // analytics can include completed tasks even after deletion.
     app.get("/api/tasks", (req, res) => {
-      const visibleTasks = tasks.filter(t => !t.deleted);
-      res.json(visibleTasks);
+      res.json(tasks);
     });
     app.post("/api/tasks", (req, res) => {
       const newTask = {
