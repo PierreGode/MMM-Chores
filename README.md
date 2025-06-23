@@ -72,6 +72,24 @@ in /MagicMirror/config/config.js
 },
 ```
 
+levels could also be rewards 
+```js
+    levelTitles: [            // titles for every 10 levels
+      "10 euro game giftcard",
+      "Movie Night Voucher",
+      "Dinner at Favorite Restaurant",
+      "Weekend Brunch Voucher",
+      "Gadget Accessory (e.g. Headphones)",
+      "Spa or Relaxation Package",
+      "Adventure Experience Voucher",
+      "Weekend trip",
+      "Adventureland",
+      "Travel destination"
+    ]
+```
+
+
+
 When `leveling.enabled` is set to `false`, the MagicMirror display hides the
 `lvlX` badges next to assigned names.
 
