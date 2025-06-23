@@ -168,7 +168,17 @@ function renderPeople() {
   for (const person of peopleCache) {
     const li = document.createElement("li");
     li.className = "list-group-item d-flex justify-content-between align-items-center";
-    li.textContent = person.name;
+    const info = document.createElement("span");
+    info.textContent = person.name;
+    if (person.level) {
+      const small = document.createElement("small");
+      small.className = "ms-2 text-muted";
+      const titlePart = person.title ? ` - ${person.title}` : "";
+      small.textContent = `lvl${person.level}${titlePart}`;
+      info.appendChild(small);
+    }
+
+    li.appendChild(info);
 
     const btn = document.createElement("button");
     btn.className = "btn btn-sm btn-outline-danger";

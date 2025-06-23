@@ -56,6 +56,8 @@ function loadData() {
       analyticsBoards  = j.analyticsBoards  || [];
       settings         = j.settings         || { language: "en", dateFormatting: "yyyy-mm-dd", useAI: true };
 
+      updatePeopleLevels({});
+
       Log.log(`MMM-Chores: Loaded ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, language: ${settings.language}`);
     } catch (e) {
       Log.error("MMM-Chores: Error reading data.json:", e);
@@ -76,13 +78,13 @@ function saveData() {
   }
 }
 
-function computeLevel(config) {
+function computeLevel(config, personId = null) {
   const lvlConf = config.leveling || {};
   if (lvlConf.enabled === false) return 1;
   const years  = parseFloat(lvlConf.yearsToMaxLevel) || 1;
   const perW   = parseFloat(lvlConf.choresPerWeekEstimate) || 1;
   const max    = parseInt(lvlConf.maxLevel, 10) || 100;
-  const done   = tasks.filter(t => t.done).length;
+  const done   = tasks.filter(t => t.done && (!personId || t.assignedTo === personId)).length;
   const totalNeeded = years * 52 * perW;
   const tasksPerLvl = totalNeeded / max;
   let lvl = Math.floor(done / tasksPerLvl) + 1;
@@ -99,17 +101,27 @@ function getTitle(config, level) {
   return arr[idx] || arr[arr.length - 1];
 }
 
-function getLevelInfo(config) {
-  const level = computeLevel(config);
+function getLevelInfo(config, personId = null) {
+  const level = computeLevel(config, personId);
   const title = getTitle(config, level);
   return { level, title };
 }
 
+function updatePeopleLevels(config) {
+  people = people.map(p => {
+    const info = getLevelInfo(config, p.id);
+    return { ...p, level: info.level, title: info.title };
+  });
+}
+
 function broadcastTasks(helper) {
   const visible = tasks.filter(t => !t.deleted);
+  updatePeopleLevels(helper.config || {});
   helper.sendSocketNotification("TASKS_UPDATE", tasks);
   helper.sendSocketNotification("CHORES_DATA", visible);
   helper.sendSocketNotification("LEVEL_INFO", getLevelInfo(helper.config || {}));
+  helper.sendSocketNotification("PEOPLE_UPDATE", people);
+  saveData();
 }
 
 function getNextDate(dateStr, recurring) {
@@ -364,7 +376,8 @@ module.exports = NodeHelper.create({
     app.post("/api/people", (req, res) => {
       const { name } = req.body;
       if (!name) return res.status(400).json({ error: "Name is required" });
-      const newPerson = { id: Date.now(), name };
+      const info = getLevelInfo(self.config || {}, null);
+      const newPerson = { id: Date.now(), name, level: info.level, title: info.title };
       people.push(newPerson);
       saveData();
       self.sendSocketNotification("PEOPLE_UPDATE", people);
