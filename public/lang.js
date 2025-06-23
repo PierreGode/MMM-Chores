@@ -10,6 +10,12 @@ const LANGUAGES = {
     taskDoneLabel: "done",
     taskPendingLabel: "pending",
     taskNamePlaceholder: "Task name…",
+    taskRecurring: {
+      none: "One time",
+      weekly: "Weekly",
+      monthly: "Monthly",
+      yearly: "Yearly"
+    },
     taskAddButton: "Add",
     aiGenerateButton: "AI Generate",
     aiGenerateTitle: "Generate tasks with AI",
@@ -52,6 +58,12 @@ const LANGUAGES = {
     taskDoneLabel: "klar",
     taskPendingLabel: "pågående",
     taskNamePlaceholder: "Uppgiftsnamn…",
+    taskRecurring: {
+      none: "Engång",
+      weekly: "Veckovis",
+      monthly: "Månadsvis",
+      yearly: "Årligen"
+    },
     taskAddButton: "Lägg till",
     aiGenerateButton: "AI-generera",
     aiGenerateTitle: "Generera uppgifter med AI",
@@ -94,6 +106,12 @@ const LANGUAGES = {
     taskDoneLabel: "fait",
     taskPendingLabel: "en attente",
     taskNamePlaceholder: "Nom de la tâche…",
+    taskRecurring: {
+      none: "Unique",
+      weekly: "Hebdomadaire",
+      monthly: "Mensuel",
+      yearly: "Annuel"
+    },
     taskAddButton: "Ajouter",
     aiGenerateButton: "Génération IA",
     aiGenerateTitle: "Générer des tâches avec l'IA",
@@ -136,6 +154,12 @@ const LANGUAGES = {
     taskDoneLabel: "completadas",
     taskPendingLabel: "pendientes",
     taskNamePlaceholder: "Nombre de tarea…",
+    taskRecurring: {
+      none: "Una vez",
+      weekly: "Semanal",
+      monthly: "Mensual",
+      yearly: "Anual"
+    },
     taskAddButton: "Agregar",
     aiGenerateButton: "Generar con IA",
     aiGenerateTitle: "Generar tareas con IA",
@@ -178,6 +202,12 @@ const LANGUAGES = {
     taskDoneLabel: "erledigt",
     taskPendingLabel: "offen",
     taskNamePlaceholder: "Aufgabenname…",
+    taskRecurring: {
+      none: "Einmalig",
+      weekly: "Wöchentlich",
+      monthly: "Monatlich",
+      yearly: "Jährlich"
+    },
     taskAddButton: "Hinzufügen",
     aiGenerateButton: "Mit KI generieren",
     aiGenerateTitle: "Aufgaben mit KI generieren",
@@ -220,6 +250,12 @@ const LANGUAGES = {
     taskDoneLabel: "completati",
     taskPendingLabel: "in sospeso",
     taskNamePlaceholder: "Nome del compito…",
+    taskRecurring: {
+      none: "Una tantum",
+      weekly: "Settimanale",
+      monthly: "Mensile",
+      yearly: "Annuale"
+    },
     taskAddButton: "Aggiungi",
     aiGenerateButton: "Genera con IA",
     aiGenerateTitle: "Genera compiti con IA",
@@ -262,6 +298,12 @@ const LANGUAGES = {
     taskDoneLabel: "klaar",
     taskPendingLabel: "in behandeling",
     taskNamePlaceholder: "Taaknaam…",
+    taskRecurring: {
+      none: "Eenmalig",
+      weekly: "Wekelijks",
+      monthly: "Maandelijks",
+      yearly: "Jaarlijks"
+    },
     taskAddButton: "Toevoegen",
     aiGenerateButton: "AI genereren",
     aiGenerateTitle: "Genereer taken met AI",
@@ -304,6 +346,12 @@ const LANGUAGES = {
     taskDoneLabel: "ukończone",
     taskPendingLabel: "oczekujące",
     taskNamePlaceholder: "Nazwa zadania…",
+    taskRecurring: {
+      none: "Jednorazowe",
+      weekly: "Tygodniowo",
+      monthly: "Miesięcznie",
+      yearly: "Rocznie"
+    },
     taskAddButton: "Dodaj",
     aiGenerateButton: "Generuj AI",
     aiGenerateTitle: "Generuj zadania za pomocą AI",
@@ -346,6 +394,12 @@ const LANGUAGES = {
     taskDoneLabel: "已完成",
     taskPendingLabel: "待处理",
     taskNamePlaceholder: "任务名称…",
+    taskRecurring: {
+      none: "一次性",
+      weekly: "每周",
+      monthly: "每月",
+      yearly: "每年"
+    },
     taskAddButton: "添加",
     aiGenerateButton: "AI生成",
     aiGenerateTitle: "使用AI生成任务",
@@ -388,6 +442,12 @@ const LANGUAGES = {
     taskDoneLabel: "منجز",
     taskPendingLabel: "قيد الانتظار",
     taskNamePlaceholder: "اسم المهمة…",
+    taskRecurring: {
+      none: "مرة واحدة",
+      weekly: "أسبوعي",
+      monthly: "شهري",
+      yearly: "سنوي"
+    },
     taskAddButton: "إضافة",
     aiGenerateButton: "إنشاء بالذكاء الاصطناعي",
     aiGenerateTitle: "إنشاء مهام بالذكاء الاصطناعي",

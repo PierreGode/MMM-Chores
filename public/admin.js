@@ -88,6 +88,13 @@ function setLanguage(lang) {
   if (pendingLabel) pendingLabel.textContent = ` ${t.taskPendingLabel}`;
   const taskInput = document.getElementById("taskName");
   if (taskInput) taskInput.placeholder = t.taskNamePlaceholder;
+  const recurringSelect = document.getElementById("taskRecurring");
+  if (recurringSelect && t.taskRecurring) {
+    Array.from(recurringSelect.options).forEach(opt => {
+      const key = opt.value || "none";
+      if (t.taskRecurring[key]) opt.textContent = t.taskRecurring[key];
+    });
+  }
   const taskAddBtn = document.getElementById("btnAddTask");
   if (taskAddBtn) taskAddBtn.innerHTML = `<i class='bi bi-plus-lg me-1'></i>${t.taskAddButton}`;
   if (aiBtn) {
@@ -225,7 +232,8 @@ function renderTasks() {
   const span = document.createElement("span");
   span.innerHTML = `<strong>${task.name}</strong> <small class="task-date">(${task.date})</small>`;
   if (task.recurring && task.recurring !== "none") {
-    span.innerHTML += ` <span class="badge bg-info text-dark">${task.recurring}</span>`;
+    const recurText = LANGUAGES[currentLang].taskRecurring[task.recurring] || task.recurring;
+    span.innerHTML += ` <span class="badge bg-info text-dark">${recurText}</span>`;
   }
   if (task.done) span.classList.add("task-done");
 
