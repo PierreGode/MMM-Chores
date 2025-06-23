@@ -376,8 +376,14 @@ module.exports = NodeHelper.create({
     app.post("/api/people", (req, res) => {
       const { name } = req.body;
       if (!name) return res.status(400).json({ error: "Name is required" });
-      const info = getLevelInfo(self.config || {}, null);
-      const newPerson = { id: Date.now(), name, level: info.level, title: info.title };
+
+      // Compute the level for the specific person being added. Using the
+      // person's ID ensures the level is based on their own completed chores
+      // (which will be zero for a new person) rather than the global stats.
+      const id = Date.now();
+      const info = getLevelInfo(self.config || {}, id);
+      const newPerson = { id, name, level: info.level, title: info.title };
+
       people.push(newPerson);
       saveData();
       self.sendSocketNotification("PEOPLE_UPDATE", people);
