@@ -229,3 +229,8 @@ h1, h2 {
   opacity: 0.7;
   font-size: 0.8rem;
 }
+
+/* Ensure level text remains visible on dark backgrounds */
+[data-theme="dark"] #peopleList small {
+  color: #fff;
+}
