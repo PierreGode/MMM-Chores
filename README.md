@@ -72,6 +72,9 @@ in /MagicMirror/config/config.js
 },
 ```
 
+When `leveling.enabled` is set to `false`, the MagicMirror display hides the
+`lvlX` badges next to assigned names.
+
 ### Level titles
 
 For level **N** (1 ≤ N ≤ 100), the module chooses a title based on the ten-level
