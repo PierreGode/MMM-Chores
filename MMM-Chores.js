@@ -189,7 +189,10 @@ Module.register("MMM-Chores", {
         assignedEl.className = "xsmall dimmed";
         assignedEl.style.marginLeft = "6px";
         let html = ` — ${p ? p.name : ""}`;
-        if (p && p.level) {
+        const lvlEnabled = !(
+          this.config.leveling && this.config.leveling.enabled === false
+        );
+        if (lvlEnabled && p && p.level) {
           html += ` <span class="lvl-badge">lvl${p.level}</span>`;
         }
         assignedEl.innerHTML = html;
