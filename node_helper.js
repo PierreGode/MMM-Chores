@@ -28,6 +28,19 @@ let tasks = [];
 let people = [];
 let analyticsBoards = [];
 
+const DEFAULT_TITLES = [
+  "Junior",
+  "Apprentice",
+  "Journeyman",
+  "Experienced",
+  "Expert",
+  "Veteran",
+  "Master",
+  "Grandmaster",
+  "Legend",
+  "Mythic"
+];
+
 let settings = {
   language: "en",
   dateFormatting: "yyyy-mm-dd",
@@ -42,6 +55,8 @@ function loadData() {
       people           = j.people           || [];
       analyticsBoards  = j.analyticsBoards  || [];
       settings         = j.settings         || { language: "en", dateFormatting: "yyyy-mm-dd", useAI: true };
+
+      updatePeopleLevels({});
 
       Log.log(`MMM-Chores: Loaded ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, language: ${settings.language}`);
     } catch (e) {
@@ -63,10 +78,50 @@ function saveData() {
   }
 }
 
+function computeLevel(config, personId = null) {
+  const lvlConf = config.leveling || {};
+  if (lvlConf.enabled === false) return 1;
+  const years  = parseFloat(lvlConf.yearsToMaxLevel) || 1;
+  const perW   = parseFloat(lvlConf.choresPerWeekEstimate) || 1;
+  const max    = parseInt(lvlConf.maxLevel, 10) || 100;
+  const done   = tasks.filter(t => t.done && (!personId || t.assignedTo === personId)).length;
+  const totalNeeded = years * 52 * perW;
+  const tasksPerLvl = totalNeeded / max;
+  let lvl = Math.floor(done / tasksPerLvl) + 1;
+  if (lvl < 1) lvl = 1;
+  if (lvl > max) lvl = max;
+  return lvl;
+}
+
+function getTitle(config, level) {
+  const arr = Array.isArray(config.levelTitles) && config.levelTitles.length === 10
+    ? config.levelTitles
+    : DEFAULT_TITLES;
+  const idx = Math.floor((level - 1) / 10);
+  return arr[idx] || arr[arr.length - 1];
+}
+
+function getLevelInfo(config, personId = null) {
+  const level = computeLevel(config, personId);
+  const title = getTitle(config, level);
+  return { level, title };
+}
+
+function updatePeopleLevels(config) {
+  people = people.map(p => {
+    const info = getLevelInfo(config, p.id);
+    return { ...p, level: info.level, title: info.title };
+  });
+}
+
 function broadcastTasks(helper) {
   const visible = tasks.filter(t => !t.deleted);
+  updatePeopleLevels(helper.config || {});
   helper.sendSocketNotification("TASKS_UPDATE", tasks);
   helper.sendSocketNotification("CHORES_DATA", visible);
+  helper.sendSocketNotification("LEVEL_INFO", getLevelInfo(helper.config || {}));
+  helper.sendSocketNotification("PEOPLE_UPDATE", people);
+  saveData();
 }
 
 function getNextDate(dateStr, recurring) {
@@ -321,7 +376,14 @@ module.exports = NodeHelper.create({
     app.post("/api/people", (req, res) => {
       const { name } = req.body;
       if (!name) return res.status(400).json({ error: "Name is required" });
-      const newPerson = { id: Date.now(), name };
+
+      // Compute the level for the specific person being added. Using the
+      // person's ID ensures the level is based on their own completed chores
+      // (which will be zero for a new person) rather than the global stats.
+      const id = Date.now();
+      const info = getLevelInfo(self.config || {}, id);
+      const newPerson = { id, name, level: info.level, title: info.title };
+
       people.push(newPerson);
       saveData();
       self.sendSocketNotification("PEOPLE_UPDATE", people);
@@ -337,9 +399,10 @@ module.exports = NodeHelper.create({
       res.json({ success: true });
     });
 
+    // Return all tasks. Filtering of deleted items is handled client-side so
+    // analytics can include completed tasks even after deletion.
     app.get("/api/tasks", (req, res) => {
-      const visibleTasks = tasks.filter(t => !t.deleted);
-      res.json(visibleTasks);
+      res.json(tasks);
     });
     app.post("/api/tasks", (req, res) => {
       const newTask = {
