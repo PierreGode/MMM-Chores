@@ -93,23 +93,37 @@ function computeLevel(config, personId = null) {
   return lvl;
 }
 
-function getTitle(config, level) {
-  const arr = Array.isArray(config.levelTitles) && config.levelTitles.length === 10
-    ? config.levelTitles
-    : DEFAULT_TITLES;
+function getTitle(config, level, person = null) {
+  let arr;
+  if (
+    person &&
+    config.customLevelTitles &&
+    Array.isArray(config.customLevelTitles[person.name]) &&
+    config.customLevelTitles[person.name].length === 10
+  ) {
+    arr = config.customLevelTitles[person.name];
+  } else if (
+    Array.isArray(config.levelTitles) &&
+    config.levelTitles.length === 10
+  ) {
+    arr = config.levelTitles;
+  } else {
+    arr = DEFAULT_TITLES;
+  }
   const idx = Math.floor((level - 1) / 10);
   return arr[idx] || arr[arr.length - 1];
 }
 
-function getLevelInfo(config, personId = null) {
+function getLevelInfo(config, person = null) {
+  const personId = person ? person.id : null;
   const level = computeLevel(config, personId);
-  const title = getTitle(config, level);
+  const title = getTitle(config, level, person);
   return { level, title };
 }
 
 function updatePeopleLevels(config) {
   people = people.map(p => {
-    const info = getLevelInfo(config, p.id);
+    const info = getLevelInfo(config, p);
     return { ...p, level: info.level, title: info.title };
   });
 }
@@ -381,8 +395,9 @@ module.exports = NodeHelper.create({
       // person's ID ensures the level is based on their own completed chores
       // (which will be zero for a new person) rather than the global stats.
       const id = Date.now();
-      const info = getLevelInfo(self.config || {}, id);
-      const newPerson = { id, name, level: info.level, title: info.title };
+      const newPersonBase = { id, name };
+      const info = getLevelInfo(self.config || {}, newPersonBase);
+      const newPerson = { ...newPersonBase, level: info.level, title: info.title };
 
       people.push(newPerson);
       saveData();
