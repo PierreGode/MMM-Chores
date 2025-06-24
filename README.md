@@ -90,8 +90,8 @@ levels could also be rewards
 
 
 
-When `leveling.enabled` is set to `false`, the MagicMirror display hides the
-`lvlX` badges next to assigned names.
+When `leveling.enabled` is set to `false`, both the MagicMirror display and the
+admin portal hide any level badges and reward titles.
 
 ### Level titles
 

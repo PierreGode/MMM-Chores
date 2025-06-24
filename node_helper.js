@@ -44,7 +44,8 @@ const DEFAULT_TITLES = [
 let settings = {
   language: "en",
   dateFormatting: "yyyy-mm-dd",
-  useAI: true
+  useAI: true,
+  levelingEnabled: true
 };
 
 function loadData() {
@@ -54,7 +55,8 @@ function loadData() {
       tasks            = j.tasks            || [];
       people           = j.people           || [];
       analyticsBoards  = j.analyticsBoards  || [];
-      settings         = j.settings         || { language: "en", dateFormatting: "yyyy-mm-dd", useAI: true };
+      settings         = j.settings         || { language: "en", dateFormatting: "yyyy-mm-dd", useAI: true, levelingEnabled: true };
+      if (settings.levelingEnabled === undefined) settings.levelingEnabled = true;
 
       updatePeopleLevels({});
 
@@ -166,7 +168,8 @@ module.exports = NodeHelper.create({
         ...settings,
         language:       payload.language       ?? settings.language,
         dateFormatting: payload.dateFormatting ?? settings.dateFormatting,
-        useAI:          payload.useAI          ?? settings.useAI
+        useAI:          payload.useAI          ?? settings.useAI,
+        levelingEnabled: payload.leveling?.enabled !== false
       };
       saveData();
       this.initServer(payload.adminPort);

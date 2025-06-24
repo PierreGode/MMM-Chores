@@ -10,6 +10,7 @@ let calendarView = 'week';
 let calendarDate = new Date();
 let localizedMonths = [];
 let localizedWeekdays = [];
+let levelingEnabled = true;
 
 // ==========================
 // API: Hämta inställningar från backend
@@ -170,7 +171,7 @@ function renderPeople() {
     li.className = "list-group-item d-flex justify-content-between align-items-center";
     const info = document.createElement("span");
     info.textContent = person.name;
-    if (person.level) {
+    if (levelingEnabled && person.level) {
       const small = document.createElement("small");
       small.className = "ms-2 text-muted";
       const titlePart = person.title ? ` - ${person.title}` : "";
@@ -788,6 +789,9 @@ function setIcon(theme) {
 
 document.addEventListener("DOMContentLoaded", async () => {
   const userSettings = await fetchUserSettings();
+  if (typeof userSettings.levelingEnabled === "boolean") {
+    levelingEnabled = userSettings.levelingEnabled;
+  }
   if (userSettings.language && LANGUAGES[userSettings.language]) {
     currentLang = userSettings.language;
   } else {
