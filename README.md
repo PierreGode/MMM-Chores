@@ -90,8 +90,8 @@ levels could also be rewards
 
 
 
-When `leveling.enabled` is set to `false`, the MagicMirror display hides the
-`lvlX` badges next to assigned names.
+When `leveling.enabled` is set to `false`, both the MagicMirror display and the
+admin portal hide any level badges and reward titles.
 
 ### Level titles
 
@@ -102,6 +102,32 @@ still uses the first title and 11 uses the second.
 
 Specify your own titles by providing a `levelTitles` array with exactly ten
 strings in the configuration. If omitted, the defaults shown above are used.
+
+### Custom titles per person
+
+You can override the global rewards for an individual by using the
+`customLevelTitles` object. The keys are the person's name and the value should
+be an array of ten titles.
+
+```js
+customLevelTitles: {
+  Pierre: [
+    "10 euro game giftcard",
+    "Movie Night Voucher",
+    "Dinner at Favorite Restaurant",
+    "Weekend Brunch Voucher",
+    "Gadget Accessory (e.g. Headphones)",
+    "Spa or Relaxation Package",
+    "Adventure Experience Voucher",
+    "Weekend trip",
+    "Adventureland",
+    "Travel destination"
+  ]
+}
+```
+
+Any person not listed in `customLevelTitles` falls back to the global
+`levelTitles` array or the defaults.
 
 ### Per-person levels
 

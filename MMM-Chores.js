@@ -24,7 +24,8 @@ Module.register("MMM-Chores", {
       "Grandmaster",
       "Legend",
       "Mythic"
-    ]
+    ],
+    customLevelTitles: {}
   },
 
   start() {
