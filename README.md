@@ -42,6 +42,8 @@ in /MagicMirror/config/config.js
   config: {
     updateInterval: 60 * 1000,
     adminPort: 5003,
+    showAnalyticsOnMirror: false, // show analytics charts on the mirror
+    analyticsCards: ["speedDemons"], // analytics board types to displa
     openaiApiKey: "your-openApi-key-here",
     useAI: true,        // hide AI features when false
     showAnalyticsOnMirror: false, // show analytics charts on the mirror
