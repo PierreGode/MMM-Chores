@@ -23,7 +23,7 @@ Module.register("MMM-Chores", {
     textMirrorSize: "small",     // small, medium or large
     useAI: true,                  // hide AI features when false
     showAnalyticsOnMirror: false, // display analytics cards on the mirror
-    analyticsCards: [],           // array of analytics card types
+    analyticsCards: [],           // board types selected in the admin UI
     leveling: {
       enabled: true,
       yearsToMaxLevel: 3,
@@ -87,6 +87,12 @@ Module.register("MMM-Chores", {
     if (notification === "SETTINGS_UPDATE") {
       Object.assign(this.config, payload);
       this.updateDom();
+    }
+    if (notification === "ANALYTICS_UPDATE") {
+      if (Array.isArray(payload)) {
+        this.config.analyticsCards = payload;
+        this.updateDom();
+      }
     }
     if (notification === "LEVEL_INFO") {
       const prevTitle = this.levelInfo ? this.levelInfo.title : null;
