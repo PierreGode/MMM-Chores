@@ -47,6 +47,7 @@ Module.register("MMM-Chores", {
 
   start() {
     this.tasks = [];
+    this.allTasks = [];
     this.people = [];
     this.levelInfo = null;
     this.chartInstances = {};
@@ -73,7 +74,7 @@ Module.register("MMM-Chores", {
 
   socketNotificationReceived(notification, payload) {
     if (notification === "TASKS_UPDATE") {
-      this.tasks = payload;
+      this.allTasks = payload;
       this.updateDom();
     }
     if (notification === "CHORES_DATA") {
@@ -176,7 +177,8 @@ Module.register("MMM-Chores", {
   },
 
   buildChartData(type) {
-    const filteredTasks = fn => this.tasks.filter(t => !(t.deleted && !t.done) && fn(t));
+    const source = Array.isArray(this.allTasks) && this.allTasks.length ? this.allTasks : this.tasks;
+    const filteredTasks = fn => source.filter(t => !(t.deleted && !t.done) && fn(t));
     let data = { labels: [], datasets: [] };
     let options = { scales: { y: { beginAtZero: true } } };
     let chartType = "bar";
@@ -271,7 +273,7 @@ Module.register("MMM-Chores", {
       case "taskmaster": {
         const now = new Date();
         const labels = this.people.map(p => p.name);
-        const counts = this.people.map(p => this.tasks.filter(t => {
+        const counts = this.people.map(p => source.filter(t => {
           const d = new Date(t.date);
           return t.done && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear() && t.assignedTo === p.id;
         }).length);
