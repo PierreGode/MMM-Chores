@@ -207,7 +207,7 @@ Module.register("MMM-Chores", {
       case "perPerson": {
         const labels = this.people.map(p => p.name);
         const counts = this.people.map(p => filteredTasks(t => t.assignedTo === p.id).length);
-        data = { labels, datasets: [{ label: "Unfinished Tasks", data: counts, backgroundColor: "rgba(153,102,255,0.5)" }] };
+        data = { labels, datasets: [{ label: "Finished Tasks", data: counts, backgroundColor: "rgba(153,102,255,0.5)" }] };
         break;
       }
       case "taskmaster": {
