@@ -11,7 +11,7 @@ let calendarDate = new Date();
 let localizedMonths = [];
 let localizedWeekdays = [];
 let levelingEnabled = true;
-let draggedTaskId = null;
+let taskSortable = null;
 
 // ==========================
 // API: Hämta inställningar från backend
@@ -191,6 +191,7 @@ function renderPeople() {
     li.appendChild(btn);
     list.appendChild(li);
   }
+
 }
 
 function renderTasks() {
@@ -208,6 +209,7 @@ function renderTasks() {
   for (const task of tasksCache.filter(t => !t.deleted)) {
     const li = document.createElement("li");
     li.className = "list-group-item d-flex justify-content-between align-items-center";
+    li.dataset.id = task.id;
 
     const left = document.createElement("div");
     left.className = "d-flex align-items-center";
@@ -282,7 +284,7 @@ function renderTasks() {
     });
 
     const del = document.createElement("button");
-    del.className = "btn btn-sm btn-outline-danger";
+    del.className = "btn btn-sm btn-outline-danger me-1";
     del.title = LANGUAGES[currentLang].remove;
     del.innerHTML = '<i class="bi bi-trash"></i>';
     del.addEventListener("click", () => deleteTask(task.id));
@@ -290,27 +292,7 @@ function renderTasks() {
     const dragBtn = document.createElement("button");
     dragBtn.className = "btn btn-sm btn-outline-secondary drag-handle me-1";
     dragBtn.innerHTML = '<i class="bi bi-list"></i>';
-    dragBtn.draggable = true;
-    dragBtn.addEventListener("dragstart", e => {
-      draggedTaskId = task.id;
-      e.dataTransfer.effectAllowed = "move";
-    });
-    dragBtn.addEventListener("dragend", () => {
-      draggedTaskId = null;
-    });
 
-    li.addEventListener("dragover", e => {
-      if (draggedTaskId !== null) e.preventDefault();
-    });
-    li.addEventListener("drop", e => {
-      e.preventDefault();
-      const from = tasksCache.findIndex(t => t.id === draggedTaskId);
-      const to = tasksCache.findIndex(t => t.id === task.id);
-      if (from === -1 || to === -1 || from === to) return;
-      tasksCache.splice(to, 0, tasksCache.splice(from, 1)[0]);
-      saveTaskOrder();
-      renderTasks();
-    });
 
     if (!task.done) {
       const edit = document.createElement("button");
@@ -336,6 +318,27 @@ function renderTasks() {
 
     list.appendChild(li);
   }
+
+  if (taskSortable) {
+    taskSortable.destroy();
+  }
+  taskSortable = new Sortable(list, {
+    handle: '.drag-handle',
+    animation: 150,
+    onEnd: async (evt) => {
+      const visible = tasksCache.filter(t => !t.deleted);
+      const moved = visible.splice(evt.oldIndex, 1)[0];
+      visible.splice(evt.newIndex, 0, moved);
+      let i = 0;
+      tasksCache = tasksCache.map(t => {
+        if (t.deleted) return t;
+        const updated = { ...visible[i], order: i };
+        i++;
+        return updated;
+      });
+      await saveTaskOrder();
+    }
+  });
 }
 
 function getWeekNumber(d) {
@@ -531,7 +534,6 @@ async function saveTaskOrder() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(ids)
   });
-  await fetchTasks();
 }
 
 // ==========================
