@@ -542,6 +542,9 @@ async function saveTaskOrder() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(ids)
   });
+  // The DOM already reflects the new order, so just
+  // wait for the backend to broadcast updates.
+  // This avoids the row "jumping" back during refresh.
 }
 
 // ==========================
