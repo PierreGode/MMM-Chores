@@ -11,7 +11,6 @@ let calendarDate = new Date();
 let localizedMonths = [];
 let localizedWeekdays = [];
 let levelingEnabled = true;
-let taskSortable = null;
 
 // ==========================
 // API: Hämta inställningar från backend
@@ -323,6 +322,7 @@ function renderTasks() {
 
     list.appendChild(li);
   }
+
 
   if (taskSortable) {
     taskSortable.destroy();
