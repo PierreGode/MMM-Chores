@@ -11,6 +11,7 @@ let calendarDate = new Date();
 let localizedMonths = [];
 let localizedWeekdays = [];
 let levelingEnabled = true;
+let draggedTaskId = null;
 
 // ==========================
 // API: Hämta inställningar från backend
@@ -286,6 +287,31 @@ function renderTasks() {
     del.innerHTML = '<i class="bi bi-trash"></i>';
     del.addEventListener("click", () => deleteTask(task.id));
 
+    const dragBtn = document.createElement("button");
+    dragBtn.className = "btn btn-sm btn-outline-secondary drag-handle me-1";
+    dragBtn.innerHTML = '<i class="bi bi-list"></i>';
+    dragBtn.draggable = true;
+    dragBtn.addEventListener("dragstart", e => {
+      draggedTaskId = task.id;
+      e.dataTransfer.effectAllowed = "move";
+    });
+    dragBtn.addEventListener("dragend", () => {
+      draggedTaskId = null;
+    });
+
+    li.addEventListener("dragover", e => {
+      if (draggedTaskId !== null) e.preventDefault();
+    });
+    li.addEventListener("drop", e => {
+      e.preventDefault();
+      const from = tasksCache.findIndex(t => t.id === draggedTaskId);
+      const to = tasksCache.findIndex(t => t.id === task.id);
+      if (from === -1 || to === -1 || from === to) return;
+      tasksCache.splice(to, 0, tasksCache.splice(from, 1)[0]);
+      saveTaskOrder();
+      renderTasks();
+    });
+
     if (!task.done) {
       const edit = document.createElement("button");
       edit.className = "btn btn-sm btn-outline-secondary me-1";
@@ -303,9 +329,9 @@ function renderTasks() {
         }
         await updateTask(task.id, { name: newName.trim(), date: newDate });
       });
-      li.append(left, select, edit, del);
+      li.append(left, select, edit, del, dragBtn);
     } else {
-      li.append(left, select, del);
+      li.append(left, select, del, dragBtn);
     }
 
     list.appendChild(li);
@@ -495,6 +521,16 @@ async function deletePerson(id) {
 
 async function deleteTask(id) {
   await fetch(`/api/tasks/${id}`, { method: "DELETE" });
+  await fetchTasks();
+}
+
+async function saveTaskOrder() {
+  const ids = tasksCache.filter(t => !t.deleted).map(t => t.id);
+  await fetch('/api/tasks/reorder', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(ids)
+  });
   await fetchTasks();
 }
 

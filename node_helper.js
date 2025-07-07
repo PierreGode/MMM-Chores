@@ -489,6 +489,22 @@ module.exports = NodeHelper.create({
       res.json({ success: true });
     });
 
+    // Reorder tasks
+    app.put("/api/tasks/reorder", (req, res) => {
+      const ids = req.body;
+      if (!Array.isArray(ids)) {
+        return res.status(400).json({ error: "Expected an array of task ids" });
+      }
+      const idSet = new Set(ids);
+      const map = new Map();
+      tasks.forEach(t => map.set(t.id, t));
+      const reordered = ids.map(id => map.get(id)).filter(Boolean);
+      tasks = reordered.concat(tasks.filter(t => !idSet.has(t.id)));
+      saveData();
+      broadcastTasks(self);
+      res.json({ success: true });
+    });
+
     app.get("/api/analyticsBoards", (req, res) => res.json(analyticsBoards));
     app.post("/api/analyticsBoards", (req, res) => {
       const newBoards = req.body;
