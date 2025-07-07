@@ -69,6 +69,12 @@ Module.register("MMM-Chores", {
   },
 
   scheduleUpdate() {
+    if (this.config.showAnalyticsOnMirror) {
+      // Avoid refreshing the entire DOM while analytics charts are visible to
+      // prevent a flashing effect. Updates instead come from socket
+      // notifications when data changes.
+      return;
+    }
     setInterval(() => this.updateDom(), this.config.updateInterval);
   },
 
