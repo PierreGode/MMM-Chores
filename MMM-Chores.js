@@ -371,8 +371,8 @@ Module.register("MMM-Chores", {
       wrapper.appendChild(note);
     }
 
-    // Filtrerar bort raderade tasks
-    const visible = this.tasks.filter(t => !(t.deleted && !t.done) && this.shouldShowTask(t));
+    // Filter out all deleted tasks completely from the mirror
+    const visible = this.tasks.filter(t => !t.deleted && this.shouldShowTask(t));
 
     if (visible.length === 0) {
       const emptyEl = document.createElement("div");
