@@ -88,6 +88,12 @@ Module.register("MMM-Chores", {
       Object.assign(this.config, payload);
       this.updateDom();
     }
+    if (notification === "ANALYTICS_UPDATE") {
+      if (Array.isArray(payload)) {
+        this.config.analyticsCards = payload;
+        this.updateDom();
+      }
+    }
     if (notification === "LEVEL_INFO") {
       const prevTitle = this.levelInfo ? this.levelInfo.title : null;
       this.levelInfo = payload;
