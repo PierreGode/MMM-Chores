@@ -23,7 +23,7 @@ Module.register("MMM-Chores", {
     textMirrorSize: "small",     // small, medium or large
     useAI: true,                  // hide AI features when false
     showAnalyticsOnMirror: false, // display analytics cards on the mirror
-    analyticsCards: [],           // array of analytics card types
+    analyticsCards: [],           // board types selected in the admin UI
     leveling: {
       enabled: true,
       yearsToMaxLevel: 3,

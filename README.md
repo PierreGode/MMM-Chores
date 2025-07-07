@@ -45,7 +45,6 @@ in /MagicMirror/config/config.js
     updateInterval: 60 * 1000,
     adminPort: 5003,
     showAnalyticsOnMirror: false, // show analytics charts on the mirror
-    analyticsCards: ["speedDemons"], // analytics board types to display
     openaiApiKey: "your-openApi-key-here",
     useAI: true,        // hide AI features when false
     showDays: 3,       // show tasks from today and the next 2 days (total 3 days)
@@ -76,10 +75,12 @@ in /MagicMirror/config/config.js
 },
 ```
 
-Available analytics card types are: `weekly`, `weekdays`, `perPerson`,
-`perPersonFinished`, `perPersonFinishedWeek`, `perPersonUnfinished`,
-`perPersonUnfinishedWeek`, `taskmaster`, `lazyLegends`, `speedDemons`,
-`weekendWarriors`, and `slacker9000`.
+Analytics boards are selected from the admin interface when
+`showAnalyticsOnMirror` is enabled. Available card types are:
+`weekly`, `weekdays`, `perPerson`, `perPersonFinished`,
+`perPersonFinishedWeek`, `perPersonUnfinished`, `perPersonUnfinishedWeek`,
+`taskmaster`, `lazyLegends`, `speedDemons`, `weekendWarriors`, and
+`slacker9000`.
 
 levels could also be rewards
 ```js
