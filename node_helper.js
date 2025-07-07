@@ -58,6 +58,12 @@ function loadData() {
       settings         = j.settings         || { language: "en", dateFormatting: "yyyy-mm-dd", useAI: true, levelingEnabled: true };
       if (settings.levelingEnabled === undefined) settings.levelingEnabled = true;
 
+      // Ensure tasks are ordered consistently using the optional 'order' field
+      tasks.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      tasks.forEach((t, idx) => {
+        if (t.order === undefined) t.order = idx;
+      });
+
       updatePeopleLevels({});
 
       Log.log(`MMM-Chores: Loaded ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, language: ${settings.language}`);
@@ -131,6 +137,7 @@ function updatePeopleLevels(config) {
 }
 
 function broadcastTasks(helper) {
+  tasks.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
   // Match the admin portal's analytics logic by excluding tasks that are both
   // deleted and unfinished. Completed tasks remain even if deleted so that
   // historical analytics are consistent across the mirror and the admin page.
@@ -431,12 +438,15 @@ module.exports = NodeHelper.create({
       res.json(tasks);
     });
     app.post("/api/tasks", (req, res) => {
+      const nextOrder =
+        tasks.reduce((m, t) => (t.order > m ? t.order : m), -1) + 1;
       const newTask = {
         id: Date.now(),
         ...req.body,
         done: false,
         assignedTo: null,
         recurring: req.body.recurring || "none",
+        order: nextOrder,
       };
       tasks.push(newTask);
       saveData();
@@ -461,6 +471,8 @@ module.exports = NodeHelper.create({
       if (!prevDone && task.done && task.recurring && task.recurring !== "none") {
         const nextDate = getNextDate(task.date, task.recurring);
         if (nextDate) {
+          const nextOrder =
+            tasks.reduce((m, t) => (t.order > m ? t.order : m), -1) + 1;
           const newTask = {
             id: Date.now(),
             name: task.name,
@@ -469,6 +481,7 @@ module.exports = NodeHelper.create({
             recurring: task.recurring,
             done: false,
             created: new Date().toISOString(),
+            order: nextOrder,
           };
           tasks.push(newTask);
         }
@@ -495,11 +508,28 @@ module.exports = NodeHelper.create({
       if (!Array.isArray(ids)) {
         return res.status(400).json({ error: "Expected an array of task ids" });
       }
-      const idSet = new Set(ids);
+
       const map = new Map();
       tasks.forEach(t => map.set(t.id, t));
-      const reordered = ids.map(id => map.get(id)).filter(Boolean);
-      tasks = reordered.concat(tasks.filter(t => !idSet.has(t.id)));
+
+      let order = 0;
+      const reordered = [];
+      ids.forEach(id => {
+        const t = map.get(id);
+        if (t) {
+          t.order = order++;
+          reordered.push(t);
+          map.delete(id);
+        }
+      });
+
+      const remaining = Array.from(map.values()).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+      remaining.forEach(t => {
+        t.order = order++;
+        reordered.push(t);
+      });
+
+      tasks = reordered;
       saveData();
       broadcastTasks(self);
       res.json({ success: true });
