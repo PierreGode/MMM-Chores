@@ -284,7 +284,7 @@ function renderTasks() {
     });
 
     const del = document.createElement("button");
-    del.className = "btn btn-sm btn-outline-danger";
+    del.className = "btn btn-sm btn-outline-danger me-1";
     del.title = LANGUAGES[currentLang].remove;
     del.innerHTML = '<i class="bi bi-trash"></i>';
     del.addEventListener("click", () => deleteTask(task.id));
