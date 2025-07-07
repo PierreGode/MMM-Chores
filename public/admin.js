@@ -336,15 +336,12 @@ function renderTasks() {
       visible.splice(evt.newIndex, 0, moved);
       let i = 0;
       tasksCache = tasksCache.map(t => t.deleted ? t : visible[i++]);
-      let order = 0;
-      tasksCache.forEach(t => {
-        if (t.deleted) {
-          delete t.order;
-        } else {
-          t.order = order++;
-        }
+      const ids = tasksCache.filter(t => !t.deleted).map(t => t.id);
+      await fetch('/api/tasks/reorder', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ids)
       });
-      await saveTaskOrder();
     }
   });
 }
@@ -535,15 +532,6 @@ async function deleteTask(id) {
   await fetchTasks();
 }
 
-async function saveTaskOrder() {
-  const ids = tasksCache.filter(t => !t.deleted).map(t => t.id);
-  await fetch('/api/tasks/reorder', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(ids)
-  });
-  await fetchTasks();
-}
 
 // ==========================
 // Analytics Board Persistence
