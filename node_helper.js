@@ -90,9 +90,13 @@ function saveData() {
       JSON.stringify({ tasks, people, analyticsBoards, settings }, null, 2),
       "utf8"
     );
-    Log.log(`MMM-Chores: Saved ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, language: ${settings.language}`);
+    Log.log(
+      `MMM-Chores: Saved ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, language: ${settings.language}`
+    );
+    return true;
   } catch (e) {
     Log.error("MMM-Chores: Error writing data.json:", e);
+    return false;
   }
 }
 
@@ -174,7 +178,7 @@ function broadcastTasks(helper) {
   helper.sendSocketNotification("CHORES_DATA", analyticsData);
   helper.sendSocketNotification("LEVEL_INFO", getLevelInfo(helper.config || {}));
   helper.sendSocketNotification("PEOPLE_UPDATE", people);
-  saveData();
+  return saveData();
 }
 
 function getNextDate(dateStr, recurring) {
@@ -452,10 +456,10 @@ module.exports = NodeHelper.create({
       const id = parseInt(req.params.id, 10);
       people = people.filter(p => p.id !== id);
       tasks  = tasks.map(t => t.assignedTo === id ? { ...t, assignedTo: null } : t);
-      saveData();
+      const success = saveData();
       self.sendSocketNotification("PEOPLE_UPDATE", people);
       broadcastTasks(self);
-      res.json({ success: true });
+      res.json({ success });
     });
 
     // Return all tasks. Filtering of deleted items is handled client-side so
@@ -473,8 +477,8 @@ module.exports = NodeHelper.create({
         recurring: req.body.recurring || "none",
       };
       tasks.push(newTask);
-      broadcastTasks(self);
-      res.status(201).json(newTask);
+      const ok = broadcastTasks(self);
+      res.status(ok ? 201 : 500).json(ok ? newTask : { error: "Failed to save data" });
     });
     app.put("/api/tasks/:id", (req, res) => {
       const id   = parseInt(req.params.id, 10);
@@ -508,7 +512,8 @@ module.exports = NodeHelper.create({
         }
       }
 
-      broadcastTasks(self);
+      const ok = broadcastTasks(self);
+      if (!ok) return res.status(500).json({ error: "Failed to save data" });
       res.json(task);
     });
     app.delete("/api/tasks/:id", (req, res) => {
@@ -517,8 +522,8 @@ module.exports = NodeHelper.create({
       if (!task) return res.status(404).json({ error: "Task not found" });
 
       task.deleted = true;
-      broadcastTasks(self);
-      res.json({ success: true });
+      const ok = broadcastTasks(self);
+      res.json({ success: ok });
     });
 
     // Reorder tasks
@@ -532,7 +537,10 @@ module.exports = NodeHelper.create({
       tasks.forEach(t => map.set(t.id, t));
       const reordered = ids.map(id => map.get(id)).filter(Boolean);
       tasks = reordered.concat(tasks.filter(t => !idSet.has(t.id)));
-      broadcastTasks(self);
+      const ok = broadcastTasks(self);
+      if (!ok) {
+        return res.status(500).json({ error: "Failed to save data" });
+      }
       res.json({ success: true });
     });
 
