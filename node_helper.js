@@ -50,6 +50,7 @@ let settings = {
 
 function loadData() {
   if (fs.existsSync(DATA_FILE)) {
+    Log.log("loadData: reading", DATA_FILE);
     try {
       const j = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
       tasks = j.tasks || [];
@@ -85,6 +86,7 @@ function loadData() {
 
 function saveData() {
   try {
+    Log.log("saveData: writing", DATA_FILE);
     fs.writeFileSync(
       DATA_FILE,
       JSON.stringify({ tasks, people, analyticsBoards, settings }, null, 2),
@@ -151,6 +153,7 @@ function updatePeopleLevels(config) {
 }
 
 function applyTaskOrder() {
+  Log.log("applyTaskOrder: before", tasks.map(t => ({ id: t.id, order: t.order, deleted: t.deleted })));
   let idx = 0;
   tasks.forEach(t => {
     if (t.deleted) {
@@ -159,18 +162,21 @@ function applyTaskOrder() {
       t.order = idx++;
     }
   });
+  Log.log("applyTaskOrder: after", tasks.map(t => ({ id: t.id, order: t.order, deleted: t.deleted })));
 }
 
 function broadcastTasks(helper) {
   // Match the admin portal's analytics logic by excluding tasks that are both
   // deleted and unfinished. Completed tasks remain even if deleted so that
   // historical analytics are consistent across the mirror and the admin page.
+  Log.log("broadcastTasks: start", tasks.map(t => ({ id: t.id, order: t.order, deleted: t.deleted, done: t.done })));
   applyTaskOrder();
   tasks.sort((a, b) => {
     if (a.deleted && !b.deleted) return 1;
     if (!a.deleted && b.deleted) return -1;
     return (a.order || 0) - (b.order || 0);
   });
+  Log.log("broadcastTasks: after sort", tasks.map(t => ({ id: t.id, order: t.order, deleted: t.deleted })));
   const analyticsData = tasks.filter(t => !(t.deleted && !t.done));
 
   updatePeopleLevels(helper.config || {});
@@ -178,7 +184,9 @@ function broadcastTasks(helper) {
   helper.sendSocketNotification("CHORES_DATA", analyticsData);
   helper.sendSocketNotification("LEVEL_INFO", getLevelInfo(helper.config || {}));
   helper.sendSocketNotification("PEOPLE_UPDATE", people);
-  return saveData();
+  const ok = saveData();
+  Log.log(`broadcastTasks: saveData returned ${ok}`);
+  return ok;
 }
 
 function getNextDate(dateStr, recurring) {
@@ -476,6 +484,7 @@ module.exports = NodeHelper.create({
         assignedTo: null,
         recurring: req.body.recurring || "none",
       };
+      Log.log("POST /api/tasks", newTask);
       tasks.push(newTask);
       const ok = broadcastTasks(self);
       res.status(ok ? 201 : 500).json(ok ? newTask : { error: "Failed to save data" });
@@ -494,6 +503,7 @@ module.exports = NodeHelper.create({
           task[key] = val;
         }
       });
+      Log.log("PUT /api/tasks/" + id, req.body);
 
       if (!prevDone && task.done && task.recurring && task.recurring !== "none") {
         const nextDate = getNextDate(task.date, task.recurring);
@@ -522,6 +532,7 @@ module.exports = NodeHelper.create({
       if (!task) return res.status(404).json({ error: "Task not found" });
 
       task.deleted = true;
+      Log.log("DELETE /api/tasks/" + id);
       const ok = broadcastTasks(self);
       res.json({ success: ok });
     });
@@ -532,11 +543,13 @@ module.exports = NodeHelper.create({
       if (!Array.isArray(ids)) {
         return res.status(400).json({ error: "Expected an array of task ids" });
       }
+      Log.log("PUT /api/tasks/reorder", ids);
       const idSet = new Set(ids);
       const map = new Map();
       tasks.forEach(t => map.set(t.id, t));
       const reordered = ids.map(id => map.get(id)).filter(Boolean);
       tasks = reordered.concat(tasks.filter(t => !idSet.has(t.id)));
+      Log.log("New task order", tasks.map(t => ({ id: t.id, order: t.order })));
       const ok = broadcastTasks(self);
       if (!ok) {
         return res.status(500).json({ error: "Failed to save data" });
