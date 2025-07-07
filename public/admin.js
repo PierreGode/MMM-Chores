@@ -148,6 +148,7 @@ async function fetchPeople() {
 async function fetchTasks() {
   const res = await fetch("/api/tasks");
   tasksCache = await res.json();
+  tasksCache.sort((a, b) => (a.order || 0) - (b.order || 0));
   renderTasks();
   renderCalendar();
 }
@@ -331,6 +332,7 @@ function renderTasks() {
       visible.splice(evt.newIndex, 0, moved);
       let i = 0;
       tasksCache = tasksCache.map(t => t.deleted ? t : visible[i++]);
+      tasksCache.forEach((t, idx) => { t.order = idx; });
       await saveTaskOrder();
     }
   });
