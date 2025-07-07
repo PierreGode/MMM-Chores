@@ -45,6 +45,9 @@ in /MagicMirror/config/config.js
     updateInterval: 60 * 1000,
     adminPort: 5003,
     showAnalyticsOnMirror: false, // show analytics charts on the mirror
+    // When analytics are shown, the module skips the periodic refresh to avoid
+    // the charts flashing on the mirror. The display updates whenever data
+    // changes instead.
     openaiApiKey: "your-openApi-key-here",
     useAI: true,        // hide AI features when false
     showDays: 3,       // show tasks from today and the next 2 days (total 3 days)
@@ -76,7 +79,8 @@ in /MagicMirror/config/config.js
 ```
 
 Analytics boards are selected from the admin interface when
-`showAnalyticsOnMirror` is enabled. Available card types are:
+`showAnalyticsOnMirror` is enabled. Enabling analytics disables the
+scheduled DOM refresh to prevent flickering. Available card types are:
 `weekly`, `weekdays`, `perPerson`, `perPersonFinished`,
 `perPersonFinishedWeek`, `perPersonUnfinished`, `perPersonUnfinishedWeek`,
 `taskmaster`, `lazyLegends`, `speedDemons`, `weekendWarriors`, and
