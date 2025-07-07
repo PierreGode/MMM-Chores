@@ -52,7 +52,15 @@ function loadData() {
   if (fs.existsSync(DATA_FILE)) {
     try {
       const j = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-      tasks            = j.tasks            || [];
+      tasks = j.tasks || [];
+      // Ensure tasks are sorted based on their stored order field if present
+      if (tasks.some(t => t.order !== undefined)) {
+        tasks.sort((a, b) => (a.order || 0) - (b.order || 0));
+      }
+      // Assign sequential order values if missing
+      tasks.forEach((t, idx) => {
+        if (t.order === undefined) t.order = idx;
+      });
       people           = j.people           || [];
       analyticsBoards  = j.analyticsBoards  || [];
       settings         = j.settings         || { language: "en", dateFormatting: "yyyy-mm-dd", useAI: true, levelingEnabled: true };
@@ -134,6 +142,7 @@ function broadcastTasks(helper) {
   // Match the admin portal's analytics logic by excluding tasks that are both
   // deleted and unfinished. Completed tasks remain even if deleted so that
   // historical analytics are consistent across the mirror and the admin page.
+  tasks.sort((a, b) => (a.order || 0) - (b.order || 0));
   const analyticsData = tasks.filter(t => !(t.deleted && !t.done));
 
   updatePeopleLevels(helper.config || {});
@@ -434,6 +443,7 @@ module.exports = NodeHelper.create({
       const newTask = {
         id: Date.now(),
         ...req.body,
+        order: tasks.length,
         done: false,
         assignedTo: null,
         recurring: req.body.recurring || "none",
@@ -467,6 +477,7 @@ module.exports = NodeHelper.create({
             date: nextDate,
             assignedTo: task.assignedTo || null,
             recurring: task.recurring,
+            order: tasks.length,
             done: false,
             created: new Date().toISOString(),
           };
@@ -484,6 +495,7 @@ module.exports = NodeHelper.create({
       if (!task) return res.status(404).json({ error: "Task not found" });
 
       task.deleted = true;
+      tasks.forEach((t, idx) => { t.order = idx; });
       saveData();
       broadcastTasks(self);
       res.json({ success: true });
@@ -500,6 +512,7 @@ module.exports = NodeHelper.create({
       tasks.forEach(t => map.set(t.id, t));
       const reordered = ids.map(id => map.get(id)).filter(Boolean);
       tasks = reordered.concat(tasks.filter(t => !idSet.has(t.id)));
+      tasks.forEach((t, idx) => { t.order = idx; });
       saveData();
       broadcastTasks(self);
       res.json({ success: true });
