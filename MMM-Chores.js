@@ -2,6 +2,10 @@ const BOARD_TITLES = {
   weekly: "Tasks Completed Per Week",
   weekdays: "Busiest Weekdays",
   perPerson: "Chores Per Person",
+  perPersonFinished: "Chores Per Person (Finished)",
+  perPersonFinishedWeek: "Chores Per Person (Finished This Week)",
+  perPersonUnfinished: "Chores Per Person (Unfinished)",
+  perPersonUnfinishedWeek: "Chores Per Person (Unfinished This Week)",
   taskmaster: "Taskmaster This Month",
   lazyLegends: "Lazy Legends",
   speedDemons: "Speed Demons",
@@ -210,6 +214,54 @@ Module.register("MMM-Chores", {
         data = { labels, datasets: [{ label: "Finished Tasks", data: counts, backgroundColor: "rgba(153,102,255,0.5)" }] };
         break;
       }
+      case "perPersonFinished": {
+        const labels = this.people.map(p => p.name);
+        const counts = this.people.map(p => filteredTasks(t => t.assignedTo === p.id && t.done).length);
+        data = { labels, datasets: [{ label: BOARD_TITLES.perPersonFinished, data: counts, backgroundColor: "rgba(75,192,192,0.5)" }] };
+        break;
+      }
+      case "perPersonFinishedWeek": {
+        const now = new Date();
+        const start = new Date(now);
+        start.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 7);
+        const labels = this.people.map(p => p.name);
+        const counts = this.people.map(p =>
+          filteredTasks(t => {
+            if (!t.done || t.assignedTo !== p.id) return false;
+            const d = new Date(t.date);
+            return d >= start && d < end;
+          }).length
+        );
+        data = { labels, datasets: [{ label: BOARD_TITLES.perPersonFinishedWeek, data: counts, backgroundColor: "rgba(75,192,192,0.5)" }] };
+        break;
+      }
+      case "perPersonUnfinished": {
+        const labels = this.people.map(p => p.name);
+        const counts = this.people.map(p => filteredTasks(t => t.assignedTo === p.id && !t.done).length);
+        data = { labels, datasets: [{ label: BOARD_TITLES.perPersonUnfinished, data: counts, backgroundColor: "rgba(255,99,132,0.5)" }] };
+        break;
+      }
+      case "perPersonUnfinishedWeek": {
+        const now = new Date();
+        const start = new Date(now);
+        start.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 7);
+        const labels = this.people.map(p => p.name);
+        const counts = this.people.map(p =>
+          filteredTasks(t => {
+            if (t.done || t.assignedTo !== p.id) return false;
+            const d = new Date(t.date);
+            return d >= start && d < end;
+          }).length
+        );
+        data = { labels, datasets: [{ label: BOARD_TITLES.perPersonUnfinishedWeek, data: counts, backgroundColor: "rgba(255,99,132,0.5)" }] };
+        break;
+      }
       case "taskmaster": {
         const now = new Date();
         const labels = this.people.map(p => p.name);
@@ -312,7 +364,7 @@ Module.register("MMM-Chores", {
     }
 
     // Filtrerar bort raderade tasks
-    const visible = this.tasks.filter(t => !t.deleted && this.shouldShowTask(t));
+    const visible = this.tasks.filter(t => !(t.deleted && !t.done) && this.shouldShowTask(t));
 
     if (visible.length === 0) {
       const emptyEl = document.createElement("div");
