@@ -137,6 +137,36 @@
   <script src="lang.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
   <script src="admin.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const list = document.getElementById("taskList");
+      if (!list) return;
+
+      Sortable.create(list, {
+        handle: ".drag-handle",
+        animation: 150,
+        onEnd: function () {
+          const ids = Array.from(list.children)
+            .map(li => parseInt(li.dataset.id))
+            .filter(id => !isNaN(id));
+
+          fetch("/api/tasks/reorder", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(ids)
+          })
+            .then(res => {
+              if (!res.ok) throw new Error("Reorder failed");
+              window.location.reload();
+            })
+            .catch(e => {
+              console.error(e);
+              alert("Could not save new task order");
+            });
+        }
+      });
+    });
+  </script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

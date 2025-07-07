@@ -11,7 +11,6 @@ let calendarDate = new Date();
 let localizedMonths = [];
 let localizedWeekdays = [];
 let levelingEnabled = true;
-let taskSortable = null;
 
 // ==========================
 // API: Hämta inställningar från backend
@@ -324,29 +323,7 @@ function renderTasks() {
     list.appendChild(li);
   }
 
-  if (taskSortable) {
-    taskSortable.destroy();
-  }
-  taskSortable = new Sortable(list, {
-    handle: '.drag-handle',
-    animation: 150,
-    onEnd: async (evt) => {
-      const visible = tasksCache.filter(t => !t.deleted);
-      const moved = visible.splice(evt.oldIndex, 1)[0];
-      visible.splice(evt.newIndex, 0, moved);
-      let i = 0;
-      tasksCache = tasksCache.map(t => t.deleted ? t : visible[i++]);
-      let order = 0;
-      tasksCache.forEach(t => {
-        if (t.deleted) {
-          delete t.order;
-        } else {
-          t.order = order++;
-        }
-      });
-      await saveTaskOrder();
-    }
-  });
+  // Dragging is handled separately in admin.html
 }
 
 function getWeekNumber(d) {
