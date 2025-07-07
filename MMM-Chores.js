@@ -284,13 +284,9 @@ Module.register("MMM-Chores", {
       const { chartType, data, options } = this.buildChartData(type);
       const existing = this.chartInstances[id];
       if (existing) {
-        existing.config.type = chartType;
-        existing.data = data;
-        existing.options = options;
-        existing.update();
-      } else {
-        this.chartInstances[id] = new Chart(ctx, { type: chartType, data, options });
+        existing.destroy();
       }
+      this.chartInstances[id] = new Chart(ctx, { type: chartType, data, options });
     });
 
     // destroy charts that are no longer configured
