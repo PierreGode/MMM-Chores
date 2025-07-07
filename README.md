@@ -77,7 +77,9 @@ in /MagicMirror/config/config.js
 ```
 
 Available analytics card types are: `weekly`, `weekdays`, `perPerson`,
-`taskmaster`, `lazyLegends`, `speedDemons`, `weekendWarriors`, and `slacker9000`.
+`perPersonFinished`, `perPersonFinishedWeek`, `perPersonUnfinished`,
+`perPersonUnfinishedWeek`, `taskmaster`, `lazyLegends`, `speedDemons`,
+`weekendWarriors`, and `slacker9000`.
 
 levels could also be rewards
 ```js

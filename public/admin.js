@@ -647,6 +647,90 @@ function renderChart(canvasId, type) {
       break;
     }
 
+    case "perPersonFinished": {
+      const labels = peopleCache.map(p => p.name);
+      const counts = peopleCache.map(p =>
+        filteredTasks(t => t.assignedTo === p.id && t.done).length
+      );
+      data = {
+        labels,
+        datasets: [{
+          label: LANGUAGES[currentLang].chartOptions.perPersonFinished,
+          data: counts,
+          backgroundColor: "rgba(75,192,192,0.5)"
+        }]
+      };
+      break;
+    }
+
+    case "perPersonFinishedWeek": {
+      const now = new Date();
+      const start = new Date(now);
+      start.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+      start.setHours(0,0,0,0);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 7);
+      const labels = peopleCache.map(p => p.name);
+      const counts = peopleCache.map(p =>
+        filteredTasks(t => {
+          if (!t.done || t.assignedTo !== p.id) return false;
+          const d = new Date(t.date);
+          return d >= start && d < end;
+        }).length
+      );
+      data = {
+        labels,
+        datasets: [{
+          label: LANGUAGES[currentLang].chartOptions.perPersonFinishedWeek,
+          data: counts,
+          backgroundColor: "rgba(75,192,192,0.5)"
+        }]
+      };
+      break;
+    }
+
+    case "perPersonUnfinished": {
+      const labels = peopleCache.map(p => p.name);
+      const counts = peopleCache.map(p =>
+        filteredTasks(t => t.assignedTo === p.id && !t.done).length
+      );
+      data = {
+        labels,
+        datasets: [{
+          label: LANGUAGES[currentLang].chartOptions.perPersonUnfinished,
+          data: counts,
+          backgroundColor: "rgba(255,99,132,0.5)"
+        }]
+      };
+      break;
+    }
+
+    case "perPersonUnfinishedWeek": {
+      const now = new Date();
+      const start = new Date(now);
+      start.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+      start.setHours(0,0,0,0);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 7);
+      const labels = peopleCache.map(p => p.name);
+      const counts = peopleCache.map(p =>
+        filteredTasks(t => {
+          if (t.done || t.assignedTo !== p.id) return false;
+          const d = new Date(t.date);
+          return d >= start && d < end;
+        }).length
+      );
+      data = {
+        labels,
+        datasets: [{
+          label: LANGUAGES[currentLang].chartOptions.perPersonUnfinishedWeek,
+          data: counts,
+          backgroundColor: "rgba(255,99,132,0.5)"
+        }]
+      };
+      break;
+    }
+
     case "taskmaster": {
       const now = new Date();
       const labels = peopleCache.map(p => p.name);
