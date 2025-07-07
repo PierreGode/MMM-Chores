@@ -45,11 +45,9 @@ in /MagicMirror/config/config.js
     updateInterval: 60 * 1000,
     adminPort: 5003,
     showAnalyticsOnMirror: false, // show analytics charts on the mirror
-    analyticsCards: ["speedDemons"], // analytics board types to displa
+    analyticsCards: ["speedDemons"], // analytics board types to display
     openaiApiKey: "your-openApi-key-here",
     useAI: true,        // hide AI features when false
-    showAnalyticsOnMirror: false, // show analytics charts on the mirror
-    analyticsCards: ["speedDemons"], // analytics board types to display
     showDays: 3,       // show tasks from today and the next 2 days (total 3 days)
     showPast: true,    // also show unfinished tasks from past days
     textMirrorSize: "small", // small, medium or large
