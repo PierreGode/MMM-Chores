@@ -323,7 +323,27 @@ function renderTasks() {
     list.appendChild(li);
   }
 
-  // Dragging is handled separately in admin.html
+
+  if (taskSortable) {
+    taskSortable.destroy();
+  }
+  taskSortable = new Sortable(list, {
+    handle: '.drag-handle',
+    animation: 150,
+    onEnd: async (evt) => {
+      const visible = tasksCache.filter(t => !t.deleted);
+      const moved = visible.splice(evt.oldIndex, 1)[0];
+      visible.splice(evt.newIndex, 0, moved);
+      let i = 0;
+      tasksCache = tasksCache.map(t => t.deleted ? t : visible[i++]);
+      const ids = tasksCache.filter(t => !t.deleted).map(t => t.id);
+      await fetch('/api/tasks/reorder', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ids)
+      });
+    }
+  });
 }
 
 function getWeekNumber(d) {
@@ -512,15 +532,6 @@ async function deleteTask(id) {
   await fetchTasks();
 }
 
-async function saveTaskOrder() {
-  const ids = tasksCache.filter(t => !t.deleted).map(t => t.id);
-  await fetch('/api/tasks/reorder', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(ids)
-  });
-  await fetchTasks();
-}
 
 // ==========================
 // Analytics Board Persistence
