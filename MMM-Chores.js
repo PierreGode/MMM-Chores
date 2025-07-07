@@ -1,3 +1,14 @@
+const BOARD_TITLES = {
+  weekly: "Tasks Completed Per Week",
+  weekdays: "Busiest Weekdays",
+  perPerson: "Chores Per Person",
+  taskmaster: "Taskmaster This Month",
+  lazyLegends: "Lazy Legends",
+  speedDemons: "Speed Demons",
+  weekendWarriors: "Weekend Warriors",
+  slacker9000: "Slacker Detector 9000"
+};
+
 Module.register("MMM-Chores", {
   defaults: {
     updateInterval: 60 * 1000,
@@ -130,6 +141,8 @@ Module.register("MMM-Chores", {
     if (!match) return dateStr;
     const [ , yyyy, mm, dd ] = match;
 
+    // Use module config for formatting. If set to empty string, hide the date
+    // entirely. Only fall back to the default when no value is specified.
     let result =
       this.config.dateFormatting !== undefined &&
       this.config.dateFormatting !== null
@@ -138,9 +151,13 @@ Module.register("MMM-Chores", {
 
     if (result === "") return "";
 
+    // Ersätt både små och stora bokstäver för yyyy, mm, dd
     result = result.replace(/yyyy/gi, yyyy);
     result = result.replace(/mm/gi, mm);
     result = result.replace(/dd/gi, dd);
+
+    // Extra stöd för stora bokstäver som kan missas pga regex
+    // (Om användaren skriver t.ex "DD" istället för "dd")
     result = result.replace(/YYYY/g, yyyy);
     result = result.replace(/MM/g, mm);
     result = result.replace(/DD/g, dd);
@@ -276,6 +293,7 @@ Module.register("MMM-Chores", {
       }
     });
 
+    // destroy charts that are no longer configured
     Object.keys(this.chartInstances).forEach(id => {
       if (!currentIds.includes(id)) {
         this.chartInstances[id].destroy();
@@ -287,7 +305,9 @@ Module.register("MMM-Chores", {
   getDom() {
     const wrapper = document.createElement("div");
 
-    // Show title change notification if any
+    // Remove the large header showing the global level. Levels are displayed
+    // next to each person's name instead.
+
     if (this.titleChangeMessage) {
       const note = document.createElement("div");
       note.className = "small bright";
@@ -295,31 +315,9 @@ Module.register("MMM-Chores", {
       wrapper.appendChild(note);
     }
 
-    // Render analytics charts if enabled (always show, even when no tasks)
-    if (this.config.showAnalyticsOnMirror && Array.isArray(this.config.analyticsCards) && this.config.analyticsCards.length) {
-      const charts = document.createElement("div");
-      charts.className = "analytics-wrapper";
-      this.config.analyticsCards.forEach((type, idx) => {
-        const card = document.createElement("div");
-        card.className = "analytics-card";
-        const title = document.createElement("div");
-        title.className = "small bright";
-        title.innerHTML = BOARD_TITLES[type] || type;
-        const canvas = document.createElement("canvas");
-        canvas.id = `chart-${idx}`;
-        canvas.className = "analytics-chart";
-        card.appendChild(title);
-        card.appendChild(canvas);
-        charts.appendChild(card);
-      });
-      wrapper.appendChild(charts);
-      setTimeout(() => this.renderCharts(), 0);
-    }
-
-    // Filter out deleted tasks and apply date/window logic
+    // Filtrerar bort raderade tasks
     const visible = this.tasks.filter(t => !t.deleted && this.shouldShowTask(t));
 
-    // If there are no tasks, show a friendly message
     if (visible.length === 0) {
       const emptyEl = document.createElement("div");
       emptyEl.className = `${this.config.textMirrorSize} dimmed`;
@@ -328,7 +326,6 @@ Module.register("MMM-Chores", {
       return wrapper;
     }
 
-    // Build list of tasks
     const ul = document.createElement("ul");
     ul.className = "normal";
 
@@ -353,7 +350,9 @@ Module.register("MMM-Chores", {
         assignedEl.className = "xsmall dimmed";
         assignedEl.style.marginLeft = "6px";
         let html = ` — ${p ? p.name : ""}`;
-        const lvlEnabled = !(this.config.leveling && this.config.leveling.enabled === false);
+        const lvlEnabled = !(
+          this.config.leveling && this.config.leveling.enabled === false
+        );
         if (lvlEnabled && p && p.level) {
           html += ` <span class="lvl-badge">lvl${p.level}</span>`;
         }
@@ -365,6 +364,28 @@ Module.register("MMM-Chores", {
     });
 
     wrapper.appendChild(ul);
+
+    if (this.config.showAnalyticsOnMirror && this.config.analyticsCards.length) {
+      const charts = document.createElement("div");
+      charts.className = "analytics-wrapper";
+      this.config.analyticsCards.forEach((type, idx) => {
+        const card = document.createElement("div");
+        card.className = "analytics-card";
+        const title = document.createElement("div");
+        title.className = "small bright";
+        title.innerHTML = BOARD_TITLES[type] || type;
+        const canvas = document.createElement("canvas");
+        const id = `chart-${idx}`;
+        canvas.id = id;
+        canvas.className = "analytics-chart";
+        card.appendChild(title);
+        card.appendChild(canvas);
+        charts.appendChild(card);
+      });
+      wrapper.appendChild(charts);
+      setTimeout(() => this.renderCharts(), 0);
+    }
+
     return wrapper;
   }
 });
