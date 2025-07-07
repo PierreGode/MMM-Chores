@@ -195,6 +195,14 @@ h1, h2 {
   cursor: grabbing;
 }
 
+/* SortableJS states */
+.sortable-chosen {
+  background-color: rgba(0,0,0,0.05);
+}
+.sortable-ghost {
+  opacity: 0.5;
+}
+
 /* Responsive adjustments */
 @media (max-width: 576px) {
   .top-controls {
