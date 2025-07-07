@@ -131,10 +131,14 @@ function updatePeopleLevels(config) {
 }
 
 function broadcastTasks(helper) {
-  const visible = tasks.filter(t => !t.deleted);
+  // Match the admin portal's analytics logic by excluding tasks that are both
+  // deleted and unfinished. Completed tasks remain even if deleted so that
+  // historical analytics are consistent across the mirror and the admin page.
+  const analyticsData = tasks.filter(t => !(t.deleted && !t.done));
+
   updatePeopleLevels(helper.config || {});
   helper.sendSocketNotification("TASKS_UPDATE", tasks);
-  helper.sendSocketNotification("CHORES_DATA", visible);
+  helper.sendSocketNotification("CHORES_DATA", analyticsData);
   helper.sendSocketNotification("LEVEL_INFO", getLevelInfo(helper.config || {}));
   helper.sendSocketNotification("PEOPLE_UPDATE", people);
   saveData();
@@ -372,7 +376,11 @@ module.exports = NodeHelper.create({
 
       const res = await fetchFn(`http://localhost:${port}/api/tasks`);
       const latest = await res.json();
-      this.sendSocketNotification("CHORES_DATA", latest);
+
+      // Keep historical data for analytics by excluding only deleted and
+      // unfinished tasks, mirroring the admin portal's behaviour.
+      const filtered = latest.filter(t => !(t.deleted && !t.done));
+      this.sendSocketNotification("CHORES_DATA", filtered);
     } catch (e) {
       Log.error("MMM-Chores: failed updating task", e);
     }
