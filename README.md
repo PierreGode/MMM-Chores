@@ -2,6 +2,8 @@
 
 **MMM-Chores** is a module for [MagicMirror²](https://github.com/MagicMirrorOrg/MagicMirror) that allows you to manage your household chores.
 
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/J3J2EARPK)
+
 It provides an admin interface where you can add, edit, and delete tasks. You can also set due dates and assign tasks to different persons. The module displays the tasks on your MagicMirror, allowing you to keep track of your household chores at a glance.
 
 The data is stored in `data.json` to make the data persistent between restarts.
@@ -42,6 +44,7 @@ in /MagicMirror/config/config.js
   config: {
     updateInterval: 60 * 1000,
     adminPort: 5003,
+    showAnalyticsOnMirror: false, // show analytics charts on the mirror
     openaiApiKey: "your-openApi-key-here",
     useAI: true,        // hide AI features when false
     showDays: 3,       // show tasks from today and the next 2 days (total 3 days)
@@ -72,7 +75,14 @@ in /MagicMirror/config/config.js
 },
 ```
 
-levels could also be rewards 
+Analytics boards are selected from the admin interface when
+`showAnalyticsOnMirror` is enabled. Available card types are:
+`weekly`, `weekdays`, `perPerson`, `perPersonFinished`,
+`perPersonFinishedWeek`, `perPersonUnfinished`, `perPersonUnfinishedWeek`,
+`taskmaster`, `lazyLegends`, `speedDemons`, `weekendWarriors`, and
+`slacker9000`.
+
+levels could also be rewards
 ```js
     levelTitles: [            // titles for every 10 levels
       "10 euro game giftcard",
