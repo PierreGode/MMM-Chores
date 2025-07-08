@@ -544,19 +544,31 @@ module.exports = NodeHelper.create({
         return res.status(400).json({ error: "Expected an array of task ids" });
       }
       Log.log("PUT /api/tasks/reorder", ids);
-      const idSet = new Set(ids);
+
       const map = new Map();
       tasks.forEach(t => map.set(t.id, t));
+      const preOrders = ids.map(id => ({
+        id,
+        found: map.has(id),
+        currentOrder: map.has(id) ? map.get(id).order : null
+      }));
+      Log.log("Reorder validation", preOrders);
+
+      const idSet = new Set(ids);
       const reordered = ids.map(id => map.get(id)).filter(Boolean);
       tasks = reordered.concat(tasks.filter(t => !idSet.has(t.id)));
 
       // Persist order numbers immediately before broadcasting
       let order = 0;
       tasks.forEach(t => {
+        const prev = t.order;
         if (t.deleted) {
           delete t.order;
         } else {
           t.order = order++;
+        }
+        if (prev !== undefined && prev !== t.order) {
+          Log.log(`Task ${t.id} order ${prev} -> ${t.order}`);
         }
       });
 
