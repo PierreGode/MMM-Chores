@@ -153,7 +153,7 @@ function updatePeopleLevels(config) {
 }
 
 function applyTaskOrder() {
-  Log.log("applyTaskOrder: before", tasks.map(t => ({ id: t.id, order: t.order, deleted: t.deleted })));
+  Log.log(`applyTaskOrder: before ${tasks.length} tasks`);
   let idx = 0;
   tasks.forEach(t => {
     if (t.deleted) {
@@ -162,21 +162,21 @@ function applyTaskOrder() {
       t.order = idx++;
     }
   });
-  Log.log("applyTaskOrder: after", tasks.map(t => ({ id: t.id, order: t.order, deleted: t.deleted })));
+  Log.log(`applyTaskOrder: after ${tasks.length} tasks`);
 }
 
 function broadcastTasks(helper) {
   // Match the admin portal's analytics logic by excluding tasks that are both
   // deleted and unfinished. Completed tasks remain even if deleted so that
   // historical analytics are consistent across the mirror and the admin page.
-  Log.log("broadcastTasks: start", tasks.map(t => ({ id: t.id, order: t.order, deleted: t.deleted, done: t.done })));
+  Log.log(`broadcastTasks: start ${tasks.length} tasks`);
   applyTaskOrder();
   tasks.sort((a, b) => {
     if (a.deleted && !b.deleted) return 1;
     if (!a.deleted && b.deleted) return -1;
     return (a.order || 0) - (b.order || 0);
   });
-  Log.log("broadcastTasks: after sort", tasks.map(t => ({ id: t.id, order: t.order, deleted: t.deleted })));
+  Log.log(`broadcastTasks: after sort ${tasks.length} tasks`);
   const analyticsData = tasks.filter(t => !(t.deleted && !t.done));
 
   updatePeopleLevels(helper.config || {});
