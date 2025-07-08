@@ -549,6 +549,17 @@ module.exports = NodeHelper.create({
       tasks.forEach(t => map.set(t.id, t));
       const reordered = ids.map(id => map.get(id)).filter(Boolean);
       tasks = reordered.concat(tasks.filter(t => !idSet.has(t.id)));
+
+      // Persist order numbers immediately before broadcasting
+      let order = 0;
+      tasks.forEach(t => {
+        if (t.deleted) {
+          delete t.order;
+        } else {
+          t.order = order++;
+        }
+      });
+
       Log.log("New task order", tasks.map(t => ({ id: t.id, order: t.order })));
       const ok = broadcastTasks(self);
       if (!ok) {
