@@ -489,6 +489,49 @@ module.exports = NodeHelper.create({
       const ok = broadcastTasks(self);
       res.status(ok ? 201 : 500).json(ok ? newTask : { error: "Failed to save data" });
     });
+
+    // Reorder tasks
+    app.put("/api/tasks/reorder", (req, res) => {
+      const ids = req.body;
+      if (!Array.isArray(ids)) {
+        return res.status(400).json({ error: "Expected an array of task ids" });
+      }
+      Log.log("PUT /api/tasks/reorder", ids);
+
+      const map = new Map();
+      tasks.forEach(t => map.set(t.id, t));
+      const preOrders = ids.map(id => ({
+        id,
+        found: map.has(id),
+        currentOrder: map.has(id) ? map.get(id).order : null
+      }));
+      Log.log("Reorder validation", preOrders);
+
+      const idSet = new Set(ids);
+      const reordered = ids.map(id => map.get(id)).filter(Boolean);
+      tasks = reordered.concat(tasks.filter(t => !idSet.has(t.id)));
+
+      // Persist order numbers immediately before broadcasting
+      let order = 0;
+      tasks.forEach(t => {
+        const prev = t.order;
+        if (t.deleted) {
+          delete t.order;
+        } else {
+          t.order = order++;
+        }
+        if (prev !== undefined && prev !== t.order) {
+          Log.log(`Task ${t.id} order ${prev} -> ${t.order}`);
+        }
+      });
+
+      Log.log("New task order", tasks.map(t => ({ id: t.id, order: t.order })));
+      const ok = broadcastTasks(self);
+      if (!ok) {
+        return res.status(500).json({ error: "Failed to save data" });
+      }
+      res.json({ success: true });
+    });
     app.put("/api/tasks/:id", (req, res) => {
       const id   = parseInt(req.params.id, 10);
       const task = tasks.find(t => t.id === id);
@@ -535,49 +578,6 @@ module.exports = NodeHelper.create({
       Log.log("DELETE /api/tasks/" + id);
       const ok = broadcastTasks(self);
       res.json({ success: ok });
-    });
-
-    // Reorder tasks
-    app.put("/api/tasks/reorder", (req, res) => {
-      const ids = req.body;
-      if (!Array.isArray(ids)) {
-        return res.status(400).json({ error: "Expected an array of task ids" });
-      }
-      Log.log("PUT /api/tasks/reorder", ids);
-
-      const map = new Map();
-      tasks.forEach(t => map.set(t.id, t));
-      const preOrders = ids.map(id => ({
-        id,
-        found: map.has(id),
-        currentOrder: map.has(id) ? map.get(id).order : null
-      }));
-      Log.log("Reorder validation", preOrders);
-
-      const idSet = new Set(ids);
-      const reordered = ids.map(id => map.get(id)).filter(Boolean);
-      tasks = reordered.concat(tasks.filter(t => !idSet.has(t.id)));
-
-      // Persist order numbers immediately before broadcasting
-      let order = 0;
-      tasks.forEach(t => {
-        const prev = t.order;
-        if (t.deleted) {
-          delete t.order;
-        } else {
-          t.order = order++;
-        }
-        if (prev !== undefined && prev !== t.order) {
-          Log.log(`Task ${t.id} order ${prev} -> ${t.order}`);
-        }
-      });
-
-      Log.log("New task order", tasks.map(t => ({ id: t.id, order: t.order })));
-      const ok = broadcastTasks(self);
-      if (!ok) {
-        return res.status(500).json({ error: "Failed to save data" });
-      }
-      res.json({ success: true });
     });
 
     app.get("/api/analyticsBoards", (req, res) => res.json(analyticsBoards));
