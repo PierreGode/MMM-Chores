@@ -6,7 +6,10 @@
 
 It provides an admin interface where you can add, edit, and delete tasks. You can also set due dates and assign tasks to different persons. The module displays the tasks on your MagicMirror, allowing you to keep track of your household chores at a glance.
 
-The data is stored in `data.json` to make the data persistent between restarts.
+The data is stored in `data.json` so it persists across restarts.
+Use the drag handle ("burger" icon) to reorder tasks in the admin UI. The
+updated order is saved to `data.json` and automatically reloaded, so it
+survives page refreshes and restarts.
 
 *Update 2025-07-07: Analytics boards can now be displayed on the mirror
 

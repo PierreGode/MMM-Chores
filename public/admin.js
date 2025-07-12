@@ -11,6 +11,7 @@ let calendarDate = new Date();
 let localizedMonths = [];
 let localizedWeekdays = [];
 let levelingEnabled = true;
+let taskSortable = null;
 
 // ==========================
 // API: Hämta inställningar från backend
@@ -147,6 +148,11 @@ async function fetchPeople() {
 async function fetchTasks() {
   const res = await fetch("/api/tasks");
   tasksCache = await res.json();
+  tasksCache.sort((a, b) => {
+    if (a.deleted && !b.deleted) return 1;
+    if (!a.deleted && b.deleted) return -1;
+    return (a.order || 0) - (b.order || 0);
+  });
   renderTasks();
   renderCalendar();
 }
@@ -190,6 +196,7 @@ function renderPeople() {
     li.appendChild(btn);
     list.appendChild(li);
   }
+
 }
 
 function renderTasks() {
@@ -207,6 +214,7 @@ function renderTasks() {
   for (const task of tasksCache.filter(t => !t.deleted)) {
     const li = document.createElement("li");
     li.className = "list-group-item d-flex justify-content-between align-items-center";
+    li.dataset.id = task.id;
 
     const left = document.createElement("div");
     left.className = "d-flex align-items-center";
@@ -281,10 +289,15 @@ function renderTasks() {
     });
 
     const del = document.createElement("button");
-    del.className = "btn btn-sm btn-outline-danger";
+    del.className = "btn btn-sm btn-outline-danger me-1";
     del.title = LANGUAGES[currentLang].remove;
     del.innerHTML = '<i class="bi bi-trash"></i>';
     del.addEventListener("click", () => deleteTask(task.id));
+
+    const dragBtn = document.createElement("button");
+    dragBtn.className = "btn btn-sm btn-outline-secondary drag-handle me-1";
+    dragBtn.innerHTML = '<i class="bi bi-list"></i>';
+
 
     if (!task.done) {
       const edit = document.createElement("button");
@@ -303,13 +316,35 @@ function renderTasks() {
         }
         await updateTask(task.id, { name: newName.trim(), date: newDate });
       });
-      li.append(left, select, edit, del);
+      li.append(left, select, edit, del, dragBtn);
     } else {
-      li.append(left, select, del);
+      li.append(left, select, del, dragBtn);
     }
 
     list.appendChild(li);
   }
+
+
+  if (taskSortable) {
+    taskSortable.destroy();
+  }
+  taskSortable = new Sortable(list, {
+    handle: '.drag-handle',
+    animation: 150,
+    onEnd: async (evt) => {
+      const visible = tasksCache.filter(t => !t.deleted);
+      const moved = visible.splice(evt.oldIndex, 1)[0];
+      visible.splice(evt.newIndex, 0, moved);
+      let i = 0;
+      tasksCache = tasksCache.map(t => t.deleted ? t : visible[i++]);
+      const ids = tasksCache.filter(t => !t.deleted).map(t => t.id);
+      await fetch('/api/tasks/reorder', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ids)
+      });
+    }
+  });
 }
 
 function getWeekNumber(d) {
@@ -497,6 +532,7 @@ async function deleteTask(id) {
   await fetch(`/api/tasks/${id}`, { method: "DELETE" });
   await fetchTasks();
 }
+
 
 // ==========================
 // Analytics Board Persistence

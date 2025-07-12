@@ -50,9 +50,26 @@ let settings = {
 
 function loadData() {
   if (fs.existsSync(DATA_FILE)) {
+    Log.log("loadData: reading", DATA_FILE);
     try {
       const j = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-      tasks            = j.tasks            || [];
+      tasks = j.tasks || [];
+      // Ensure active tasks are sorted and have sequential order
+      if (tasks.some(t => t.order !== undefined)) {
+        tasks.sort((a, b) => {
+          if (a.deleted && !b.deleted) return 1;
+          if (!a.deleted && b.deleted) return -1;
+          return (a.order || 0) - (b.order || 0);
+        });
+      }
+      let order = 0;
+      tasks.forEach(t => {
+        if (t.deleted) {
+          delete t.order;
+        } else {
+          t.order = order++;
+        }
+      });
       people           = j.people           || [];
       analyticsBoards  = j.analyticsBoards  || [];
       settings         = j.settings         || { language: "en", dateFormatting: "yyyy-mm-dd", useAI: true, levelingEnabled: true };
@@ -69,14 +86,19 @@ function loadData() {
 
 function saveData() {
   try {
+    Log.log("saveData: writing", DATA_FILE);
     fs.writeFileSync(
       DATA_FILE,
       JSON.stringify({ tasks, people, analyticsBoards, settings }, null, 2),
       "utf8"
     );
-    Log.log(`MMM-Chores: Saved ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, language: ${settings.language}`);
+    Log.log(
+      `MMM-Chores: Saved ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, language: ${settings.language}`
+    );
+    return true;
   } catch (e) {
     Log.error("MMM-Chores: Error writing data.json:", e);
+    return false;
   }
 }
 
@@ -130,10 +152,31 @@ function updatePeopleLevels(config) {
   });
 }
 
+function applyTaskOrder() {
+  Log.log(`applyTaskOrder: before ${tasks.length} tasks`);
+  let idx = 0;
+  tasks.forEach(t => {
+    if (t.deleted) {
+      delete t.order;
+    } else {
+      t.order = idx++;
+    }
+  });
+  Log.log(`applyTaskOrder: after ${tasks.length} tasks`);
+}
+
 function broadcastTasks(helper) {
   // Match the admin portal's analytics logic by excluding tasks that are both
   // deleted and unfinished. Completed tasks remain even if deleted so that
   // historical analytics are consistent across the mirror and the admin page.
+  Log.log(`broadcastTasks: start ${tasks.length} tasks`);
+  applyTaskOrder();
+  tasks.sort((a, b) => {
+    if (a.deleted && !b.deleted) return 1;
+    if (!a.deleted && b.deleted) return -1;
+    return (a.order || 0) - (b.order || 0);
+  });
+  Log.log(`broadcastTasks: after sort ${tasks.length} tasks`);
   const analyticsData = tasks.filter(t => !(t.deleted && !t.done));
 
   updatePeopleLevels(helper.config || {});
@@ -141,7 +184,9 @@ function broadcastTasks(helper) {
   helper.sendSocketNotification("CHORES_DATA", analyticsData);
   helper.sendSocketNotification("LEVEL_INFO", getLevelInfo(helper.config || {}));
   helper.sendSocketNotification("PEOPLE_UPDATE", people);
-  saveData();
+  const ok = saveData();
+  Log.log(`broadcastTasks: saveData returned ${ok}`);
+  return ok;
 }
 
 function getNextDate(dateStr, recurring) {
@@ -419,10 +464,10 @@ module.exports = NodeHelper.create({
       const id = parseInt(req.params.id, 10);
       people = people.filter(p => p.id !== id);
       tasks  = tasks.map(t => t.assignedTo === id ? { ...t, assignedTo: null } : t);
-      saveData();
+      const success = saveData();
       self.sendSocketNotification("PEOPLE_UPDATE", people);
       broadcastTasks(self);
-      res.json({ success: true });
+      res.json({ success });
     });
 
     // Return all tasks. Filtering of deleted items is handled client-side so
@@ -434,14 +479,58 @@ module.exports = NodeHelper.create({
       const newTask = {
         id: Date.now(),
         ...req.body,
+        order: tasks.filter(t => !t.deleted).length,
         done: false,
         assignedTo: null,
         recurring: req.body.recurring || "none",
       };
+      Log.log("POST /api/tasks", newTask);
       tasks.push(newTask);
-      saveData();
-      broadcastTasks(self);
-      res.status(201).json(newTask);
+      const ok = broadcastTasks(self);
+      res.status(ok ? 201 : 500).json(ok ? newTask : { error: "Failed to save data" });
+    });
+
+    // Reorder tasks
+    app.put("/api/tasks/reorder", (req, res) => {
+      const ids = req.body;
+      if (!Array.isArray(ids)) {
+        return res.status(400).json({ error: "Expected an array of task ids" });
+      }
+      Log.log("PUT /api/tasks/reorder", ids);
+
+      const map = new Map();
+      tasks.forEach(t => map.set(t.id, t));
+      const preOrders = ids.map(id => ({
+        id,
+        found: map.has(id),
+        currentOrder: map.has(id) ? map.get(id).order : null
+      }));
+      Log.log("Reorder validation", preOrders);
+
+      const idSet = new Set(ids);
+      const reordered = ids.map(id => map.get(id)).filter(Boolean);
+      tasks = reordered.concat(tasks.filter(t => !idSet.has(t.id)));
+
+      // Persist order numbers immediately before broadcasting
+      let order = 0;
+      tasks.forEach(t => {
+        const prev = t.order;
+        if (t.deleted) {
+          delete t.order;
+        } else {
+          t.order = order++;
+        }
+        if (prev !== undefined && prev !== t.order) {
+          Log.log(`Task ${t.id} order ${prev} -> ${t.order}`);
+        }
+      });
+
+      Log.log("New task order", tasks.map(t => ({ id: t.id, order: t.order })));
+      const ok = broadcastTasks(self);
+      if (!ok) {
+        return res.status(500).json({ error: "Failed to save data" });
+      }
+      res.json({ success: true });
     });
     app.put("/api/tasks/:id", (req, res) => {
       const id   = parseInt(req.params.id, 10);
@@ -457,6 +546,7 @@ module.exports = NodeHelper.create({
           task[key] = val;
         }
       });
+      Log.log("PUT /api/tasks/" + id, req.body);
 
       if (!prevDone && task.done && task.recurring && task.recurring !== "none") {
         const nextDate = getNextDate(task.date, task.recurring);
@@ -467,6 +557,7 @@ module.exports = NodeHelper.create({
             date: nextDate,
             assignedTo: task.assignedTo || null,
             recurring: task.recurring,
+            order: tasks.filter(t => !t.deleted).length,
             done: false,
             created: new Date().toISOString(),
           };
@@ -474,8 +565,8 @@ module.exports = NodeHelper.create({
         }
       }
 
-      saveData();
-      broadcastTasks(self);
+      const ok = broadcastTasks(self);
+      if (!ok) return res.status(500).json({ error: "Failed to save data" });
       res.json(task);
     });
     app.delete("/api/tasks/:id", (req, res) => {
@@ -484,9 +575,9 @@ module.exports = NodeHelper.create({
       if (!task) return res.status(404).json({ error: "Task not found" });
 
       task.deleted = true;
-      saveData();
-      broadcastTasks(self);
-      res.json({ success: true });
+      Log.log("DELETE /api/tasks/" + id);
+      const ok = broadcastTasks(self);
+      res.json({ success: ok });
     });
 
     app.get("/api/analyticsBoards", (req, res) => res.json(analyticsBoards));
