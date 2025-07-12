@@ -23,6 +23,7 @@
   display: flex;
   margin-bottom: 8px;
   font-size: 0.9em;
+  transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
 /* Checkbox spacing */
@@ -35,6 +36,12 @@
 .MMM-Chores li.task-done {
   text-decoration: line-through;
   opacity: 0.6;
+}
+
+/* Temporary animation when a task changes state */
+.MMM-Chores li.moving {
+  opacity: 0;
+  transform: translateY(10px);
 }
 
 /* Empty-state message */

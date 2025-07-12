@@ -378,7 +378,17 @@ Module.register("MMM-Chores", {
     }
 
     // Filter out all deleted tasks completely from the mirror
-    const visible = this.tasks.filter(t => !t.deleted && this.shouldShowTask(t));
+    const visible = this.tasks
+      .filter(t => !t.deleted && this.shouldShowTask(t))
+      .sort((a, b) => {
+        if (a.done && !b.done) return 1;
+        if (!a.done && b.done) return -1;
+        const da = new Date(a.date);
+        const db = new Date(b.date);
+        if (da < db) return -1;
+        if (da > db) return 1;
+        return (a.order || 0) - (b.order || 0);
+      });
 
     if (visible.length === 0) {
       const emptyEl = document.createElement("div");
@@ -393,13 +403,16 @@ Module.register("MMM-Chores", {
 
     visible.forEach(task => {
       const li = document.createElement("li");
-      li.className = this.config.textMirrorSize;
+      li.className = `${this.config.textMirrorSize}${task.done ? " task-done" : ""}`;
 
       const cb = document.createElement("input");
       cb.type = "checkbox";
       cb.checked = task.done;
       cb.style.marginRight = "8px";
-      cb.addEventListener("change", () => this.toggleDone(task, cb.checked));
+      cb.addEventListener("change", () => {
+        li.classList.add("moving");
+        setTimeout(() => this.toggleDone(task, cb.checked), 200);
+      });
       li.appendChild(cb);
 
       const dateText = this.formatDate(task.date);
