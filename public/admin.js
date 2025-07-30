@@ -990,17 +990,17 @@ function updateAllCharts() {
 }
 
 const root = document.documentElement;
-const themeTgl = document.getElementById("themeToggle");
+const themeBtn = document.getElementById("themeToggle");
 const themeIcon = document.getElementById("themeIcon");
 const STORAGE_KEY = "mmm-chores-theme";
 
 const savedTheme = localStorage.getItem(STORAGE_KEY) || "light";
 root.setAttribute("data-theme", savedTheme);
-themeTgl.checked = savedTheme === "dark";
 setIcon(savedTheme);
 
-themeTgl.addEventListener("change", () => {
-  const theme = themeTgl.checked ? "dark" : "light";
+themeBtn.addEventListener("click", () => {
+  const current = root.getAttribute("data-theme");
+  const theme = current === "dark" ? "light" : "dark";
   root.setAttribute("data-theme", theme);
   localStorage.setItem(STORAGE_KEY, theme);
   setIcon(theme);
