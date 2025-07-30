@@ -67,7 +67,14 @@ function initSettingsForm(settings) {
   if (showPast) showPast.checked = !!settings.showPast;
   if (textSize) textSize.value = settings.textMirrorSize || 'small';
   if (dateFmt) dateFmt.value = settings.dateFormatting || '';
-  if (openAI) openAI.value = settings.openaiApiKey || '';
+  if (openAI) {
+    if (settings.openaiApiKey) {
+      openAI.placeholder = '********';
+      openAI.value = '';
+    } else {
+      openAI.value = '';
+    }
+  }
   if (useAI) useAI.checked = settings.useAI !== false;
   if (showAnalytics) showAnalytics.checked = !!settings.showAnalyticsOnMirror;
   if (levelEnable) levelEnable.checked = settings.levelingEnabled !== false;
@@ -103,6 +110,7 @@ function initSettingsForm(settings) {
         maxLevel: parseInt(maxLevelInput.value, 10) || 100
       }
     };
+    if (!payload.openaiApiKey) delete payload.openaiApiKey;
     try {
       const res = await fetch('/api/settings', {
         method: 'PUT',
