@@ -22,6 +22,7 @@ Module.register("MMM-Chores", {
     dateFormatting: "yyyy-mm-dd", // Standardformat, kan ändras i config
     textMirrorSize: "small",     // small, medium or large
     useAI: true,                  // hide AI features when false
+    openaiApiKey: "",
     showAnalyticsOnMirror: false, // display analytics cards on the mirror
     analyticsCards: [],           // board types selected in the admin UI
     leveling: {
