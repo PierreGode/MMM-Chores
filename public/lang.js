@@ -49,7 +49,16 @@ const LANGUAGES = {
     },
     weekLabel: "Week",
     monthLabel: "Month",
-    footer: "Built with Bootstrap & Chart.js • MMM-Chores by Pierre Gode"
+    footer: "Built with Bootstrap & Chart.js • MMM-Chores by Pierre Gode",
+    settingsBtnTitle: "Settings",
+    settingsTitle: "Settings",
+    settingsLocked: "Settings are locked. Unlock in config.js.",
+    saveButton: "Save",
+    levelingTitle: "Leveling",
+    levelingEnabledLabel: "Enable leveling",
+    yearsToMaxLabel: "Years to max level",
+    choresPerWeekLabel: "Chores per week estimate",
+    maxLevelLabel: "Max level"
   },
   sv: {
     title: "MMM-Chores Admin  ",
@@ -101,7 +110,16 @@ const LANGUAGES = {
     },
     weekLabel: "Vecka",
     monthLabel: "Månad",
-    footer: "Byggt med Bootstrap & Chart.js • MMM-Chores av Pierre Gode"
+    footer: "Byggt med Bootstrap & Chart.js • MMM-Chores av Pierre Gode",
+    settingsBtnTitle: "Inställningar",
+    settingsTitle: "Inställningar",
+    settingsLocked: "Denna inställningssida är låst. Lås upp i config.js.",
+    saveButton: "Spara",
+    levelingTitle: "Nivåer",
+    levelingEnabledLabel: "Aktivera nivåsystem",
+    yearsToMaxLabel: "År till maxnivå",
+    choresPerWeekLabel: "Sysslor per vecka",
+    maxLevelLabel: "Maxnivå"
   },
   fr: {
     title: "MMM-Chores Admin  ",
@@ -153,7 +171,16 @@ const LANGUAGES = {
     },
     weekLabel: "Semaine",
     monthLabel: "Mois",
-    footer: "Construit avec Bootstrap & Chart.js • MMM-Chores par Pierre Gode"
+    footer: "Construit avec Bootstrap & Chart.js • MMM-Chores par Pierre Gode",
+    settingsBtnTitle: "Paramètres",
+    settingsTitle: "Paramètres",
+    settingsLocked: "Les paramètres sont verrouillés. Déverrouillez dans config.js.",
+    saveButton: "Enregistrer",
+    levelingTitle: "Niveaux",
+    levelingEnabledLabel: "Activer le système de niveaux",
+    yearsToMaxLabel: "Années jusqu'au niveau max",
+    choresPerWeekLabel: "Corvées par semaine",
+    maxLevelLabel: "Niveau maximum"
   },
   es: {
     title: "MMM-Chores Admin  ",
@@ -205,7 +232,16 @@ const LANGUAGES = {
     },
     weekLabel: "Semana",
     monthLabel: "Mes",
-    footer: "Construido con Bootstrap y Chart.js • MMM-Chores por Pierre Gode"
+    footer: "Construido con Bootstrap y Chart.js • MMM-Chores por Pierre Gode",
+    settingsBtnTitle: "Configuración",
+    settingsTitle: "Configuración",
+    settingsLocked: "La configuración está bloqueada. Desbloquéala en config.js.",
+    saveButton: "Guardar",
+    levelingTitle: "Niveles",
+    levelingEnabledLabel: "Activar sistema de niveles",
+    yearsToMaxLabel: "Años hasta nivel máximo",
+    choresPerWeekLabel: "Tareas por semana",
+    maxLevelLabel: "Nivel máximo"
   },
   de: {
     title: "MMM-Chores Admin  ",
@@ -257,7 +293,16 @@ const LANGUAGES = {
     },
     weekLabel: "Woche",
     monthLabel: "Monat",
-    footer: "Erstellt mit Bootstrap & Chart.js • MMM-Chores von Pierre Gode"
+    footer: "Erstellt mit Bootstrap & Chart.js • MMM-Chores von Pierre Gode",
+    settingsBtnTitle: "Einstellungen",
+    settingsTitle: "Einstellungen",
+    settingsLocked: "Einstellungen sind gesperrt. In config.js freischalten.",
+    saveButton: "Speichern",
+    levelingTitle: "Levelsystem",
+    levelingEnabledLabel: "Levelsystem aktivieren",
+    yearsToMaxLabel: "Jahre bis Max-Level",
+    choresPerWeekLabel: "Aufgaben pro Woche",
+    maxLevelLabel: "Max-Level"
   },
   it: {
     title: "MMM-Chores Admin  ",
@@ -309,7 +354,16 @@ const LANGUAGES = {
     },
     weekLabel: "Settimana",
     monthLabel: "Mese",
-    footer: "Realizzato con Bootstrap & Chart.js • MMM-Chores di Pierre Gode"
+    footer: "Realizzato con Bootstrap & Chart.js • MMM-Chores di Pierre Gode",
+    settingsBtnTitle: "Impostazioni",
+    settingsTitle: "Impostazioni",
+    settingsLocked: "Le impostazioni sono bloccate. Sbloccale in config.js.",
+    saveButton: "Salva",
+    levelingTitle: "Livelli",
+    levelingEnabledLabel: "Abilita sistema di livelli",
+    yearsToMaxLabel: "Anni al livello massimo",
+    choresPerWeekLabel: "Compiti per settimana",
+    maxLevelLabel: "Livello massimo"
   },
   nl: {
     title: "MMM-Chores Admin  ",
@@ -361,7 +415,16 @@ const LANGUAGES = {
     },
     weekLabel: "Week",
     monthLabel: "Maand",
-    footer: "Gemaakt met Bootstrap & Chart.js • MMM-Chores door Pierre Gode"
+    footer: "Gemaakt met Bootstrap & Chart.js • MMM-Chores door Pierre Gode",
+    settingsBtnTitle: "Instellingen",
+    settingsTitle: "Instellingen",
+    settingsLocked: "Instellingen zijn vergrendeld. Ontgrendel in config.js.",
+    saveButton: "Opslaan",
+    levelingTitle: "Niveaus",
+    levelingEnabledLabel: "Levelsysteem inschakelen",
+    yearsToMaxLabel: "Jaren tot max level",
+    choresPerWeekLabel: "Klussen per week",
+    maxLevelLabel: "Max level"
   },
   pl: {
     title: "MMM-Chores Admin  ",
@@ -413,7 +476,16 @@ const LANGUAGES = {
     },
     weekLabel: "Tydzień",
     monthLabel: "Miesiąc",
-    footer: "Zbudowane z Bootstrap i Chart.js • MMM-Chores przez Pierre Gode"
+    footer: "Zbudowane z Bootstrap i Chart.js • MMM-Chores przez Pierre Gode",
+    settingsBtnTitle: "Ustawienia",
+    settingsTitle: "Ustawienia",
+    settingsLocked: "Ustawienia są zablokowane. Odblokuj w config.js.",
+    saveButton: "Zapisz",
+    levelingTitle: "Poziomy",
+    levelingEnabledLabel: "Włącz system poziomów",
+    yearsToMaxLabel: "Lata do maks. poziomu",
+    choresPerWeekLabel: "Zadania na tydzień",
+    maxLevelLabel: "Maks. poziom"
   },
   zh: {
     title: "MMM-Chores 管理  ",
@@ -465,7 +537,16 @@ const LANGUAGES = {
     },
     weekLabel: "周",
     monthLabel: "月",
-    footer: "由 Bootstrap 和 Chart.js 构建 • MMM-Chores 由 Pierre Gode 创建"
+    footer: "由 Bootstrap 和 Chart.js 构建 • MMM-Chores 由 Pierre Gode 创建",
+    settingsBtnTitle: "设置",
+    settingsTitle: "设置",
+    settingsLocked: "设置已锁定。请在 config.js 中解锁。",
+    saveButton: "保存",
+    levelingTitle: "等级",
+    levelingEnabledLabel: "启用等级系统",
+    yearsToMaxLabel: "达到最高等级的年数",
+    choresPerWeekLabel: "每周任务数预估",
+    maxLevelLabel: "最高等级"
   },
   ar: {
     title: "إدارة MMM-Chores  ",
@@ -517,6 +598,15 @@ const LANGUAGES = {
     },
     weekLabel: "أسبوع",
     monthLabel: "شهر",
-    footer: "تم الإنشاء باستخدام Bootstrap و Chart.js • MMM-Chores بواسطة Pierre Gode"
+    footer: "تم الإنشاء باستخدام Bootstrap و Chart.js • MMM-Chores بواسطة Pierre Gode",
+    settingsBtnTitle: "الإعدادات",
+    settingsTitle: "الإعدادات",
+    settingsLocked: "الإعدادات مقفلة. افتحها في config.js.",
+    saveButton: "حفظ",
+    levelingTitle: "المستويات",
+    levelingEnabledLabel: "تفعيل نظام المستويات",
+    yearsToMaxLabel: "السنوات حتى أعلى مستوى",
+    choresPerWeekLabel: "عدد المهام أسبوعيًا",
+    maxLevelLabel: "أقصى مستوى"
   }
 };

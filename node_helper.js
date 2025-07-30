@@ -49,7 +49,12 @@ let settings = {
   showAnalyticsOnMirror: false,
   openaiApiKey: "",
   useAI: true,
-  levelingEnabled: true
+  levelingEnabled: true,
+  leveling: {
+    yearsToMaxLevel: 3,
+    choresPerWeekEstimate: 4,
+    maxLevel: 100
+  }
 };
 
 function loadData() {
@@ -84,14 +89,28 @@ function loadData() {
         showAnalyticsOnMirror: false,
         openaiApiKey: "",
         useAI: true,
-        levelingEnabled: true
+        levelingEnabled: true,
+        leveling: {
+          yearsToMaxLevel: 3,
+          choresPerWeekEstimate: 4,
+          maxLevel: 100
+        }
       };
       if (settings.levelingEnabled === undefined) settings.levelingEnabled = true;
+      if (!settings.leveling) {
+        settings.leveling = { yearsToMaxLevel: 3, choresPerWeekEstimate: 4, maxLevel: 100 };
+      }
       if (settings.textMirrorSize === undefined) settings.textMirrorSize = "small";
       if (settings.showPast === undefined) settings.showPast = false;
       if (settings.showAnalyticsOnMirror === undefined) settings.showAnalyticsOnMirror = false;
       if (settings.openaiApiKey === undefined) settings.openaiApiKey = "";
       if (settings.useAI === undefined) settings.useAI = true;
+      if (!settings.leveling) {
+        settings.leveling = { yearsToMaxLevel: 3, choresPerWeekEstimate: 4, maxLevel: 100 };
+      }
+      if (settings.leveling.yearsToMaxLevel === undefined) settings.leveling.yearsToMaxLevel = 3;
+      if (settings.leveling.choresPerWeekEstimate === undefined) settings.leveling.choresPerWeekEstimate = 4;
+      if (settings.leveling.maxLevel === undefined) settings.leveling.maxLevel = 100;
 
       updatePeopleLevels({});
 
@@ -240,9 +259,14 @@ module.exports = NodeHelper.create({
         showAnalyticsOnMirror: payload.showAnalyticsOnMirror ?? settings.showAnalyticsOnMirror,
         openaiApiKey:         payload.openaiApiKey         ?? settings.openaiApiKey,
         useAI:                payload.useAI                ?? settings.useAI,
-        levelingEnabled:      payload.leveling?.enabled !== false
+        levelingEnabled:      payload.leveling?.enabled !== false,
+        leveling: {
+          yearsToMaxLevel:      payload.leveling?.yearsToMaxLevel ?? settings.leveling.yearsToMaxLevel,
+          choresPerWeekEstimate: payload.leveling?.choresPerWeekEstimate ?? settings.leveling.choresPerWeekEstimate,
+          maxLevel:             payload.leveling?.maxLevel ?? settings.leveling.maxLevel
+        }
       };
-      Object.assign(this.config, settings, { leveling: { ...this.config.leveling, enabled: settings.levelingEnabled } });
+      Object.assign(this.config, settings, { leveling: { ...this.config.leveling, ...settings.leveling, enabled: settings.levelingEnabled } });
       saveData();
       this.initServer(payload.adminPort);
     }
@@ -615,13 +639,20 @@ module.exports = NodeHelper.create({
       res.json({ success: true, analyticsBoards });
     });
 
-    app.get("/api/settings", (req, res) => res.json(settings));
+    app.get("/api/settings", (req, res) => {
+      res.json({ ...settings, leveling: settings.leveling, settings: self.config.settings });
+    });
     app.put("/api/settings", (req, res) => {
       const newSettings = req.body;
       if (typeof newSettings !== "object") {
         return res.status(400).json({ error: "Invalid settings data" });
       }
+      if (newSettings.leveling) {
+        settings.leveling = { ...settings.leveling, ...newSettings.leveling };
+        self.config.leveling = { ...self.config.leveling, ...newSettings.leveling };
+      }
       Object.entries(newSettings).forEach(([key, val]) => {
+        if (key === "leveling") return;
         settings[key] = val;
         if (self.config) {
           if (key === "levelingEnabled") {

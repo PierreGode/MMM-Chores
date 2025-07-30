@@ -37,7 +37,7 @@ npm install
 ```
 
 ## Configuration
-Most settings are now editable in the admin portal under the **Settings** tab.
+Most settings are now editable in the admin portal via the cogwheel **Settings** button.
 Add the module to `config.js` like so:
 ```js
 {
@@ -47,6 +47,7 @@ Add the module to `config.js` like so:
   config: {
     updateInterval: 60 * 1000,
     adminPort: 5003,
+    settings: "unlocked", // set to "locked" to disable settings popup
     // other options can be set in the admin portal
     leveling: {               // optional leveling system
       enabled: true,   // enable or disable leveling system
