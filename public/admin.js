@@ -90,11 +90,17 @@ function initSettingsForm(settings) {
       }
     };
     try {
-      await fetch('/api/settings', {
+      const res = await fetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+      if (res.ok) {
+        const data = await res.json();
+        await applySettings(data.settings || payload);
+        const instance = bootstrap.Modal.getInstance(document.getElementById('settingsModal'));
+        if (instance) instance.hide();
+      }
     } catch (err) {
       console.error('Failed saving settings', err);
     }
@@ -228,6 +234,18 @@ async function fetchTasks() {
   });
   renderTasks();
   renderCalendar();
+}
+
+async function applySettings(newSettings) {
+  if (typeof newSettings.levelingEnabled === 'boolean') {
+    levelingEnabled = newSettings.levelingEnabled;
+  }
+  if (newSettings.useAI !== undefined) {
+    const aiButton = document.getElementById('btnAiGenerate');
+    if (aiButton) aiButton.style.display = newSettings.useAI === false ? 'none' : '';
+  }
+  await fetchPeople();
+  await fetchTasks();
 }
 
 // ==========================
