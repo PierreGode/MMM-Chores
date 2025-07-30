@@ -12,6 +12,7 @@ let localizedMonths = [];
 let localizedWeekdays = [];
 let levelingEnabled = true;
 let taskSortable = null;
+let settingsMode = 'unlocked';
 
 // ==========================
 // API: Hämta inställningar från backend
@@ -56,6 +57,10 @@ function initSettingsForm(settings) {
   const openAI = document.getElementById('settingsOpenAI');
   const useAI = document.getElementById('settingsUseAI');
   const showAnalytics = document.getElementById('settingsShowAnalytics');
+  const levelEnable = document.getElementById('settingsLevelEnable');
+  const yearsInput = document.getElementById('settingsYears');
+  const perWeekInput = document.getElementById('settingsPerWeek');
+  const maxLevelInput = document.getElementById('settingsMaxLevel');
 
   if (showPast) showPast.checked = !!settings.showPast;
   if (textSize) textSize.value = settings.textMirrorSize || 'small';
@@ -63,6 +68,10 @@ function initSettingsForm(settings) {
   if (openAI) openAI.value = settings.openaiApiKey || '';
   if (useAI) useAI.checked = settings.useAI !== false;
   if (showAnalytics) showAnalytics.checked = !!settings.showAnalyticsOnMirror;
+  if (levelEnable) levelEnable.checked = settings.levelingEnabled !== false;
+  if (yearsInput) yearsInput.value = settings.leveling?.yearsToMaxLevel || 3;
+  if (perWeekInput) perWeekInput.value = settings.leveling?.choresPerWeekEstimate || 4;
+  if (maxLevelInput) maxLevelInput.value = settings.leveling?.maxLevel || 100;
 
   form.addEventListener('submit', async e => {
     e.preventDefault();
@@ -72,7 +81,13 @@ function initSettingsForm(settings) {
       dateFormatting: dateFmt.value,
       openaiApiKey: openAI.value,
       useAI: useAI.checked,
-      showAnalyticsOnMirror: showAnalytics.checked
+      showAnalyticsOnMirror: showAnalytics.checked,
+      levelingEnabled: levelEnable.checked,
+      leveling: {
+        yearsToMaxLevel: parseFloat(yearsInput.value) || 3,
+        choresPerWeekEstimate: parseFloat(perWeekInput.value) || 4,
+        maxLevel: parseInt(maxLevelInput.value, 10) || 100
+      }
     };
     try {
       await fetch('/api/settings', {
@@ -117,7 +132,21 @@ function setLanguage(lang) {
   const tabs = document.querySelectorAll(".nav-link");
   if (tabs[0]) tabs[0].textContent = t.tabs[0];
   if (tabs[1]) tabs[1].textContent = t.tabs[1];
-  if (tabs[2]) tabs[2].textContent = t.tabs[2] || 'Settings';
+
+  const settingsBtn = document.getElementById("settingsBtn");
+  if (settingsBtn) settingsBtn.title = t.settingsBtnTitle || 'Settings';
+  const modalTitle = document.getElementById("settingsModalLabel");
+  if (modalTitle) modalTitle.textContent = t.settingsTitle || 'Settings';
+  const saveBtn = document.getElementById("settingsSaveBtn");
+  if (saveBtn) saveBtn.textContent = t.saveButton || 'Save';
+  const levelEnableLbl = document.querySelector("label[for='settingsLevelEnable']");
+  if (levelEnableLbl) levelEnableLbl.textContent = t.levelingEnabledLabel;
+  const yearsLbl = document.querySelector("label[for='settingsYears']");
+  if (yearsLbl) yearsLbl.textContent = t.yearsToMaxLabel;
+  const perWeekLbl = document.querySelector("label[for='settingsPerWeek']");
+  if (perWeekLbl) perWeekLbl.textContent = t.choresPerWeekLabel;
+  const maxLvlLbl = document.querySelector("label[for='settingsMaxLevel']");
+  if (maxLvlLbl) maxLvlLbl.textContent = t.maxLevelLabel;
 
   const peopleHeader = document.getElementById("peopleHeader");
   if (peopleHeader) peopleHeader.textContent = t.peopleTitle;
@@ -956,6 +985,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (typeof userSettings.levelingEnabled === "boolean") {
     levelingEnabled = userSettings.levelingEnabled;
   }
+  if (userSettings.settings) {
+    settingsMode = userSettings.settings;
+  }
   if (userSettings.language && LANGUAGES[userSettings.language]) {
     currentLang = userSettings.language;
   } else {
@@ -998,6 +1030,27 @@ document.addEventListener("DOMContentLoaded", async () => {
   const savedBoards = await fetchSavedBoards();
   if (savedBoards.length) {
     savedBoards.forEach(type => addChart(type));
+  }
+
+  const settingsBtn = document.getElementById("settingsBtn");
+  const settingsModalEl = document.getElementById("settingsModal");
+  const settingsForm = document.getElementById("settingsForm");
+  const lockedMsg = document.getElementById("settingsLockedMsg");
+  const modal = settingsModalEl ? new bootstrap.Modal(settingsModalEl) : null;
+  if (settingsBtn && modal) {
+    settingsBtn.addEventListener('click', () => {
+      if (settingsMode !== 'unlocked') {
+        if (lockedMsg) {
+          lockedMsg.textContent = LANGUAGES[currentLang].settingsLocked;
+          lockedMsg.classList.remove('d-none');
+        }
+        if (settingsForm) settingsForm.classList.add('d-none');
+      } else {
+        if (lockedMsg) lockedMsg.classList.add('d-none');
+        if (settingsForm) settingsForm.classList.remove('d-none');
+      }
+      modal.show();
+    });
   }
 });
 
