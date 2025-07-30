@@ -13,6 +13,8 @@ let localizedWeekdays = [];
 let levelingEnabled = true;
 let taskSortable = null;
 let settingsMode = 'unlocked';
+let settingsChanged = false;
+let settingsSaved = false;
 
 // ==========================
 // API: Hämta inställningar från backend
@@ -73,8 +75,20 @@ function initSettingsForm(settings) {
   if (perWeekInput) perWeekInput.value = settings.leveling?.choresPerWeekEstimate || 4;
   if (maxLevelInput) maxLevelInput.value = settings.leveling?.maxLevel || 100;
 
+  settingsChanged = false;
+  settingsSaved = false;
+
+  const inputs = [showPast, textSize, dateFmt, openAI, useAI, showAnalytics, levelEnable, yearsInput, perWeekInput, maxLevelInput];
+  inputs.forEach(el => {
+    if (el) {
+      el.addEventListener('input', () => { settingsChanged = true; });
+      el.addEventListener('change', () => { settingsChanged = true; });
+    }
+  });
+
   form.addEventListener('submit', async e => {
     e.preventDefault();
+    settingsSaved = true;
     const payload = {
       showPast: showPast.checked,
       textMirrorSize: textSize.value,
@@ -1057,6 +1071,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const modal = settingsModalEl ? new bootstrap.Modal(settingsModalEl) : null;
   if (settingsBtn && modal) {
     settingsBtn.addEventListener('click', () => {
+      settingsChanged = false;
+      settingsSaved = false;
       if (settingsMode !== 'unlocked') {
         if (lockedMsg) {
           lockedMsg.textContent = LANGUAGES[currentLang].settingsLocked;
@@ -1068,6 +1084,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (settingsForm) settingsForm.classList.remove('d-none');
       }
       modal.show();
+    });
+  }
+
+  if (settingsModalEl) {
+    settingsModalEl.addEventListener('hidden.bs.modal', () => {
+      if (!settingsSaved && settingsChanged) {
+        window.location.reload();
+      }
     });
   }
 });

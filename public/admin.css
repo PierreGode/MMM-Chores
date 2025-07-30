@@ -51,6 +51,7 @@ h1, h2 {
   box-shadow: 0 12px 32px rgba(0,0,0,.15);
   backdrop-filter: blur(calc(var(--blur) / 2));
   margin-bottom: 2rem;
+  margin-top: 3rem;
 }
 
 /* Theme toggle */
