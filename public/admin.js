@@ -44,6 +44,49 @@ async function saveUserLanguage(lang) {
 }
 
 // ==========================
+// Init settings form and save handler
+// ==========================
+function initSettingsForm(settings) {
+  const form = document.getElementById('settingsForm');
+  if (!form) return;
+
+  const showPast = document.getElementById('settingsShowPast');
+  const textSize = document.getElementById('settingsTextSize');
+  const dateFmt = document.getElementById('settingsDateFmt');
+  const openAI = document.getElementById('settingsOpenAI');
+  const useAI = document.getElementById('settingsUseAI');
+  const showAnalytics = document.getElementById('settingsShowAnalytics');
+
+  if (showPast) showPast.checked = !!settings.showPast;
+  if (textSize) textSize.value = settings.textMirrorSize || 'small';
+  if (dateFmt) dateFmt.value = settings.dateFormatting || '';
+  if (openAI) openAI.value = settings.openaiApiKey || '';
+  if (useAI) useAI.checked = settings.useAI !== false;
+  if (showAnalytics) showAnalytics.checked = !!settings.showAnalyticsOnMirror;
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const payload = {
+      showPast: showPast.checked,
+      textMirrorSize: textSize.value,
+      dateFormatting: dateFmt.value,
+      openaiApiKey: openAI.value,
+      useAI: useAI.checked,
+      showAnalyticsOnMirror: showAnalytics.checked
+    };
+    try {
+      await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (err) {
+      console.error('Failed saving settings', err);
+    }
+  });
+}
+
+// ==========================
 // Uppdatera boardTitleMap
 // ==========================
 function updateBoardTitleMap() {
@@ -74,6 +117,7 @@ function setLanguage(lang) {
   const tabs = document.querySelectorAll(".nav-link");
   if (tabs[0]) tabs[0].textContent = t.tabs[0];
   if (tabs[1]) tabs[1].textContent = t.tabs[1];
+  if (tabs[2]) tabs[2].textContent = t.tabs[2] || 'Settings';
 
   const peopleHeader = document.getElementById("peopleHeader");
   if (peopleHeader) peopleHeader.textContent = t.peopleTitle;
@@ -944,6 +988,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (aiButton && userSettings.useAI === false) {
     aiButton.style.display = "none";
   }
+
+  initSettingsForm(userSettings);
 
   setLanguage(currentLang);
   await fetchPeople();

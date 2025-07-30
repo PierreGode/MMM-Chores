@@ -37,7 +37,8 @@ npm install
 ```
 
 ## Configuration
-in /MagicMirror/config/config.js
+Most settings are now editable in the admin portal under the **Settings** tab.
+Add the module to `config.js` like so:
 ```js
 {
   module: "MMM-Chores",
@@ -46,14 +47,7 @@ in /MagicMirror/config/config.js
   config: {
     updateInterval: 60 * 1000,
     adminPort: 5003,
-    showAnalyticsOnMirror: false, // show analytics charts on the mirror
-    openaiApiKey: "your-openApi-key-here",
-    useAI: true,        // hide AI features when false
-    showPast: true,    // show unfinished tasks from past days
-    textMirrorSize: "small", // small, medium or large
-    dateFormatting: "MM-DD",  // Date format pattern to display task dates.
-                              // Use tokens like 'yyyy', 'mm', 'dd'.
-                              // Set to "" to hide the date completely.
+    // other options can be set in the admin portal
     leveling: {               // optional leveling system
       enabled: true,   // enable or disable leveling system
       yearsToMaxLevel: 3,

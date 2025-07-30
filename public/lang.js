@@ -2,7 +2,7 @@ const LANGUAGES = {
   en: {
     title: "MMM-Chores Admin  ",
     subtitle: "Manage tasks, people & analytics",
-    tabs: ["Dashboard", "Analytics"],
+    tabs: ["Dashboard", "Analytics", "Settings"],
     peopleTitle: "People",
     newPersonPlaceholder: "New person…",
     addPersonBtnTitle: "Add",
@@ -54,7 +54,7 @@ const LANGUAGES = {
   sv: {
     title: "MMM-Chores Admin  ",
     subtitle: "Hantera uppgifter, personer & analys",
-    tabs: ["Dashboard", "Analys"],
+    tabs: ["Dashboard", "Analys", "Inställningar"],
     peopleTitle: "Personer",
     newPersonPlaceholder: "Ny person…",
     addPersonBtnTitle: "Lägg till",
@@ -106,7 +106,7 @@ const LANGUAGES = {
   fr: {
     title: "MMM-Chores Admin  ",
     subtitle: "Gérer les tâches, les personnes et les analyses",
-    tabs: ["Tableau de bord", "Analytique"],
+    tabs: ["Tableau de bord", "Analytique", "Paramètres"],
     peopleTitle: "Personnes",
     newPersonPlaceholder: "Nouvelle personne…",
     addPersonBtnTitle: "Ajouter",
@@ -158,7 +158,7 @@ const LANGUAGES = {
   es: {
     title: "MMM-Chores Admin  ",
     subtitle: "Gestionar tareas, personas y análisis",
-    tabs: ["Panel", "Analítica"],
+    tabs: ["Panel", "Analítica", "Configuración"],
     peopleTitle: "Personas",
     newPersonPlaceholder: "Nueva persona…",
     addPersonBtnTitle: "Agregar",
@@ -210,7 +210,7 @@ const LANGUAGES = {
   de: {
     title: "MMM-Chores Admin  ",
     subtitle: "Aufgaben, Personen & Analysen verwalten",
-    tabs: ["Übersicht", "Analytik"],
+    tabs: ["Übersicht", "Analytik", "Einstellungen"],
     peopleTitle: "Personen",
     newPersonPlaceholder: "Neue Person…",
     addPersonBtnTitle: "Hinzufügen",
@@ -262,7 +262,7 @@ const LANGUAGES = {
   it: {
     title: "MMM-Chores Admin  ",
     subtitle: "Gestisci compiti, persone e analisi",
-    tabs: ["Dashboard", "Analisi"],
+    tabs: ["Dashboard", "Analisi", "Impostazioni"],
     peopleTitle: "Persone",
     newPersonPlaceholder: "Nuova persona…",
     addPersonBtnTitle: "Aggiungi",
@@ -314,7 +314,7 @@ const LANGUAGES = {
   nl: {
     title: "MMM-Chores Admin  ",
     subtitle: "Beheer taken, mensen & analyses",
-    tabs: ["Dashboard", "Analyse"],
+    tabs: ["Dashboard", "Analyse", "Instellingen"],
     peopleTitle: "Mensen",
     newPersonPlaceholder: "Nieuwe persoon…",
     addPersonBtnTitle: "Toevoegen",
@@ -366,7 +366,7 @@ const LANGUAGES = {
   pl: {
     title: "MMM-Chores Admin  ",
     subtitle: "Zarządzaj zadaniami, ludźmi i analizami",
-    tabs: ["Panel", "Analityka"],
+    tabs: ["Panel", "Analityka", "Ustawienia"],
     peopleTitle: "Osoby",
     newPersonPlaceholder: "Nowa osoba…",
     addPersonBtnTitle: "Dodaj",
@@ -418,7 +418,7 @@ const LANGUAGES = {
   zh: {
     title: "MMM-Chores 管理  ",
     subtitle: "管理任务、人员和分析",
-    tabs: ["仪表板", "分析"],
+    tabs: ["仪表板", "分析", "设置"],
     peopleTitle: "人员",
     newPersonPlaceholder: "新人员…",
     addPersonBtnTitle: "添加",
@@ -470,7 +470,7 @@ const LANGUAGES = {
   ar: {
     title: "إدارة MMM-Chores  ",
     subtitle: "إدارة المهام، الأشخاص والتحليلات",
-    tabs: ["لوحة التحكم", "تحليلات"],
+    tabs: ["لوحة التحكم", "تحليلات", "الإعدادات"],
     peopleTitle: "الأشخاص",
     newPersonPlaceholder: "شخص جديد…",
     addPersonBtnTitle: "إضافة",

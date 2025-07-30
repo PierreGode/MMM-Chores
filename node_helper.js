@@ -44,6 +44,10 @@ const DEFAULT_TITLES = [
 let settings = {
   language: "en",
   dateFormatting: "yyyy-mm-dd",
+  textMirrorSize: "small",
+  showPast: false,
+  showAnalyticsOnMirror: false,
+  openaiApiKey: "",
   useAI: true,
   levelingEnabled: true
 };
@@ -72,8 +76,22 @@ function loadData() {
       });
       people           = j.people           || [];
       analyticsBoards  = j.analyticsBoards  || [];
-      settings         = j.settings         || { language: "en", dateFormatting: "yyyy-mm-dd", useAI: true, levelingEnabled: true };
+      settings = j.settings || {
+        language: "en",
+        dateFormatting: "yyyy-mm-dd",
+        textMirrorSize: "small",
+        showPast: false,
+        showAnalyticsOnMirror: false,
+        openaiApiKey: "",
+        useAI: true,
+        levelingEnabled: true
+      };
       if (settings.levelingEnabled === undefined) settings.levelingEnabled = true;
+      if (settings.textMirrorSize === undefined) settings.textMirrorSize = "small";
+      if (settings.showPast === undefined) settings.showPast = false;
+      if (settings.showAnalyticsOnMirror === undefined) settings.showAnalyticsOnMirror = false;
+      if (settings.openaiApiKey === undefined) settings.openaiApiKey = "";
+      if (settings.useAI === undefined) settings.useAI = true;
 
       updatePeopleLevels({});
 
@@ -215,11 +233,16 @@ module.exports = NodeHelper.create({
 
       settings = {
         ...settings,
-        language:       payload.language       ?? settings.language,
-        dateFormatting: payload.dateFormatting ?? settings.dateFormatting,
-        useAI:          payload.useAI          ?? settings.useAI,
-        levelingEnabled: payload.leveling?.enabled !== false
+        language:             payload.language             ?? settings.language,
+        dateFormatting:       payload.dateFormatting       ?? settings.dateFormatting,
+        textMirrorSize:       payload.textMirrorSize       ?? settings.textMirrorSize,
+        showPast:             payload.showPast             ?? settings.showPast,
+        showAnalyticsOnMirror: payload.showAnalyticsOnMirror ?? settings.showAnalyticsOnMirror,
+        openaiApiKey:         payload.openaiApiKey         ?? settings.openaiApiKey,
+        useAI:                payload.useAI                ?? settings.useAI,
+        levelingEnabled:      payload.leveling?.enabled !== false
       };
+      Object.assign(this.config, settings, { leveling: { ...this.config.leveling, enabled: settings.levelingEnabled } });
       saveData();
       this.initServer(payload.adminPort);
     }
@@ -600,6 +623,14 @@ module.exports = NodeHelper.create({
       }
       Object.entries(newSettings).forEach(([key, val]) => {
         settings[key] = val;
+        if (self.config) {
+          if (key === "levelingEnabled") {
+            self.config.leveling = self.config.leveling || {};
+            self.config.leveling.enabled = val;
+          } else {
+            self.config[key] = val;
+          }
+        }
       });
       saveData();
       self.sendSocketNotification("SETTINGS_UPDATE", settings);
