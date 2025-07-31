@@ -664,6 +664,9 @@ module.exports = NodeHelper.create({
         }
       });
       saveData();
+      updatePeopleLevels(self.config);
+      self.sendSocketNotification("LEVEL_INFO", getLevelInfo(self.config));
+      self.sendSocketNotification("PEOPLE_UPDATE", people);
       self.sendSocketNotification("SETTINGS_UPDATE", settings);
       res.json({ success: true, settings });
     });
