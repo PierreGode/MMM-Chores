@@ -128,15 +128,8 @@ Module.register("MMM-Chores", {
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) {
-      if (task.done) {
-        if (task.finished) {
-          const fin = new Date(task.finished);
-          fin.setHours(0, 0, 0, 0);
-          if (fin.getTime() === today.getTime()) return true;
-        }
-        return false;
-      }
-      return showPast;
+      if (!showPast) return false;
+      return !task.done;
     }
     return diffDays < showDays;
   },
