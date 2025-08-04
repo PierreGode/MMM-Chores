@@ -15,6 +15,7 @@ let taskSortable = null;
 let settingsMode = 'unlocked';
 let settingsChanged = false;
 let settingsSaved = false;
+let dateFormatting = '';
 
 // ==========================
 // API: Hämta inställningar från backend
@@ -255,6 +256,9 @@ async function applySettings(newSettings) {
     const aiButton = document.getElementById('btnAiGenerate');
     if (aiButton) aiButton.style.display = newSettings.useAI === false ? 'none' : '';
   }
+  if (newSettings.dateFormatting !== undefined) {
+    dateFormatting = newSettings.dateFormatting;
+  }
   await fetchPeople();
   await fetchTasks();
 }
@@ -299,6 +303,30 @@ function renderPeople() {
     list.appendChild(li);
   }
 
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return dateStr;
+  const [, yyyy, mm, dd] = match;
+
+  let fmt =
+    dateFormatting !== undefined && dateFormatting !== null
+      ? dateFormatting
+      : 'yyyy-mm-dd';
+
+  if (fmt === '') return '';
+
+  fmt = fmt.replace(/yyyy/gi, yyyy);
+  fmt = fmt.replace(/mm/gi, mm);
+  fmt = fmt.replace(/dd/gi, dd);
+
+  fmt = fmt.replace(/YYYY/g, yyyy);
+  fmt = fmt.replace(/MM/g, mm);
+  fmt = fmt.replace(/DD/g, dd);
+
+  return fmt;
 }
 
 function renderTasks() {
@@ -351,7 +379,11 @@ function renderTasks() {
     });
 
   const span = document.createElement("span");
-  span.innerHTML = `<strong>${task.name}</strong> <small class="task-date">(${task.date})</small>`;
+  const formatted = formatDate(task.date);
+  span.innerHTML = `<strong>${task.name}</strong>`;
+  if (formatted) {
+    span.innerHTML += ` <small class="task-date">(${formatted})</small>`;
+  }
   if (task.recurring && task.recurring !== "none") {
     const recurText = LANGUAGES[currentLang].taskRecurring[task.recurring] || task.recurring;
     span.innerHTML += ` <span class="badge bg-info text-dark">${recurText}</span>`;
@@ -1022,6 +1054,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   } else {
     currentLang = localStorage.getItem("mmm-chores-lang") || 'en';
   }
+  dateFormatting = userSettings.dateFormatting || '';
 
   const selector = document.createElement("select");
   selector.className = "language-select";

@@ -178,7 +178,14 @@
             </div>
             <div class="col-12 col-sm-6">
               <label class="form-label" for="settingsDateFmt">Date format</label>
-              <input type="text" id="settingsDateFmt" class="form-control" />
+              <select id="settingsDateFmt" class="form-select">
+                <option value="">Do not show date</option>
+                <option value="yyyy-mm-dd">yyyy-mm-dd</option>
+                <option value="mm-dd">mm-dd</option>
+                <option value="mm-dd-yyyy">mm-dd-yyyy</option>
+                <option value="mm-dd">mm-dd</option>
+                <option value="dd">dd</option>
+              </select>
             </div>
             <div class="col-12 col-sm-6">
               <label class="form-label" for="settingsYears">Years to max level</label>
