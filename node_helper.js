@@ -70,9 +70,9 @@ function loadData() {
           t.order = order++;
         }
       });
-      people           = j.people           || [];
-      analyticsBoards  = j.analyticsBoards  || [];
-      settings         = j.settings         || { language: "en", dateFormatting: "yyyy-mm-dd", useAI: true, levelingEnabled: true };
+      people          = j.people          || [];
+      analyticsBoards = j.analyticsBoards || [];
+      settings        = { ...settings, ...(j.settings || {}) };
       if (settings.levelingEnabled === undefined) settings.levelingEnabled = true;
 
       updatePeopleLevels({});
@@ -100,6 +100,15 @@ function saveData() {
     Log.error("MMM-Chores: Error writing data.json:", e);
     return false;
   }
+}
+
+function moduleSettings() {
+  return {
+    language: settings.language,
+    dateFormatting: settings.dateFormatting,
+    useAI: settings.useAI,
+    leveling: { enabled: settings.levelingEnabled }
+  };
 }
 
 function computeLevel(config, personId = null) {
@@ -213,14 +222,25 @@ module.exports = NodeHelper.create({
     if (notification === "INIT_SERVER") {
       this.config = payload;
 
-      settings = {
-        ...settings,
-        language:       payload.language       ?? settings.language,
-        dateFormatting: payload.dateFormatting ?? settings.dateFormatting,
-        useAI:          payload.useAI          ?? settings.useAI,
-        levelingEnabled: payload.leveling?.enabled !== false
-      };
+      settings.language = settings.language || payload.language || "en";
+      if (settings.dateFormatting === undefined || settings.dateFormatting === null) {
+        settings.dateFormatting = payload.dateFormatting;
+      }
+      if (typeof settings.useAI !== "boolean") {
+        settings.useAI = payload.useAI;
+      }
+      if (typeof settings.levelingEnabled !== "boolean") {
+        settings.levelingEnabled = payload.leveling?.enabled !== false;
+      }
+
+      this.config.useAI = settings.useAI;
+      if (!this.config.leveling) this.config.leveling = {};
+      this.config.leveling.enabled = settings.levelingEnabled;
+      this.config.dateFormatting = settings.dateFormatting;
+      this.config.language = settings.language;
+
       saveData();
+      this.sendSocketNotification("SETTINGS_UPDATE", moduleSettings());
       this.initServer(payload.adminPort);
     }
     if (notification === "USER_TOGGLE_CHORE") {
@@ -600,9 +620,16 @@ module.exports = NodeHelper.create({
       }
       Object.entries(newSettings).forEach(([key, val]) => {
         settings[key] = val;
+        if (key === "useAI") self.config.useAI = val;
+        if (key === "levelingEnabled") {
+          if (!self.config.leveling) self.config.leveling = {};
+          self.config.leveling.enabled = val;
+        }
+        if (key === "dateFormatting") self.config.dateFormatting = val;
+        if (key === "language") self.config.language = val;
       });
       saveData();
-      self.sendSocketNotification("SETTINGS_UPDATE", settings);
+      self.sendSocketNotification("SETTINGS_UPDATE", moduleSettings());
       res.json({ success: true, settings });
     });
 
@@ -613,7 +640,7 @@ module.exports = NodeHelper.create({
       broadcastTasks(self);
       self.sendSocketNotification("PEOPLE_UPDATE", people);
       self.sendSocketNotification("ANALYTICS_UPDATE", analyticsBoards);
-      self.sendSocketNotification("SETTINGS_UPDATE", settings);
+      self.sendSocketNotification("SETTINGS_UPDATE", moduleSettings());
     });
 
     const httpsPort = port + 1;
