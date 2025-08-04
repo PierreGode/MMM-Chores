@@ -43,6 +43,24 @@ const DEFAULT_TITLES = [
 ];
 
 let settings = {};
+let autoUpdateTimer = null;
+
+function scheduleAutoUpdate() {
+  if (!settings.autoUpdate) return;
+  if (autoUpdateTimer) clearTimeout(autoUpdateTimer);
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(4, 0, 0, 0);
+  if (next <= now) {
+    next.setDate(next.getDate() + 1);
+  }
+  const delay = next - now;
+  Log.log(`Auto update scheduled for ${next.toString()}`);
+  autoUpdateTimer = setTimeout(() => {
+    autoUpdateTimer = null;
+    runAutoUpdate();
+  }, delay);
+}
 
 function loadData() {
   if (fs.existsSync(DATA_FILE)) {
@@ -105,14 +123,18 @@ function runAutoUpdate() {
   exec("git pull", { cwd: __dirname }, (err, stdout) => {
     if (err) {
       Log.error("Auto update failed:", err);
-      return;
-    }
-    Log.log("Auto update output: " + stdout.trim());
-    if (!stdout.includes("Already up to date")) {
-      Log.log("Auto update applied, reloading module...");
-      process.exit(0);
     } else {
-      Log.log("Auto update: already up to date");
+      Log.log("Auto update output: " + stdout.trim());
+      if (!stdout.includes("Already up to date")) {
+        Log.log("Auto update applied, reloading module...");
+        process.exit(0);
+        return;
+      } else {
+        Log.log("Auto update: already up to date");
+      }
+    }
+    if (settings.autoUpdate) {
+      scheduleAutoUpdate();
     }
   });
 }
@@ -223,7 +245,7 @@ module.exports = NodeHelper.create({
     Log.log("MMM-Chores helper started...");
     loadData();
     if (settings.autoUpdate) {
-      runAutoUpdate();
+      scheduleAutoUpdate();
     }
   },
 
@@ -656,7 +678,12 @@ module.exports = NodeHelper.create({
       self.sendSocketNotification("SETTINGS_UPDATE", settings);
       res.json({ success: true, settings });
       if (newSettings.autoUpdate && !wasAutoUpdate) {
-        runAutoUpdate();
+        scheduleAutoUpdate();
+      } else if (!newSettings.autoUpdate && wasAutoUpdate) {
+        if (autoUpdateTimer) {
+          clearTimeout(autoUpdateTimer);
+          autoUpdateTimer = null;
+        }
       }
     });
 
