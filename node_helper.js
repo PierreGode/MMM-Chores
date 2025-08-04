@@ -47,7 +47,6 @@ let settings = {
   textMirrorSize: "small",
   showPast: false,
   showAnalyticsOnMirror: false,
-  openaiApiKey: "",
   useAI: true,
   levelingEnabled: true,
   leveling: {
@@ -87,7 +86,6 @@ function loadData() {
         textMirrorSize: "small",
         showPast: false,
         showAnalyticsOnMirror: false,
-        openaiApiKey: "",
         useAI: true,
         levelingEnabled: true,
         leveling: {
@@ -96,6 +94,7 @@ function loadData() {
           maxLevel: 100
         }
       };
+      if (settings.openaiApiKey !== undefined) delete settings.openaiApiKey;
       if (settings.levelingEnabled === undefined) settings.levelingEnabled = true;
       if (!settings.leveling) {
         settings.leveling = { yearsToMaxLevel: 3, choresPerWeekEstimate: 4, maxLevel: 100 };
@@ -103,7 +102,6 @@ function loadData() {
       if (settings.textMirrorSize === undefined) settings.textMirrorSize = "small";
       if (settings.showPast === undefined) settings.showPast = false;
       if (settings.showAnalyticsOnMirror === undefined) settings.showAnalyticsOnMirror = false;
-      if (settings.openaiApiKey === undefined) settings.openaiApiKey = "";
       if (settings.useAI === undefined) settings.useAI = true;
       if (!settings.leveling) {
         settings.leveling = { yearsToMaxLevel: 3, choresPerWeekEstimate: 4, maxLevel: 100 };
@@ -257,7 +255,6 @@ module.exports = NodeHelper.create({
         textMirrorSize:       payload.textMirrorSize       ?? settings.textMirrorSize,
         showPast:             payload.showPast             ?? settings.showPast,
         showAnalyticsOnMirror: payload.showAnalyticsOnMirror ?? settings.showAnalyticsOnMirror,
-        openaiApiKey:         payload.openaiApiKey         ?? settings.openaiApiKey,
         useAI:                payload.useAI                ?? settings.useAI,
         levelingEnabled:      payload.leveling?.enabled !== false,
         leveling: {
@@ -640,7 +637,9 @@ module.exports = NodeHelper.create({
     });
 
     app.get("/api/settings", (req, res) => {
-      res.json({ ...settings, leveling: settings.leveling, settings: self.config.settings });
+      const safeSettings = { ...settings };
+      delete safeSettings.openaiApiKey;
+      res.json({ ...safeSettings, leveling: safeSettings.leveling, settings: self.config.settings });
     });
     app.put("/api/settings", (req, res) => {
       const newSettings = req.body;
@@ -652,7 +651,7 @@ module.exports = NodeHelper.create({
         self.config.leveling = { ...self.config.leveling, ...newSettings.leveling };
       }
       Object.entries(newSettings).forEach(([key, val]) => {
-        if (key === "leveling") return;
+        if (key === "leveling" || key === "openaiApiKey") return;
         settings[key] = val;
         if (self.config) {
           if (key === "levelingEnabled") {

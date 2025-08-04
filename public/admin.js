@@ -56,7 +56,6 @@ function initSettingsForm(settings) {
   const showPast = document.getElementById('settingsShowPast');
   const textSize = document.getElementById('settingsTextSize');
   const dateFmt = document.getElementById('settingsDateFmt');
-  const openAI = document.getElementById('settingsOpenAI');
   const useAI = document.getElementById('settingsUseAI');
   const showAnalytics = document.getElementById('settingsShowAnalytics');
   const levelEnable = document.getElementById('settingsLevelEnable');
@@ -67,14 +66,6 @@ function initSettingsForm(settings) {
   if (showPast) showPast.checked = !!settings.showPast;
   if (textSize) textSize.value = settings.textMirrorSize || 'small';
   if (dateFmt) dateFmt.value = settings.dateFormatting || '';
-  if (openAI) {
-    if (settings.openaiApiKey) {
-      openAI.placeholder = '********';
-      openAI.value = '';
-    } else {
-      openAI.value = '';
-    }
-  }
   if (useAI) useAI.checked = settings.useAI !== false;
   if (showAnalytics) showAnalytics.checked = !!settings.showAnalyticsOnMirror;
   if (levelEnable) levelEnable.checked = settings.levelingEnabled !== false;
@@ -85,7 +76,7 @@ function initSettingsForm(settings) {
   settingsChanged = false;
   settingsSaved = false;
 
-  const inputs = [showPast, textSize, dateFmt, openAI, useAI, showAnalytics, levelEnable, yearsInput, perWeekInput, maxLevelInput];
+  const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, yearsInput, perWeekInput, maxLevelInput];
   inputs.forEach(el => {
     if (el) {
       el.addEventListener('input', () => { settingsChanged = true; });
@@ -100,7 +91,6 @@ function initSettingsForm(settings) {
       showPast: showPast.checked,
       textMirrorSize: textSize.value,
       dateFormatting: dateFmt.value,
-      openaiApiKey: openAI.value,
       useAI: useAI.checked,
       showAnalyticsOnMirror: showAnalytics.checked,
       levelingEnabled: levelEnable.checked,
@@ -110,7 +100,6 @@ function initSettingsForm(settings) {
         maxLevel: parseInt(maxLevelInput.value, 10) || 100
       }
     };
-    if (!payload.openaiApiKey) delete payload.openaiApiKey;
     try {
       const res = await fetch('/api/settings', {
         method: 'PUT',
