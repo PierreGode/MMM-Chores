@@ -94,12 +94,20 @@ Module.register("MMM-Chores", {
       this.updateDom();
     }
     if (notification === "SETTINGS_UPDATE") {
+      const prevAnalytics = this.config.showAnalyticsOnMirror;
       Object.assign(this.config, payload);
       if (payload.levelingEnabled !== undefined) {
         this.config.leveling = this.config.leveling || {};
         this.config.leveling.enabled = payload.levelingEnabled;
       }
-      this.updateDom();
+      if (payload.showAnalyticsOnMirror && !prevAnalytics && typeof Chart === "undefined") {
+        const script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js";
+        script.onload = () => this.updateDom();
+        document.head.appendChild(script);
+      } else {
+        this.updateDom();
+      }
     }
     if (notification === "ANALYTICS_UPDATE") {
       if (Array.isArray(payload)) {
