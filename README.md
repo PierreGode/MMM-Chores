@@ -50,12 +50,6 @@ Add the module to `config.js` like so:
     openaiApiKey: "your-openApi-key-here",
     settings: "unlocked", // set to "locked" to disable settings popup
     // other options can be set in the admin portal
-    leveling: {               // optional leveling system
-      enabled: true,   // enable or disable leveling system
-      yearsToMaxLevel: 3,
-      choresPerWeekEstimate: 4,
-      maxLevel: 100
-    },
     levelTitles: [            // titles for every 10 levels
       "Junior",
       "Apprentice",
