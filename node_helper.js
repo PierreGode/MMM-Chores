@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 const path       = require("path");
 const fs         = require("fs");
 const https      = require("https");
+const { exec }   = require("child_process");
 
 // Use built-in fetch if available (Node 18+) otherwise fall back to node-fetch
 let fetchFn = global.fetch;
@@ -23,6 +24,9 @@ try {
 
 const DATA_FILE = path.join(__dirname, "data.json");
 const CERT_DIR  = path.join(__dirname, "certs");
+
+const AUTO_UPDATE_HOUR = 4; // 04:00 local time
+let autoUpdateTimeout = null;
 
 let tasks = [];
 let people = [];
@@ -97,6 +101,38 @@ function saveData() {
     Log.error("MMM-Chores: Error writing data.json:", e);
     return false;
   }
+}
+
+function runAutoUpdate() {
+  Log.log("Auto update: running git pull");
+  exec("git pull", { cwd: __dirname }, (err, stdout) => {
+    if (err) {
+      Log.error("Auto update failed:", err);
+      return;
+    }
+    Log.log("Auto update output: " + stdout.trim());
+    if (!stdout.includes("Already up to date")) {
+      Log.log("Auto update applied, reloading module...");
+      process.exit(0);
+    } else {
+      Log.log("Auto update: already up to date");
+    }
+  });
+}
+
+function scheduleAutoUpdate() {
+  clearTimeout(autoUpdateTimeout);
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(AUTO_UPDATE_HOUR, 0, 0, 0);
+  if (next <= now) {
+    next.setDate(next.getDate() + 1);
+  }
+  const delay = next - now;
+  autoUpdateTimeout = setTimeout(() => {
+    runAutoUpdate();
+    scheduleAutoUpdate();
+  }, delay);
 }
 
 function computeLevel(config, personId = null) {
@@ -204,6 +240,10 @@ module.exports = NodeHelper.create({
   start() {
     Log.log("MMM-Chores helper started...");
     loadData();
+    if (settings.autoUpdate) {
+      runAutoUpdate();
+      scheduleAutoUpdate();
+    }
   },
 
   socketNotificationReceived(notification, payload) {
@@ -217,6 +257,7 @@ module.exports = NodeHelper.create({
         showPast: settings.showPast ?? payload.showPast,
         showAnalyticsOnMirror: settings.showAnalyticsOnMirror ?? payload.showAnalyticsOnMirror,
         useAI: settings.useAI ?? payload.useAI,
+        autoUpdate: settings.autoUpdate ?? payload.autoUpdate,
         levelingEnabled: settings.levelingEnabled ?? (payload.leveling?.enabled !== false),
         leveling: {
           yearsToMaxLevel: settings.leveling?.yearsToMaxLevel ?? payload.leveling?.yearsToMaxLevel,
@@ -607,6 +648,7 @@ module.exports = NodeHelper.create({
     });
     app.put("/api/settings", (req, res) => {
       const newSettings = req.body;
+      const wasAutoUpdate = settings.autoUpdate;
       if (typeof newSettings !== "object") {
         return res.status(400).json({ error: "Invalid settings data" });
       }
@@ -632,6 +674,13 @@ module.exports = NodeHelper.create({
       self.sendSocketNotification("PEOPLE_UPDATE", people);
       self.sendSocketNotification("SETTINGS_UPDATE", settings);
       res.json({ success: true, settings });
+      if (newSettings.autoUpdate && !wasAutoUpdate) {
+        runAutoUpdate();
+        scheduleAutoUpdate();
+      } else if (!newSettings.autoUpdate && wasAutoUpdate) {
+        clearTimeout(autoUpdateTimeout);
+        autoUpdateTimeout = null;
+      }
     });
 
     app.post("/api/ai-generate", (req, res) => self.aiGenerateTasks(req, res));
