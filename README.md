@@ -105,7 +105,7 @@ be an array of ten titles.
 
 ```js
 customLevelTitles: {
-  Pierre: [
+  NameOfTheUser: [
     "10 euro game giftcard",
     "Movie Night Voucher",
     "Dinner at Favorite Restaurant",
