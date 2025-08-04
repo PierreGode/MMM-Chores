@@ -41,20 +41,7 @@ const DEFAULT_TITLES = [
   "Mythic"
 ];
 
-let settings = {
-  language: "en",
-  dateFormatting: "yyyy-mm-dd",
-  textMirrorSize: "small",
-  showPast: false,
-  showAnalyticsOnMirror: false,
-  useAI: true,
-  levelingEnabled: true,
-  leveling: {
-    yearsToMaxLevel: 3,
-    choresPerWeekEstimate: 4,
-    maxLevel: 100
-  }
-};
+let settings = {};
 
 function loadData() {
   if (fs.existsSync(DATA_FILE)) {
@@ -78,41 +65,16 @@ function loadData() {
           t.order = order++;
         }
       });
-      people           = j.people           || [];
-      analyticsBoards  = j.analyticsBoards  || [];
-      settings = j.settings || {
-        language: "en",
-        dateFormatting: "yyyy-mm-dd",
-        textMirrorSize: "small",
-        showPast: false,
-        showAnalyticsOnMirror: false,
-        useAI: true,
-        levelingEnabled: true,
-        leveling: {
-          yearsToMaxLevel: 3,
-          choresPerWeekEstimate: 4,
-          maxLevel: 100
-        }
-      };
+      people          = j.people          || [];
+      analyticsBoards = j.analyticsBoards || [];
+      settings        = j.settings        || {};
       if (settings.openaiApiKey !== undefined) delete settings.openaiApiKey;
-      if (settings.levelingEnabled === undefined) settings.levelingEnabled = true;
-      if (!settings.leveling) {
-        settings.leveling = { yearsToMaxLevel: 3, choresPerWeekEstimate: 4, maxLevel: 100 };
-      }
-      if (settings.textMirrorSize === undefined) settings.textMirrorSize = "small";
-      if (settings.showPast === undefined) settings.showPast = false;
-      if (settings.showAnalyticsOnMirror === undefined) settings.showAnalyticsOnMirror = false;
-      if (settings.useAI === undefined) settings.useAI = true;
-      if (!settings.leveling) {
-        settings.leveling = { yearsToMaxLevel: 3, choresPerWeekEstimate: 4, maxLevel: 100 };
-      }
-      if (settings.leveling.yearsToMaxLevel === undefined) settings.leveling.yearsToMaxLevel = 3;
-      if (settings.leveling.choresPerWeekEstimate === undefined) settings.leveling.choresPerWeekEstimate = 4;
-      if (settings.leveling.maxLevel === undefined) settings.leveling.maxLevel = 100;
 
       updatePeopleLevels({});
 
-      Log.log(`MMM-Chores: Loaded ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, language: ${settings.language}`);
+      Log.log(
+        `MMM-Chores: Loaded ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards`
+      );
     } catch (e) {
       Log.error("MMM-Chores: Error reading data.json:", e);
     }
@@ -249,21 +211,23 @@ module.exports = NodeHelper.create({
       this.config = payload;
 
       settings = {
-        ...settings,
-        language:             payload.language             ?? settings.language,
-        dateFormatting:       payload.dateFormatting       ?? settings.dateFormatting,
-        textMirrorSize:       payload.textMirrorSize       ?? settings.textMirrorSize,
-        showPast:             payload.showPast             ?? settings.showPast,
-        showAnalyticsOnMirror: payload.showAnalyticsOnMirror ?? settings.showAnalyticsOnMirror,
-        useAI:                payload.useAI                ?? settings.useAI,
-        levelingEnabled:      payload.leveling?.enabled !== false,
+        language: settings.language ?? payload.language,
+        dateFormatting: settings.dateFormatting ?? payload.dateFormatting,
+        textMirrorSize: settings.textMirrorSize ?? payload.textMirrorSize,
+        showPast: settings.showPast ?? payload.showPast,
+        showAnalyticsOnMirror: settings.showAnalyticsOnMirror ?? payload.showAnalyticsOnMirror,
+        useAI: settings.useAI ?? payload.useAI,
+        levelingEnabled: settings.levelingEnabled ?? (payload.leveling?.enabled !== false),
         leveling: {
-          yearsToMaxLevel:      payload.leveling?.yearsToMaxLevel ?? settings.leveling.yearsToMaxLevel,
-          choresPerWeekEstimate: payload.leveling?.choresPerWeekEstimate ?? settings.leveling.choresPerWeekEstimate,
-          maxLevel:             payload.leveling?.maxLevel ?? settings.leveling.maxLevel
+          yearsToMaxLevel: settings.leveling?.yearsToMaxLevel ?? payload.leveling?.yearsToMaxLevel,
+          choresPerWeekEstimate: settings.leveling?.choresPerWeekEstimate ?? payload.leveling?.choresPerWeekEstimate,
+          maxLevel: settings.leveling?.maxLevel ?? payload.leveling?.maxLevel
         }
       };
-      Object.assign(this.config, settings, { leveling: { ...this.config.leveling, ...settings.leveling, enabled: settings.levelingEnabled } });
+
+      Object.assign(this.config, settings, {
+        leveling: { ...payload.leveling, ...settings.leveling, enabled: settings.levelingEnabled }
+      });
       saveData();
       this.initServer(payload.adminPort);
     }
