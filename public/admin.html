@@ -15,13 +15,15 @@
   <div class="container py-4 flex-grow-1 position-relative">
 
     <div class="top-controls">
-      <div class="form-check form-switch theme-switch">
-        <input class="form-check-input" type="checkbox" id="themeToggle" />
-        <label class="form-check-label small" for="themeToggle">
+      <div class="theme-switch">
+        <button class="btn btn-outline-secondary btn-icon" id="themeToggle" title="Toggle theme">
           <i class="bi" id="themeIcon"></i>
-        </label>
+        </button>
       </div>
       <!-- language selector inserted via JS -->
+      <button class="btn btn-outline-secondary btn-icon" id="settingsBtn" title="Settings">
+        <i class="bi bi-gear-fill"></i>
+      </button>
     </div>
 
     <div class="hero mb-4">
@@ -126,6 +128,82 @@
           </select>
         </div>
         <div id="analyticsContainer" class="row g-3"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal fade" id="settingsModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content card-shadow">
+        <div class="modal-header">
+          <h5 class="modal-title" id="settingsModalLabel">Settings</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="settingsLockedMsg" class="text-center my-3 d-none"></div>
+          <form id="settingsForm" class="row gy-3 d-none" autocomplete="off">
+            <div class="col-12 col-sm-6">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="settingsShowPast" />
+                <label class="form-check-label" for="settingsShowPast">Show past tasks</label>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="settingsShowAnalytics" />
+                <label class="form-check-label" for="settingsShowAnalytics">Analytics on mirror</label>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="settingsUseAI" />
+                <label class="form-check-label" for="settingsUseAI">Use AI features</label>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="settingsLevelEnable" />
+                <label class="form-check-label" for="settingsLevelEnable">Enable leveling</label>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="form-label" for="settingsTextSize">Mirror text size</label>
+              <select id="settingsTextSize" class="form-select">
+                <option value="small">Small</option>
+                <option value="medium">Medium</option>
+                <option value="large">Large</option>
+              </select>
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="form-label" for="settingsDateFmt">Date format</label>
+              <select id="settingsDateFmt" class="form-select">
+                <option value="">Do not show date</option>
+                <option value="yyyy-mm-dd">yyyy-mm-dd</option>
+                <option value="mm-dd">mm-dd</option>
+                <option value="mm-dd-yyyy">mm-dd-yyyy</option>
+                <option value="mm-dd">mm-dd</option>
+                <option value="dd">dd</option>
+              </select>
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="form-label" for="settingsYears">Years to max level</label>
+              <input type="number" id="settingsYears" class="form-control" />
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="form-label" for="settingsPerWeek">Chores per week estimate</label>
+              <input type="number" id="settingsPerWeek" class="form-control" />
+            </div>
+            <div class="col-12 col-sm-6">
+              <label class="form-label" for="settingsMaxLevel">Max level</label>
+              <input type="number" id="settingsMaxLevel" class="form-control" />
+            </div>
+            <div class="col-12">
+              <button class="btn btn-primary" type="submit" id="settingsSaveBtn">Save</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </div>

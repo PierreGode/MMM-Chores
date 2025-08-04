@@ -17,11 +17,13 @@ Module.register("MMM-Chores", {
   defaults: {
     updateInterval: 60 * 1000,
     adminPort: 5003,
+    settings: "locked", // set to "unlocked" to enable settings popup or to a 6-digit PIN (e.g. "000000") to require a PIN
     showDays: 1,
     showPast: false,
     dateFormatting: "yyyy-mm-dd", // Standardformat, kan ändras i config
     textMirrorSize: "small",     // small, medium or large
     useAI: true,                  // hide AI features when false
+    openaiApiKey: "",
     showAnalyticsOnMirror: false, // display analytics cards on the mirror
     analyticsCards: [],           // board types selected in the admin UI
     leveling: {
@@ -92,8 +94,20 @@ Module.register("MMM-Chores", {
       this.updateDom();
     }
     if (notification === "SETTINGS_UPDATE") {
+      const prevAnalytics = this.config.showAnalyticsOnMirror;
       Object.assign(this.config, payload);
-      this.updateDom();
+      if (payload.levelingEnabled !== undefined) {
+        this.config.leveling = this.config.leveling || {};
+        this.config.leveling.enabled = payload.levelingEnabled;
+      }
+      if (payload.showAnalyticsOnMirror && !prevAnalytics && typeof Chart === "undefined") {
+        const script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js";
+        script.onload = () => this.updateDom();
+        document.head.appendChild(script);
+      } else {
+        this.updateDom();
+      }
     }
     if (notification === "ANALYTICS_UPDATE") {
       if (Array.isArray(payload)) {
@@ -126,15 +140,10 @@ Module.register("MMM-Chores", {
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) {
-      if (task.done) {
-        if (task.finished) {
-          const fin = new Date(task.finished);
-          fin.setHours(0, 0, 0, 0);
-          if (fin.getTime() === today.getTime()) return true;
-        }
-        return false;
-      }
-      return showPast;
+      // Task is in the past. Respect the showPast setting and only display
+      // unfinished tasks when enabled. Completed past tasks are always hidden.
+      if (!showPast) return false;
+      return !task.done;
     }
     return diffDays < showDays;
   },

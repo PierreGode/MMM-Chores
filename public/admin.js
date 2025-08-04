@@ -12,6 +12,10 @@ let localizedMonths = [];
 let localizedWeekdays = [];
 let levelingEnabled = true;
 let taskSortable = null;
+let settingsMode = 'unlocked';
+let settingsChanged = false;
+let settingsSaved = false;
+let dateFormatting = '';
 
 // ==========================
 // API: Hämta inställningar från backend
@@ -41,6 +45,78 @@ async function saveUserLanguage(lang) {
   } catch (e) {
     console.error('Failed saving user language:', e);
   }
+}
+
+// ==========================
+// Init settings form and save handler
+// ==========================
+function initSettingsForm(settings) {
+  const form = document.getElementById('settingsForm');
+  if (!form) return;
+
+  const showPast = document.getElementById('settingsShowPast');
+  const textSize = document.getElementById('settingsTextSize');
+  const dateFmt = document.getElementById('settingsDateFmt');
+  const useAI = document.getElementById('settingsUseAI');
+  const showAnalytics = document.getElementById('settingsShowAnalytics');
+  const levelEnable = document.getElementById('settingsLevelEnable');
+  const yearsInput = document.getElementById('settingsYears');
+  const perWeekInput = document.getElementById('settingsPerWeek');
+  const maxLevelInput = document.getElementById('settingsMaxLevel');
+
+  if (showPast) showPast.checked = !!settings.showPast;
+  if (textSize) textSize.value = settings.textMirrorSize || 'small';
+  if (dateFmt) dateFmt.value = settings.dateFormatting || '';
+  if (useAI) useAI.checked = settings.useAI !== false;
+  if (showAnalytics) showAnalytics.checked = !!settings.showAnalyticsOnMirror;
+  if (levelEnable) levelEnable.checked = settings.levelingEnabled !== false;
+  if (yearsInput) yearsInput.value = settings.leveling?.yearsToMaxLevel || 3;
+  if (perWeekInput) perWeekInput.value = settings.leveling?.choresPerWeekEstimate || 4;
+  if (maxLevelInput) maxLevelInput.value = settings.leveling?.maxLevel || 100;
+
+  settingsChanged = false;
+  settingsSaved = false;
+
+  const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, yearsInput, perWeekInput, maxLevelInput];
+  inputs.forEach(el => {
+    if (el) {
+      el.addEventListener('input', () => { settingsChanged = true; });
+      el.addEventListener('change', () => { settingsChanged = true; });
+    }
+  });
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    settingsSaved = true;
+    const payload = {
+      showPast: showPast.checked,
+      textMirrorSize: textSize.value,
+      dateFormatting: dateFmt.value,
+      useAI: useAI.checked,
+      showAnalyticsOnMirror: showAnalytics.checked,
+      levelingEnabled: levelEnable.checked,
+      leveling: {
+        yearsToMaxLevel: parseFloat(yearsInput.value) || 3,
+        choresPerWeekEstimate: parseFloat(perWeekInput.value) || 4,
+        maxLevel: parseInt(maxLevelInput.value, 10) || 100
+      }
+    };
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        await applySettings(data.settings || payload);
+        const instance = bootstrap.Modal.getInstance(document.getElementById('settingsModal'));
+        if (instance) instance.hide();
+      }
+    } catch (err) {
+      console.error('Failed saving settings', err);
+    }
+  });
 }
 
 // ==========================
@@ -74,6 +150,21 @@ function setLanguage(lang) {
   const tabs = document.querySelectorAll(".nav-link");
   if (tabs[0]) tabs[0].textContent = t.tabs[0];
   if (tabs[1]) tabs[1].textContent = t.tabs[1];
+
+  const settingsBtn = document.getElementById("settingsBtn");
+  if (settingsBtn) settingsBtn.title = t.settingsBtnTitle || 'Settings';
+  const modalTitle = document.getElementById("settingsModalLabel");
+  if (modalTitle) modalTitle.textContent = t.settingsTitle || 'Settings';
+  const saveBtn = document.getElementById("settingsSaveBtn");
+  if (saveBtn) saveBtn.textContent = t.saveButton || 'Save';
+  const levelEnableLbl = document.querySelector("label[for='settingsLevelEnable']");
+  if (levelEnableLbl) levelEnableLbl.textContent = t.levelingEnabledLabel;
+  const yearsLbl = document.querySelector("label[for='settingsYears']");
+  if (yearsLbl) yearsLbl.textContent = t.yearsToMaxLabel;
+  const perWeekLbl = document.querySelector("label[for='settingsPerWeek']");
+  if (perWeekLbl) perWeekLbl.textContent = t.choresPerWeekLabel;
+  const maxLvlLbl = document.querySelector("label[for='settingsMaxLevel']");
+  if (maxLvlLbl) maxLvlLbl.textContent = t.maxLevelLabel;
 
   const peopleHeader = document.getElementById("peopleHeader");
   if (peopleHeader) peopleHeader.textContent = t.peopleTitle;
@@ -157,6 +248,21 @@ async function fetchTasks() {
   renderCalendar();
 }
 
+async function applySettings(newSettings) {
+  if (typeof newSettings.levelingEnabled === 'boolean') {
+    levelingEnabled = newSettings.levelingEnabled;
+  }
+  if (newSettings.useAI !== undefined) {
+    const aiButton = document.getElementById('btnAiGenerate');
+    if (aiButton) aiButton.style.display = newSettings.useAI === false ? 'none' : '';
+  }
+  if (newSettings.dateFormatting !== undefined) {
+    dateFormatting = newSettings.dateFormatting;
+  }
+  await fetchPeople();
+  await fetchTasks();
+}
+
 // ==========================
 // Render People & Tasks
 // ==========================
@@ -197,6 +303,30 @@ function renderPeople() {
     list.appendChild(li);
   }
 
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return dateStr;
+  const [, yyyy, mm, dd] = match;
+
+  let fmt =
+    dateFormatting !== undefined && dateFormatting !== null
+      ? dateFormatting
+      : 'yyyy-mm-dd';
+
+  if (fmt === '') return '';
+
+  fmt = fmt.replace(/yyyy/gi, yyyy);
+  fmt = fmt.replace(/mm/gi, mm);
+  fmt = fmt.replace(/dd/gi, dd);
+
+  fmt = fmt.replace(/YYYY/g, yyyy);
+  fmt = fmt.replace(/MM/g, mm);
+  fmt = fmt.replace(/DD/g, dd);
+
+  return fmt;
 }
 
 function renderTasks() {
@@ -249,7 +379,11 @@ function renderTasks() {
     });
 
   const span = document.createElement("span");
-  span.innerHTML = `<strong>${task.name}</strong> <small class="task-date">(${task.date})</small>`;
+  const formatted = formatDate(task.date);
+  span.innerHTML = `<strong>${task.name}</strong>`;
+  if (formatted) {
+    span.innerHTML += ` <small class="task-date">(${formatted})</small>`;
+  }
   if (task.recurring && task.recurring !== "none") {
     const recurText = LANGUAGES[currentLang].taskRecurring[task.recurring] || task.recurring;
     span.innerHTML += ` <span class="badge bg-info text-dark">${recurText}</span>`;
@@ -885,17 +1019,17 @@ function updateAllCharts() {
 }
 
 const root = document.documentElement;
-const themeTgl = document.getElementById("themeToggle");
+const themeBtn = document.getElementById("themeToggle");
 const themeIcon = document.getElementById("themeIcon");
 const STORAGE_KEY = "mmm-chores-theme";
 
 const savedTheme = localStorage.getItem(STORAGE_KEY) || "light";
 root.setAttribute("data-theme", savedTheme);
-themeTgl.checked = savedTheme === "dark";
 setIcon(savedTheme);
 
-themeTgl.addEventListener("change", () => {
-  const theme = themeTgl.checked ? "dark" : "light";
+themeBtn.addEventListener("click", () => {
+  const current = root.getAttribute("data-theme");
+  const theme = current === "dark" ? "light" : "dark";
   root.setAttribute("data-theme", theme);
   localStorage.setItem(STORAGE_KEY, theme);
   setIcon(theme);
@@ -912,11 +1046,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (typeof userSettings.levelingEnabled === "boolean") {
     levelingEnabled = userSettings.levelingEnabled;
   }
+  if (userSettings.settings) {
+    settingsMode = userSettings.settings;
+  }
   if (userSettings.language && LANGUAGES[userSettings.language]) {
     currentLang = userSettings.language;
   } else {
     currentLang = localStorage.getItem("mmm-chores-lang") || 'en';
   }
+  dateFormatting = userSettings.dateFormatting || '';
 
   const selector = document.createElement("select");
   selector.className = "language-select";
@@ -945,6 +1083,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     aiButton.style.display = "none";
   }
 
+  initSettingsForm(userSettings);
+
   setLanguage(currentLang);
   await fetchPeople();
   await fetchTasks();
@@ -952,6 +1092,56 @@ document.addEventListener("DOMContentLoaded", async () => {
   const savedBoards = await fetchSavedBoards();
   if (savedBoards.length) {
     savedBoards.forEach(type => addChart(type));
+  }
+
+  const settingsBtn = document.getElementById("settingsBtn");
+  const settingsModalEl = document.getElementById("settingsModal");
+  const settingsForm = document.getElementById("settingsForm");
+  const lockedMsg = document.getElementById("settingsLockedMsg");
+  const modal = settingsModalEl ? new bootstrap.Modal(settingsModalEl) : null;
+  if (settingsBtn && modal) {
+    settingsBtn.addEventListener('click', () => {
+      settingsChanged = false;
+      settingsSaved = false;
+      if (settingsMode === 'unlocked') {
+        if (lockedMsg) lockedMsg.classList.add('d-none');
+        if (settingsForm) settingsForm.classList.remove('d-none');
+        modal.show();
+        return;
+      }
+
+      if (/^\d{6}$/.test(settingsMode)) {
+        const pin = prompt(LANGUAGES[currentLang].settingsEnterPin);
+        if (pin === settingsMode) {
+          settingsMode = 'unlocked';
+          if (lockedMsg) lockedMsg.classList.add('d-none');
+          if (settingsForm) settingsForm.classList.remove('d-none');
+        } else {
+          if (lockedMsg) {
+            lockedMsg.textContent = LANGUAGES[currentLang].settingsWrongPin;
+            lockedMsg.classList.remove('d-none');
+          }
+          if (settingsForm) settingsForm.classList.add('d-none');
+        }
+        modal.show();
+        return;
+      }
+
+      if (lockedMsg) {
+        lockedMsg.textContent = LANGUAGES[currentLang].settingsLocked;
+        lockedMsg.classList.remove('d-none');
+      }
+      if (settingsForm) settingsForm.classList.add('d-none');
+      modal.show();
+    });
+  }
+
+  if (settingsModalEl) {
+    settingsModalEl.addEventListener('hidden.bs.modal', () => {
+      if (!settingsSaved && settingsChanged) {
+        window.location.reload();
+      }
+    });
   }
 });
 

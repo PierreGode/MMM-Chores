@@ -11,13 +11,18 @@ Use the drag handle ("burger" icon) to reorder tasks in the admin UI. The
 updated order is saved to `data.json` and automatically reloaded, so it
 survives page refreshes and restarts.
 
-*Update 2025-07-07: Analytics boards can now be displayed on the mirror
+The **Show past tasks** setting lets you toggle whether overdue tasks that are
+not yet completed should remain visible on the mirror. Completed past tasks are
+always hidden.
+
+*Update 2025-08-04: most settings are moved to admin webpage
 
 ## Screenshots
   
 ![frontend](img/screenshot1_frontend.png)
 
-![backend](img/admin.png)
+![backend](img/IMG_0005.jpeg)
+![backend](img/IMG_0006.jpeg)
 
 ## Installation
 
@@ -37,7 +42,8 @@ npm install
 ```
 
 ## Configuration
-in /MagicMirror/config/config.js
+Most settings are now editable in the admin portal via the cogwheel **Settings** button.
+Add the module to `config.js` like so:
 ```js
 {
   module: "MMM-Chores",
@@ -46,21 +52,11 @@ in /MagicMirror/config/config.js
   config: {
     updateInterval: 60 * 1000,
     adminPort: 5003,
-    showAnalyticsOnMirror: false, // show analytics charts on the mirror
-    openaiApiKey: "your-openApi-key-here",
-    useAI: true,        // hide AI features when false
-    showPast: true,    // show unfinished tasks from past days
-    textMirrorSize: "small", // small, medium or large
-    dateFormatting: "MM-DD",  // Date format pattern to display task dates.
-                              // Use tokens like 'yyyy', 'mm', 'dd'.
-                              // Set to "" to hide the date completely.
-    leveling: {               // optional leveling system
-      enabled: true,   // enable or disable leveling system
-      yearsToMaxLevel: 3,
-      choresPerWeekEstimate: 4,
-      maxLevel: 100
-    },
-    levelTitles: [            // titles for every 10 levels
+    openaiApiKey: "your-openApi-key here",
+    settings: "unlocked", // set a 6 digit pin like "000000" to lock settings popup with a personal pin, change 000000 to any 6 digit password you want, or comment this out to lock settings completly
+// other options can be set in the admin portal
+    levelTitles: [
+    // titles for every 10 levels
       "Junior",
       "Apprentice",
       "Journeyman",
@@ -115,7 +111,7 @@ be an array of ten titles.
 
 ```js
 customLevelTitles: {
-  Pierre: [
+  NameOfTheUser: [
     "10 euro game giftcard",
     "Movie Night Voucher",
     "Dinner at Favorite Restaurant",

@@ -41,12 +41,7 @@ const DEFAULT_TITLES = [
   "Mythic"
 ];
 
-let settings = {
-  language: "en",
-  dateFormatting: "yyyy-mm-dd",
-  useAI: true,
-  levelingEnabled: true
-};
+let settings = {};
 
 function loadData() {
   if (fs.existsSync(DATA_FILE)) {
@@ -70,14 +65,16 @@ function loadData() {
           t.order = order++;
         }
       });
-      people           = j.people           || [];
-      analyticsBoards  = j.analyticsBoards  || [];
-      settings         = j.settings         || { language: "en", dateFormatting: "yyyy-mm-dd", useAI: true, levelingEnabled: true };
-      if (settings.levelingEnabled === undefined) settings.levelingEnabled = true;
+      people          = j.people          || [];
+      analyticsBoards = j.analyticsBoards || [];
+      settings        = j.settings        || {};
+      if (settings.openaiApiKey !== undefined) delete settings.openaiApiKey;
 
       updatePeopleLevels({});
 
-      Log.log(`MMM-Chores: Loaded ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, language: ${settings.language}`);
+      Log.log(
+        `MMM-Chores: Loaded ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards`
+      );
     } catch (e) {
       Log.error("MMM-Chores: Error reading data.json:", e);
     }
@@ -214,12 +211,23 @@ module.exports = NodeHelper.create({
       this.config = payload;
 
       settings = {
-        ...settings,
-        language:       payload.language       ?? settings.language,
-        dateFormatting: payload.dateFormatting ?? settings.dateFormatting,
-        useAI:          payload.useAI          ?? settings.useAI,
-        levelingEnabled: payload.leveling?.enabled !== false
+        language: settings.language ?? payload.language,
+        dateFormatting: settings.dateFormatting ?? payload.dateFormatting,
+        textMirrorSize: settings.textMirrorSize ?? payload.textMirrorSize,
+        showPast: settings.showPast ?? payload.showPast,
+        showAnalyticsOnMirror: settings.showAnalyticsOnMirror ?? payload.showAnalyticsOnMirror,
+        useAI: settings.useAI ?? payload.useAI,
+        levelingEnabled: settings.levelingEnabled ?? (payload.leveling?.enabled !== false),
+        leveling: {
+          yearsToMaxLevel: settings.leveling?.yearsToMaxLevel ?? payload.leveling?.yearsToMaxLevel,
+          choresPerWeekEstimate: settings.leveling?.choresPerWeekEstimate ?? payload.leveling?.choresPerWeekEstimate,
+          maxLevel: settings.leveling?.maxLevel ?? payload.leveling?.maxLevel
+        }
       };
+
+      Object.assign(this.config, settings, {
+        leveling: { ...payload.leveling, ...settings.leveling, enabled: settings.levelingEnabled }
+      });
       saveData();
       this.initServer(payload.adminPort);
     }
@@ -592,16 +600,36 @@ module.exports = NodeHelper.create({
       res.json({ success: true, analyticsBoards });
     });
 
-    app.get("/api/settings", (req, res) => res.json(settings));
+    app.get("/api/settings", (req, res) => {
+      const safeSettings = { ...settings };
+      delete safeSettings.openaiApiKey;
+      res.json({ ...safeSettings, leveling: safeSettings.leveling, settings: self.config.settings });
+    });
     app.put("/api/settings", (req, res) => {
       const newSettings = req.body;
       if (typeof newSettings !== "object") {
         return res.status(400).json({ error: "Invalid settings data" });
       }
+      if (newSettings.leveling) {
+        settings.leveling = { ...settings.leveling, ...newSettings.leveling };
+        self.config.leveling = { ...self.config.leveling, ...newSettings.leveling };
+      }
       Object.entries(newSettings).forEach(([key, val]) => {
+        if (key === "leveling" || key === "openaiApiKey") return;
         settings[key] = val;
+        if (self.config) {
+          if (key === "levelingEnabled") {
+            self.config.leveling = self.config.leveling || {};
+            self.config.leveling.enabled = val;
+          } else {
+            self.config[key] = val;
+          }
+        }
       });
       saveData();
+      updatePeopleLevels(self.config);
+      self.sendSocketNotification("LEVEL_INFO", getLevelInfo(self.config));
+      self.sendSocketNotification("PEOPLE_UPDATE", people);
       self.sendSocketNotification("SETTINGS_UPDATE", settings);
       res.json({ success: true, settings });
     });
