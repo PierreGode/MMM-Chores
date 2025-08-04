@@ -11,6 +11,10 @@ Use the drag handle ("burger" icon) to reorder tasks in the admin UI. The
 updated order is saved to `data.json` and automatically reloaded, so it
 survives page refreshes and restarts.
 
+The **Show past tasks** setting lets you toggle whether overdue tasks that are
+not yet completed should remain visible on the mirror. Completed past tasks are
+always hidden.
+
 *Update 2025-07-07: Analytics boards can now be displayed on the mirror
 
 ## Screenshots
