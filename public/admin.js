@@ -1103,16 +1103,35 @@ document.addEventListener("DOMContentLoaded", async () => {
     settingsBtn.addEventListener('click', () => {
       settingsChanged = false;
       settingsSaved = false;
-      if (settingsMode !== 'unlocked') {
-        if (lockedMsg) {
-          lockedMsg.textContent = LANGUAGES[currentLang].settingsLocked;
-          lockedMsg.classList.remove('d-none');
-        }
-        if (settingsForm) settingsForm.classList.add('d-none');
-      } else {
+      if (settingsMode === 'unlocked') {
         if (lockedMsg) lockedMsg.classList.add('d-none');
         if (settingsForm) settingsForm.classList.remove('d-none');
+        modal.show();
+        return;
       }
+
+      if (/^\d{6}$/.test(settingsMode)) {
+        const pin = prompt(LANGUAGES[currentLang].settingsEnterPin);
+        if (pin === settingsMode) {
+          settingsMode = 'unlocked';
+          if (lockedMsg) lockedMsg.classList.add('d-none');
+          if (settingsForm) settingsForm.classList.remove('d-none');
+        } else {
+          if (lockedMsg) {
+            lockedMsg.textContent = LANGUAGES[currentLang].settingsWrongPin;
+            lockedMsg.classList.remove('d-none');
+          }
+          if (settingsForm) settingsForm.classList.add('d-none');
+        }
+        modal.show();
+        return;
+      }
+
+      if (lockedMsg) {
+        lockedMsg.textContent = LANGUAGES[currentLang].settingsLocked;
+        lockedMsg.classList.remove('d-none');
+      }
+      if (settingsForm) settingsForm.classList.add('d-none');
       modal.show();
     });
   }

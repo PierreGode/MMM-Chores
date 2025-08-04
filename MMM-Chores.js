@@ -17,7 +17,7 @@ Module.register("MMM-Chores", {
   defaults: {
     updateInterval: 60 * 1000,
     adminPort: 5003,
-    settings: "locked", // "locked" disables settings popup / "unlocked" enables settings popup 
+    settings: "locked", // set to "unlocked" to enable settings popup or to a 6-digit PIN (e.g. "000000") to require a PIN
     showDays: 1,
     showPast: false,
     dateFormatting: "yyyy-mm-dd", // Standardformat, kan ändras i config

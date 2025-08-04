@@ -52,7 +52,7 @@ Add the module to `config.js` like so:
     updateInterval: 60 * 1000,
     adminPort: 5003,
     openaiApiKey: "your-openApi-key-here",
-    settings: "unlocked", // set to "locked" to disable settings popup
+    settings: "unlocked", // set to "000000" to lock settings popup with a personal pin, change 000000 to any 6 digit password you want
     // other options can be set in the admin portal
     levelTitles: [            // titles for every 10 levels
       "Junior",
