@@ -47,6 +47,7 @@ Add the module to `config.js` like so:
   config: {
     updateInterval: 60 * 1000,
     adminPort: 5003,
+    openaiApiKey: "your-openApi-key-here",
     settings: "unlocked", // set to "locked" to disable settings popup
     // other options can be set in the admin portal
     leveling: {               // optional leveling system
