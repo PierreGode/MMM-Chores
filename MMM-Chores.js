@@ -95,6 +95,10 @@ Module.register("MMM-Chores", {
     }
     if (notification === "SETTINGS_UPDATE") {
       Object.assign(this.config, payload);
+      if (payload.levelingEnabled !== undefined) {
+        this.config.leveling = this.config.leveling || {};
+        this.config.leveling.enabled = payload.levelingEnabled;
+      }
       this.updateDom();
     }
     if (notification === "ANALYTICS_UPDATE") {
