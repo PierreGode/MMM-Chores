@@ -60,6 +60,7 @@ function initSettingsForm(settings) {
   const useAI = document.getElementById('settingsUseAI');
   const showAnalytics = document.getElementById('settingsShowAnalytics');
   const levelEnable = document.getElementById('settingsLevelEnable');
+  const autoUpdate = document.getElementById('settingsAutoUpdate');
   const yearsInput = document.getElementById('settingsYears');
   const perWeekInput = document.getElementById('settingsPerWeek');
   const maxLevelInput = document.getElementById('settingsMaxLevel');
@@ -70,6 +71,7 @@ function initSettingsForm(settings) {
   if (useAI) useAI.checked = settings.useAI !== false;
   if (showAnalytics) showAnalytics.checked = !!settings.showAnalyticsOnMirror;
   if (levelEnable) levelEnable.checked = settings.levelingEnabled !== false;
+  if (autoUpdate) autoUpdate.checked = !!settings.autoUpdate;
   if (yearsInput) yearsInput.value = settings.leveling?.yearsToMaxLevel || 3;
   if (perWeekInput) perWeekInput.value = settings.leveling?.choresPerWeekEstimate || 4;
   if (maxLevelInput) maxLevelInput.value = settings.leveling?.maxLevel || 100;
@@ -77,7 +79,7 @@ function initSettingsForm(settings) {
   settingsChanged = false;
   settingsSaved = false;
 
-  const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, yearsInput, perWeekInput, maxLevelInput];
+  const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, yearsInput, perWeekInput, maxLevelInput];
   inputs.forEach(el => {
     if (el) {
       el.addEventListener('input', () => { settingsChanged = true; });
@@ -95,6 +97,7 @@ function initSettingsForm(settings) {
       useAI: useAI.checked,
       showAnalyticsOnMirror: showAnalytics.checked,
       levelingEnabled: levelEnable.checked,
+      autoUpdate: autoUpdate.checked,
       leveling: {
         yearsToMaxLevel: parseFloat(yearsInput.value) || 3,
         choresPerWeekEstimate: parseFloat(perWeekInput.value) || 4,
@@ -159,6 +162,8 @@ function setLanguage(lang) {
   if (saveBtn) saveBtn.textContent = t.saveButton || 'Save';
   const levelEnableLbl = document.querySelector("label[for='settingsLevelEnable']");
   if (levelEnableLbl) levelEnableLbl.textContent = t.levelingEnabledLabel;
+  const autoUpdateLbl = document.querySelector("label[for='settingsAutoUpdate']");
+  if (autoUpdateLbl) autoUpdateLbl.textContent = t.autoUpdateLabel || 'Enable autoupdate';
   const yearsLbl = document.querySelector("label[for='settingsYears']");
   if (yearsLbl) yearsLbl.textContent = t.yearsToMaxLabel;
   const perWeekLbl = document.querySelector("label[for='settingsPerWeek']");

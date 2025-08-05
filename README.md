@@ -43,6 +43,7 @@ npm install
 
 ## Configuration
 Most settings are now editable in the admin portal via the cogwheel **Settings** button.
+An additional option **Enable autoupdate** can pull the latest changes via `git pull` and reload the module automatically and Autoupdates run once per day at **04:00** local time.
 Add the module to `config.js` like so:
 ```js
 {
