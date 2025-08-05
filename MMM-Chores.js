@@ -26,6 +26,8 @@ Module.register("MMM-Chores", {
     openaiApiKey: "",
     showAnalyticsOnMirror: false, // display analytics cards on the mirror
     analyticsCards: [],           // board types selected in the admin UI
+    pushoverApiToken: "",
+    pushoverUserKey: "",
     leveling: {
       enabled: true,
       yearsToMaxLevel: 3,

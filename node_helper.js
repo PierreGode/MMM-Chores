@@ -44,6 +44,8 @@ const DEFAULT_TITLES = [
 
 let settings = {};
 let autoUpdateTimer = null;
+let pushoverDailyTimer = null;
+let pushoverReminderInterval = null;
 
 function scheduleAutoUpdate() {
   if (!settings.autoUpdate) return;
@@ -137,6 +139,80 @@ function runAutoUpdate() {
       scheduleAutoUpdate();
     }
   });
+}
+
+function sendPushover(title, message, config) {
+  if (!config || !config.pushoverApiToken || !config.pushoverUserKey) return;
+  const params = new URLSearchParams({
+    token: config.pushoverApiToken,
+    user: config.pushoverUserKey,
+    title,
+    message,
+  });
+  fetchFn("https://api.pushover.net/1/messages.json", {
+    method: "POST",
+    body: params,
+  }).catch(err => Log.error("Pushover error:", err));
+}
+
+function sendDailySummary(config) {
+  const undone = tasks.filter(t => !t.done && !t.deleted);
+  if (undone.length === 0) return;
+  const msg = undone.map(t => t.name).join(", ");
+  sendPushover("Chores Reminder", msg, config);
+}
+
+function checkTaskReminders(config, threshold) {
+  const now = Date.now();
+  let changed = false;
+  tasks.forEach(t => {
+    if (t.done || t.deleted) return;
+    if (!t.created) return;
+    if (t.pushoverNotified) return;
+    const created = new Date(t.created).getTime();
+    if (now - created >= threshold) {
+      sendPushover("Task Reminder", `${t.name} is still not finished.`, config);
+      t.pushoverNotified = true;
+      changed = true;
+    }
+  });
+  if (changed) saveData();
+}
+
+function scheduleDaily(config) {
+  const hour = parseInt(settings.pushoverNotifyHour, 10);
+  if (isNaN(hour)) return;
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(hour, 0, 0, 0);
+  if (next <= now) next.setDate(next.getDate() + 1);
+  const delay = next - now;
+  pushoverDailyTimer = setTimeout(() => {
+    sendDailySummary(config);
+    scheduleDaily(config);
+  }, delay);
+}
+
+function scheduleReminderCheck(config) {
+  const after = parseFloat(settings.pushoverAfterHours);
+  if (!after || isNaN(after)) return;
+  const threshold = after * 60 * 60 * 1000;
+  checkTaskReminders(config, threshold);
+  pushoverReminderInterval = setInterval(() => checkTaskReminders(config, threshold), 60 * 1000);
+}
+
+function schedulePushover(config) {
+  if (pushoverDailyTimer) {
+    clearTimeout(pushoverDailyTimer);
+    pushoverDailyTimer = null;
+  }
+  if (pushoverReminderInterval) {
+    clearInterval(pushoverReminderInterval);
+    pushoverReminderInterval = null;
+  }
+  if (!settings.pushoverEnabled) return;
+  scheduleDaily(config);
+  scheduleReminderCheck(config);
 }
 
 function computeLevel(config, personId = null) {
@@ -261,6 +337,9 @@ module.exports = NodeHelper.create({
         showAnalyticsOnMirror: settings.showAnalyticsOnMirror ?? payload.showAnalyticsOnMirror,
         useAI: settings.useAI ?? payload.useAI,
         autoUpdate: settings.autoUpdate ?? payload.autoUpdate,
+        pushoverEnabled: settings.pushoverEnabled ?? false,
+        pushoverNotifyHour: settings.pushoverNotifyHour ?? null,
+        pushoverAfterHours: settings.pushoverAfterHours ?? null,
         levelingEnabled: settings.levelingEnabled ?? (payload.leveling?.enabled !== false),
         leveling: {
           yearsToMaxLevel: settings.leveling?.yearsToMaxLevel ?? payload.leveling?.yearsToMaxLevel,
@@ -274,6 +353,7 @@ module.exports = NodeHelper.create({
       });
       saveData();
       this.initServer(payload.adminPort);
+      schedulePushover(this.config);
     }
     if (notification === "USER_TOGGLE_CHORE") {
       this.handleUserToggle(payload);
@@ -404,6 +484,7 @@ module.exports = NodeHelper.create({
           task.created = now.toISOString();
           task.done    = false;
           if (!task.assignedTo) task.assignedTo = null;
+          task.pushoverNotified = false;
           tasks.push(task);
           createdCount++;
         }
@@ -535,6 +616,8 @@ module.exports = NodeHelper.create({
         done: false,
         assignedTo: null,
         recurring: req.body.recurring || "none",
+        created: new Date().toISOString(),
+        pushoverNotified: false,
       };
       Log.log("POST /api/tasks", newTask);
       tasks.push(newTask);
@@ -600,6 +683,10 @@ module.exports = NodeHelper.create({
       });
       Log.log("PUT /api/tasks/" + id, req.body);
 
+      if (!task.done) {
+        task.pushoverNotified = false;
+      }
+
       if (!prevDone && task.done && task.recurring && task.recurring !== "none") {
         const nextDate = getNextDate(task.date, task.recurring);
         if (nextDate) {
@@ -612,6 +699,7 @@ module.exports = NodeHelper.create({
             order: tasks.filter(t => !t.deleted).length,
             done: false,
             created: new Date().toISOString(),
+            pushoverNotified: false,
           };
           tasks.push(newTask);
         }
@@ -676,6 +764,7 @@ module.exports = NodeHelper.create({
       self.sendSocketNotification("LEVEL_INFO", getLevelInfo(self.config));
       self.sendSocketNotification("PEOPLE_UPDATE", people);
       self.sendSocketNotification("SETTINGS_UPDATE", settings);
+      schedulePushover(self.config);
       res.json({ success: true, settings });
       if (newSettings.autoUpdate && !wasAutoUpdate) {
         scheduleAutoUpdate();

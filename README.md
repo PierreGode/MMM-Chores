@@ -54,6 +54,8 @@ Add the module to `config.js` like so:
     updateInterval: 60 * 1000,
     adminPort: 5003,
     openaiApiKey: "your-openApi-key here",
+    pushoverApiToken: "your-pushover-app-token",
+    pushoverUserKey: "your-pushover-user-key",
     settings: "unlocked", // set a 6 digit pin like "000000" to lock settings popup with a personal pin, change 000000 to any 6 digit password you want, or comment this out to lock settings completly
 // other options can be set in the admin portal
     levelTitles: [
@@ -145,7 +147,12 @@ Go to http://yourmirrorIP:5003/ #page will be reachable within same network.
 
 ## Push Notifications
 
-If you wish to use push notifications follow guide below. 
+MMM-Chores can send reminders through [Pushover](https://pushover.net/). Set
+`pushoverApiToken` and `pushoverUserKey` in your `config.js`, then enable and
+configure notifications (daily hour or after a task has been open for a number
+of hours) in the admin web settings.
+
+The steps below describe the optional self-hosted web push setup.
 
 ![cert](img/screenshot3_cert.png)
 

@@ -175,6 +175,20 @@
               </div>
             </div>
             <div class="col-12 col-sm-6">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="settingsPushoverEnable" />
+                <label class="form-check-label" for="settingsPushoverEnable">Enable Pushover notifications</label>
+              </div>
+            </div>
+            <div class="col-12 col-sm-6 pushover-settings d-none">
+              <label class="form-label" for="settingsPushoverHour">Notify at hour (0-23)</label>
+              <input type="number" min="0" max="23" id="settingsPushoverHour" class="form-control" />
+            </div>
+            <div class="col-12 col-sm-6 pushover-settings d-none">
+              <label class="form-label" for="settingsPushoverDelay">Remind after hours</label>
+              <input type="number" min="0" id="settingsPushoverDelay" class="form-control" />
+            </div>
+            <div class="col-12 col-sm-6">
               <label class="form-label" for="settingsTextSize">Mirror text size</label>
               <select id="settingsTextSize" class="form-select">
                 <option value="small">Small</option>
