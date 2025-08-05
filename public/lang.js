@@ -61,7 +61,10 @@ const LANGUAGES = {
     levelingEnabledLabel: "Enable leveling",
     yearsToMaxLabel: "Years to max level",
     choresPerWeekLabel: "Chores per week estimate",
-    maxLevelLabel: "Max level"
+    maxLevelLabel: "Max level",
+    pushoverEnableLabel: "Enable Pushover notifications",
+    pushoverHourLabel: "Notify at hour (0-23)",
+    pushoverDelayLabel: "Remind after hours"
   },
   sv: {
     title: "MMM-Chores Admin  ",
@@ -125,7 +128,10 @@ const LANGUAGES = {
     levelingEnabledLabel: "Aktivera nivåsystem",
     yearsToMaxLabel: "År till maxnivå",
     choresPerWeekLabel: "Sysslor per vecka",
-    maxLevelLabel: "Maxnivå"
+    maxLevelLabel: "Maxnivå",
+    pushoverEnableLabel: "Aktivera Pushover-notiser",
+    pushoverHourLabel: "Meddela vid timme (0-23)",
+    pushoverDelayLabel: "Påminn efter timmar"
   },
   fr: {
     title: "MMM-Chores Admin  ",
@@ -189,7 +195,10 @@ const LANGUAGES = {
     levelingEnabledLabel: "Activer le système de niveaux",
     yearsToMaxLabel: "Années jusqu'au niveau max",
     choresPerWeekLabel: "Corvées par semaine",
-    maxLevelLabel: "Niveau maximum"
+    maxLevelLabel: "Niveau maximum",
+    pushoverEnableLabel: "Activer les notifications Pushover",
+    pushoverHourLabel: "Notifier à l'heure (0-23)",
+    pushoverDelayLabel: "Rappeler après heures"
   },
   es: {
     title: "MMM-Chores Admin  ",
@@ -253,7 +262,10 @@ const LANGUAGES = {
     levelingEnabledLabel: "Activar sistema de niveles",
     yearsToMaxLabel: "Años hasta nivel máximo",
     choresPerWeekLabel: "Tareas por semana",
-    maxLevelLabel: "Nivel máximo"
+    maxLevelLabel: "Nivel máximo",
+    pushoverEnableLabel: "Activar notificaciones Pushover",
+    pushoverHourLabel: "Notificar a la hora (0-23)",
+    pushoverDelayLabel: "Recordar después de horas"
   },
   de: {
     title: "MMM-Chores Admin  ",
@@ -317,7 +329,10 @@ const LANGUAGES = {
     levelingEnabledLabel: "Levelsystem aktivieren",
     yearsToMaxLabel: "Jahre bis Max-Level",
     choresPerWeekLabel: "Aufgaben pro Woche",
-    maxLevelLabel: "Max-Level"
+    maxLevelLabel: "Max-Level",
+    pushoverEnableLabel: "Pushover-Benachrichtigungen aktivieren",
+    pushoverHourLabel: "Benachrichtigen um Stunde (0-23)",
+    pushoverDelayLabel: "Erinnern nach Stunden"
   },
   it: {
     title: "MMM-Chores Admin  ",
@@ -381,7 +396,10 @@ const LANGUAGES = {
     levelingEnabledLabel: "Abilita sistema di livelli",
     yearsToMaxLabel: "Anni al livello massimo",
     choresPerWeekLabel: "Compiti per settimana",
-    maxLevelLabel: "Livello massimo"
+    maxLevelLabel: "Livello massimo",
+    pushoverEnableLabel: "Abilita notifiche Pushover",
+    pushoverHourLabel: "Notifica all'ora (0-23)",
+    pushoverDelayLabel: "Ricorda dopo ore"
   },
   nl: {
     title: "MMM-Chores Admin  ",
@@ -445,7 +463,10 @@ const LANGUAGES = {
     levelingEnabledLabel: "Levelsysteem inschakelen",
     yearsToMaxLabel: "Jaren tot max level",
     choresPerWeekLabel: "Klussen per week",
-    maxLevelLabel: "Max level"
+    maxLevelLabel: "Max level",
+    pushoverEnableLabel: "Pushover-meldingen inschakelen",
+    pushoverHourLabel: "Meld op uur (0-23)",
+    pushoverDelayLabel: "Herinner na uren"
   },
   pl: {
     title: "MMM-Chores Admin  ",
@@ -509,7 +530,10 @@ const LANGUAGES = {
     levelingEnabledLabel: "Włącz system poziomów",
     yearsToMaxLabel: "Lata do maks. poziomu",
     choresPerWeekLabel: "Zadania na tydzień",
-    maxLevelLabel: "Maks. poziom"
+    maxLevelLabel: "Maks. poziom",
+    pushoverEnableLabel: "Włącz powiadomienia Pushover",
+    pushoverHourLabel: "Powiadom o godzinie (0-23)",
+    pushoverDelayLabel: "Przypomnij po godzinach"
   },
   zh: {
     title: "MMM-Chores 管理  ",
@@ -573,7 +597,10 @@ const LANGUAGES = {
     levelingEnabledLabel: "启用等级系统",
     yearsToMaxLabel: "达到最高等级的年数",
     choresPerWeekLabel: "每周任务数预估",
-    maxLevelLabel: "最高等级"
+    maxLevelLabel: "最高等级",
+    pushoverEnableLabel: "启用 Pushover 通知",
+    pushoverHourLabel: "在指定小时提醒 (0-23)",
+    pushoverDelayLabel: "在创建后若未完成则提醒 (小时)"
   },
   ar: {
     title: "إدارة MMM-Chores  ",
@@ -637,6 +664,9 @@ const LANGUAGES = {
     levelingEnabledLabel: "تفعيل نظام المستويات",
     yearsToMaxLabel: "السنوات حتى أعلى مستوى",
     choresPerWeekLabel: "عدد المهام أسبوعيًا",
-    maxLevelLabel: "أقصى مستوى"
+    maxLevelLabel: "أقصى مستوى",
+    pushoverEnableLabel: "تفعيل إشعارات Pushover",
+    pushoverHourLabel: "أبلغني عند الساعة (0-23)",
+    pushoverDelayLabel: "ذكّرني بعد عدد من الساعات"
   }
 };

@@ -61,6 +61,10 @@ function initSettingsForm(settings) {
   const showAnalytics = document.getElementById('settingsShowAnalytics');
   const levelEnable = document.getElementById('settingsLevelEnable');
   const autoUpdate = document.getElementById('settingsAutoUpdate');
+  const pushoverEnable = document.getElementById('settingsPushoverEnable');
+  const pushoverHour = document.getElementById('settingsPushoverHour');
+  const pushoverDelay = document.getElementById('settingsPushoverDelay');
+  const pushoverElems = document.querySelectorAll('.pushover-settings');
   const yearsInput = document.getElementById('settingsYears');
   const perWeekInput = document.getElementById('settingsPerWeek');
   const maxLevelInput = document.getElementById('settingsMaxLevel');
@@ -72,6 +76,12 @@ function initSettingsForm(settings) {
   if (showAnalytics) showAnalytics.checked = !!settings.showAnalyticsOnMirror;
   if (levelEnable) levelEnable.checked = settings.levelingEnabled !== false;
   if (autoUpdate) autoUpdate.checked = !!settings.autoUpdate;
+  if (pushoverEnable) {
+    pushoverEnable.checked = !!settings.pushoverEnabled;
+    pushoverElems.forEach(el => el.classList.toggle('d-none', !pushoverEnable.checked));
+  }
+  if (pushoverHour) pushoverHour.value = settings.pushoverNotifyHour ?? '';
+  if (pushoverDelay) pushoverDelay.value = settings.pushoverAfterHours ?? '';
   if (yearsInput) yearsInput.value = settings.leveling?.yearsToMaxLevel || 3;
   if (perWeekInput) perWeekInput.value = settings.leveling?.choresPerWeekEstimate || 4;
   if (maxLevelInput) maxLevelInput.value = settings.leveling?.maxLevel || 100;
@@ -79,13 +89,18 @@ function initSettingsForm(settings) {
   settingsChanged = false;
   settingsSaved = false;
 
-  const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, yearsInput, perWeekInput, maxLevelInput];
+  const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, pushoverEnable, pushoverHour, pushoverDelay, yearsInput, perWeekInput, maxLevelInput];
   inputs.forEach(el => {
     if (el) {
       el.addEventListener('input', () => { settingsChanged = true; });
       el.addEventListener('change', () => { settingsChanged = true; });
     }
   });
+  if (pushoverEnable) {
+    pushoverEnable.addEventListener('change', () => {
+      pushoverElems.forEach(el => el.classList.toggle('d-none', !pushoverEnable.checked));
+    });
+  }
 
   form.addEventListener('submit', async e => {
     e.preventDefault();
@@ -98,6 +113,9 @@ function initSettingsForm(settings) {
       showAnalyticsOnMirror: showAnalytics.checked,
       levelingEnabled: levelEnable.checked,
       autoUpdate: autoUpdate.checked,
+      pushoverEnabled: pushoverEnable.checked,
+      pushoverNotifyHour: pushoverHour.value === '' ? null : parseInt(pushoverHour.value, 10),
+      pushoverAfterHours: pushoverDelay.value === '' ? null : parseFloat(pushoverDelay.value),
       leveling: {
         yearsToMaxLevel: parseFloat(yearsInput.value) || 3,
         choresPerWeekEstimate: parseFloat(perWeekInput.value) || 4,
@@ -164,6 +182,12 @@ function setLanguage(lang) {
   if (levelEnableLbl) levelEnableLbl.textContent = t.levelingEnabledLabel;
   const autoUpdateLbl = document.querySelector("label[for='settingsAutoUpdate']");
   if (autoUpdateLbl) autoUpdateLbl.textContent = t.autoUpdateLabel || 'Enable autoupdate';
+  const pushoverEnableLbl = document.querySelector("label[for='settingsPushoverEnable']");
+  if (pushoverEnableLbl) pushoverEnableLbl.textContent = t.pushoverEnableLabel || 'Enable Pushover notifications';
+  const pushoverHourLbl = document.querySelector("label[for='settingsPushoverHour']");
+  if (pushoverHourLbl) pushoverHourLbl.textContent = t.pushoverHourLabel || 'Notify at hour (0-23)';
+  const pushoverDelayLbl = document.querySelector("label[for='settingsPushoverDelay']");
+  if (pushoverDelayLbl) pushoverDelayLbl.textContent = t.pushoverDelayLabel || 'Remind after hours';
   const yearsLbl = document.querySelector("label[for='settingsYears']");
   if (yearsLbl) yearsLbl.textContent = t.yearsToMaxLabel;
   const perWeekLbl = document.querySelector("label[for='settingsPerWeek']");
