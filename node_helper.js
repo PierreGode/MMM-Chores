@@ -273,7 +273,15 @@ module.exports = NodeHelper.create({
         leveling: { ...payload.leveling, ...settings.leveling, enabled: settings.levelingEnabled }
       });
       saveData();
-      this.initServer(payload.adminPort);
+      if (!this.server) {
+        this.initServer(payload.adminPort);
+      } else {
+        // When the mirror reloads, resend the current data so tasks and
+        // settings are restored immediately without needing a task change.
+        broadcastTasks(this);
+        this.sendSocketNotification("ANALYTICS_UPDATE", analyticsBoards);
+        this.sendSocketNotification("SETTINGS_UPDATE", settings);
+      }
     }
     if (notification === "USER_TOGGLE_CHORE") {
       this.handleUserToggle(payload);
@@ -484,6 +492,10 @@ module.exports = NodeHelper.create({
   },
 
   initServer(port) {
+    if (this.server) {
+      // Server already running; nothing to do.
+      return;
+    }
     const self = this;
     const app  = express();
 
@@ -689,7 +701,7 @@ module.exports = NodeHelper.create({
 
     app.post("/api/ai-generate", (req, res) => self.aiGenerateTasks(req, res));
 
-    app.listen(port, "0.0.0.0", () => {
+    this.server = app.listen(port, "0.0.0.0", () => {
       Log.log(`MMM-Chores admin (HTTP) running at http://0.0.0.0:${port}`);
       broadcastTasks(self);
       self.sendSocketNotification("PEOPLE_UPDATE", people);
