@@ -17,6 +17,25 @@ let settingsChanged = false;
 let settingsSaved = false;
 let dateFormatting = '';
 
+function currentTimestamp(prefix = "") {
+  const now = new Date();
+  const iso = now.toISOString();
+  const pad = n => n.toString().padStart(2, "0");
+  const stamp =
+    prefix +
+    pad(now.getMonth() + 1) +
+    pad(now.getDate()) +
+    pad(now.getHours()) +
+    pad(now.getMinutes());
+
+  const el = document.getElementById("currentTimestamp");
+  if (el) {
+    el.textContent = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  }
+
+  return { iso, stamp };
+}
+
 // ==========================
 // API: Hämta inställningar från backend
 // ==========================
@@ -622,17 +641,7 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
   const recurring = document.getElementById("taskRecurring").value;
   if (!name) return;
   if (!date) date = new Date().toISOString().split("T")[0];
-
-  const now = new Date();
-  const iso = now.toISOString();
-  const pad = n => n.toString().padStart(2, "0");
-  const stamp = (prefix) => (
-    prefix +
-    pad(now.getMonth() + 1) +
-    pad(now.getDate()) +
-    pad(now.getHours()) +
-    pad(now.getMinutes())
-  );
+  const { iso, stamp } = currentTimestamp("C");
 
   await fetch("/api/tasks", {
     method: "POST",
@@ -642,7 +651,7 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
       date,
       recurring,
       created: iso,
-      createdShort: stamp("C")
+      createdShort: stamp
     })
   });
   e.target.reset();
@@ -1060,6 +1069,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     currentLang = localStorage.getItem("mmm-chores-lang") || 'en';
   }
   dateFormatting = userSettings.dateFormatting || '';
+
+  currentTimestamp();
+  setInterval(() => currentTimestamp(), 1000);
 
   const selector = document.createElement("select");
   selector.className = "language-select";
