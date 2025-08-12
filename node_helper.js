@@ -45,6 +45,11 @@ const DEFAULT_TITLES = [
 let settings = {};
 let autoUpdateTimer = null;
 
+function getLocalISO(date = new Date()) {
+  const offsetMs = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - offsetMs).toISOString().slice(0, -1);
+}
+
 function scheduleAutoUpdate() {
   if (!settings.autoUpdate) return;
   if (autoUpdateTimer) clearTimeout(autoUpdateTimer);
@@ -409,7 +414,7 @@ module.exports = NodeHelper.create({
         const alreadyExists = tasks.some(t => t.name === task.name && t.date === task.date && !t.deleted);
         if (!alreadyExists) {
           task.id      = Date.now() + Math.floor(Math.random() * 10000);
-          task.created = now.toISOString();
+          task.created = getLocalISO(now);
           task.done    = false;
           if (!task.assignedTo) task.assignedTo = null;
           tasks.push(task);
@@ -442,17 +447,17 @@ module.exports = NodeHelper.create({
       weekday: 'long', year: 'numeric', month: 'numeric', day: 'numeric'
     });
 
-    return JSON.stringify({
-      instruction:
-        `Today is ${todayString}. ` +
-        "Analyze historical data to determine which day of the week different people usually perform specific chores. " +
-        "Based on this, generate new tasks for the next 7 days with the correct assignment of the right person on the right day in the same language as the tasks. " +
-        "Return ONLY a JSON array of objects containing: name, date (yyyy-mm-dd), assignedTo (person id).",
+      return JSON.stringify({
+        instruction:
+          `Today is ${todayString}. ` +
+          "Analyze historical data to determine which day of the week different people usually perform specific chores. " +
+          "Based on this, generate new tasks for the next 7 days with the correct assignment of the right person on the right day in the same language as the tasks. " +
+          "Return ONLY a JSON array of objects containing: name, date (yyyy-mm-dd), assignedTo (person id).",
 
-      today: new Date().toISOString().slice(0, 10),
-      tasks: relevantTasks,
-      people: people
-    });
+        today: getLocalISO(new Date()).slice(0, 10),
+        tasks: relevantTasks,
+        people: people
+      });
   },
 
   async handleUserToggle({ id, done }) {
@@ -540,9 +545,11 @@ module.exports = NodeHelper.create({
       res.json(tasks);
     });
     app.post("/api/tasks", (req, res) => {
+      const now = new Date();
       const newTask = {
         id: Date.now(),
         ...req.body,
+        created: getLocalISO(now),
         order: tasks.filter(t => !t.deleted).length,
         done: false,
         assignedTo: null,
@@ -623,7 +630,7 @@ module.exports = NodeHelper.create({
             recurring: task.recurring,
             order: tasks.filter(t => !t.deleted).length,
             done: false,
-            created: new Date().toISOString(),
+            created: getLocalISO(new Date()),
           };
           tasks.push(newTask);
         }
