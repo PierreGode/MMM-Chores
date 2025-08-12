@@ -133,7 +133,19 @@ Module.register("MMM-Chores", {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const tDate = new Date(task.date);
+    // Parse the task's date as a local date to avoid timezone shifts that
+    // make today's chores appear as past tasks in some regions.
+    let tDate;
+    if (typeof task.date === "string") {
+      const parts = task.date.split("-").map(Number);
+      if (parts.length === 3) {
+        tDate = new Date(parts[0], parts[1] - 1, parts[2]);
+      } else {
+        tDate = new Date(task.date);
+      }
+    } else {
+      tDate = new Date(task.date);
+    }
     tDate.setHours(0, 0, 0, 0);
 
     const diffMs = tDate - today;
