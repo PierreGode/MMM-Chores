@@ -61,7 +61,9 @@ const LANGUAGES = {
     levelingEnabledLabel: "Enable leveling",
     yearsToMaxLabel: "Years to max level",
     choresPerWeekLabel: "Chores per week estimate",
-    maxLevelLabel: "Max level"
+    maxLevelLabel: "Max level",
+    pushoverEnabledLabel: "Enable Pushover",
+    pushoverUserLabel: "Pushover User Key"
   },
   sv: {
     title: "MMM-Chores Admin  ",
@@ -125,7 +127,9 @@ const LANGUAGES = {
     levelingEnabledLabel: "Aktivera nivåsystem",
     yearsToMaxLabel: "År till maxnivå",
     choresPerWeekLabel: "Sysslor per vecka",
-    maxLevelLabel: "Maxnivå"
+    maxLevelLabel: "Maxnivå",
+    pushoverEnabledLabel: "Aktivera Pushover",
+    pushoverUserLabel: "Pushover User Key"
   },
   fr: {
     title: "MMM-Chores Admin  ",
@@ -189,7 +193,9 @@ const LANGUAGES = {
     levelingEnabledLabel: "Activer le système de niveaux",
     yearsToMaxLabel: "Années jusqu'au niveau max",
     choresPerWeekLabel: "Corvées par semaine",
-    maxLevelLabel: "Niveau maximum"
+    maxLevelLabel: "Niveau maximum",
+    pushoverEnabledLabel: "Activer Pushover",
+    pushoverUserLabel: "Pushover User Key"
   },
   es: {
     title: "MMM-Chores Admin  ",
@@ -253,7 +259,9 @@ const LANGUAGES = {
     levelingEnabledLabel: "Activar sistema de niveles",
     yearsToMaxLabel: "Años hasta nivel máximo",
     choresPerWeekLabel: "Tareas por semana",
-    maxLevelLabel: "Nivel máximo"
+    maxLevelLabel: "Nivel máximo",
+    pushoverEnabledLabel: "Habilitar Pushover",
+    pushoverUserLabel: "Pushover User Key"
   },
   de: {
     title: "MMM-Chores Admin  ",
@@ -317,7 +325,9 @@ const LANGUAGES = {
     levelingEnabledLabel: "Levelsystem aktivieren",
     yearsToMaxLabel: "Jahre bis Max-Level",
     choresPerWeekLabel: "Aufgaben pro Woche",
-    maxLevelLabel: "Max-Level"
+    maxLevelLabel: "Max-Level",
+    pushoverEnabledLabel: "Pushover aktivieren",
+    pushoverUserLabel: "Pushover User Key"
   },
   it: {
     title: "MMM-Chores Admin  ",
@@ -381,7 +391,9 @@ const LANGUAGES = {
     levelingEnabledLabel: "Abilita sistema di livelli",
     yearsToMaxLabel: "Anni al livello massimo",
     choresPerWeekLabel: "Compiti per settimana",
-    maxLevelLabel: "Livello massimo"
+    maxLevelLabel: "Livello massimo",
+    pushoverEnabledLabel: "Abilita Pushover",
+    pushoverUserLabel: "Pushover User Key"
   },
   nl: {
     title: "MMM-Chores Admin  ",
@@ -445,7 +457,9 @@ const LANGUAGES = {
     levelingEnabledLabel: "Levelsysteem inschakelen",
     yearsToMaxLabel: "Jaren tot max level",
     choresPerWeekLabel: "Klussen per week",
-    maxLevelLabel: "Max level"
+    maxLevelLabel: "Max level",
+    pushoverEnabledLabel: "Pushover inschakelen",
+    pushoverUserLabel: "Pushover User Key"
   },
   pl: {
     title: "MMM-Chores Admin  ",
@@ -509,7 +523,9 @@ const LANGUAGES = {
     levelingEnabledLabel: "Włącz system poziomów",
     yearsToMaxLabel: "Lata do maks. poziomu",
     choresPerWeekLabel: "Zadania na tydzień",
-    maxLevelLabel: "Maks. poziom"
+    maxLevelLabel: "Maks. poziom",
+    pushoverEnabledLabel: "Włącz Pushover",
+    pushoverUserLabel: "Pushover User Key"
   },
   zh: {
     title: "MMM-Chores 管理  ",
@@ -573,7 +589,9 @@ const LANGUAGES = {
     levelingEnabledLabel: "启用等级系统",
     yearsToMaxLabel: "达到最高等级的年数",
     choresPerWeekLabel: "每周任务数预估",
-    maxLevelLabel: "最高等级"
+    maxLevelLabel: "最高等级",
+    pushoverEnabledLabel: "启用 Pushover",
+    pushoverUserLabel: "Pushover User Key"
   },
   ar: {
     title: "إدارة MMM-Chores  ",
@@ -637,6 +655,8 @@ const LANGUAGES = {
     levelingEnabledLabel: "تفعيل نظام المستويات",
     yearsToMaxLabel: "السنوات حتى أعلى مستوى",
     choresPerWeekLabel: "عدد المهام أسبوعيًا",
-    maxLevelLabel: "أقصى مستوى"
+    maxLevelLabel: "أقصى مستوى",
+    pushoverEnabledLabel: "تفعيل Pushover",
+    pushoverUserLabel: "Pushover User Key"
   }
 };
