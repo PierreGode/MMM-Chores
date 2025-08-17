@@ -67,6 +67,19 @@ function scheduleAutoUpdate() {
   }, delay);
 }
 
+function sendPushover(config, settings, message) {
+  if (!config.pushoverApiKey || !settings.pushoverEnabled || !settings.pushoverUser) return;
+  const params = new URLSearchParams({
+    token: config.pushoverApiKey,
+    user: settings.pushoverUser,
+    message
+  });
+  fetchFn("https://api.pushover.net/1/messages.json", {
+    method: "POST",
+    body: params
+  }).catch(err => Log.error("MMM-Chores: Failed to send Pushover notification", err));
+}
+
 function loadData() {
   if (fs.existsSync(DATA_FILE)) {
     Log.log("loadData: reading", DATA_FILE);
@@ -93,6 +106,7 @@ function loadData() {
       analyticsBoards = j.analyticsBoards || [];
       settings        = j.settings        || {};
       if (settings.openaiApiKey !== undefined) delete settings.openaiApiKey;
+      if (settings.pushoverApiKey !== undefined) delete settings.pushoverApiKey;
 
       updatePeopleLevels({});
 
@@ -266,6 +280,8 @@ module.exports = NodeHelper.create({
         showAnalyticsOnMirror: settings.showAnalyticsOnMirror ?? payload.showAnalyticsOnMirror,
         useAI: settings.useAI ?? payload.useAI,
         autoUpdate: settings.autoUpdate ?? payload.autoUpdate,
+        pushoverEnabled: settings.pushoverEnabled ?? payload.pushoverEnabled,
+        pushoverUser: settings.pushoverUser ?? payload.pushoverUser,
         levelingEnabled: settings.levelingEnabled ?? (payload.leveling?.enabled !== false),
         leveling: {
           yearsToMaxLevel: settings.leveling?.yearsToMaxLevel ?? payload.leveling?.yearsToMaxLevel,
@@ -557,6 +573,7 @@ module.exports = NodeHelper.create({
       };
       Log.log("POST /api/tasks", newTask);
       tasks.push(newTask);
+      sendPushover(self.config, settings, `New task: ${newTask.name}`);
       const ok = broadcastTasks(self);
       res.status(ok ? 201 : 500).json(ok ? newTask : { error: "Failed to save data" });
     });
@@ -637,6 +654,9 @@ module.exports = NodeHelper.create({
       }
 
       const ok = broadcastTasks(self);
+      if (!prevDone && task.done) {
+        sendPushover(self.config, settings, `Task completed: ${task.name}`);
+      }
       if (!ok) return res.status(500).json({ error: "Failed to save data" });
       res.json(task);
     });
@@ -666,6 +686,7 @@ module.exports = NodeHelper.create({
     app.get("/api/settings", (req, res) => {
       const safeSettings = { ...settings };
       delete safeSettings.openaiApiKey;
+      delete safeSettings.pushoverApiKey;
       res.json({ ...safeSettings, leveling: safeSettings.leveling, settings: self.config.settings });
     });
     app.put("/api/settings", (req, res) => {
@@ -679,7 +700,7 @@ module.exports = NodeHelper.create({
         self.config.leveling = { ...self.config.leveling, ...newSettings.leveling };
       }
       Object.entries(newSettings).forEach(([key, val]) => {
-        if (key === "leveling" || key === "openaiApiKey") return;
+        if (key === "leveling" || key === "openaiApiKey" || key === "pushoverApiKey") return;
         settings[key] = val;
         if (self.config) {
           if (key === "levelingEnabled") {
