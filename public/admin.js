@@ -34,12 +34,14 @@ async function checkLogin() {
   const res = await fetch('/api/login', { headers: authHeaders() });
   const data = await res.json();
   if (!data.loginRequired) {
+    if (loginDiv) loginDiv.style.display = 'none';
     if (app) app.style.display = '';
     initApp();
     return;
   }
   if (data.loggedIn) {
     userPermission = data.permission || 'write';
+    if (loginDiv) loginDiv.style.display = 'none';
     if (app) app.style.display = '';
     initApp();
     return;
