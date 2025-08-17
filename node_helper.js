@@ -561,7 +561,9 @@ module.exports = NodeHelper.create({
 
     app.use((req, res, next) => {
       if (!self.config.login) return next();
-      if (req.path === "/api/login") return next();
+      // Allow the login API and root admin page without authentication so the
+      // login overlay can be displayed in the browser.
+      if (req.path === "/api/login" || req.path === "/") return next();
       const token = req.headers["x-auth-token"];
       const user = sessions[token];
       if (!user) return res.status(401).json({ error: "Unauthorized" });
