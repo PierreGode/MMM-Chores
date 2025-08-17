@@ -56,6 +56,11 @@ Add the module to `config.js` like so:
     adminPort: 5003,
     openaiApiKey: "your-openApi-key here",
     pushoverApiKey: "your-pushover-api-key",
+    login: false,
+    users: [
+      { username: "admin", password: "secret", permission: "write" },
+      { username: "viewer", password: "viewer", permission: "read" }
+    ],
     settings: "unlocked", // set a 6 digit pin like "000000" to lock settings popup with a personal pin, change 000000 to any 6 digit password you want, or comment this out to lock settings completly
 // other options can be set in the admin portal
     levelTitles: [
@@ -74,6 +79,8 @@ Add the module to `config.js` like so:
   }
 },
 ```
+
+When `login` is set to `true`, define one or more `users` with `username`, `password` and `permission` (`"read"` or `"write"`). Users with read permission may view all tasks but cannot create, delete or modify them.
 
 levels could also be rewards
 ```js

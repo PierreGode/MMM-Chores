@@ -28,6 +28,7 @@ const CERT_DIR  = path.join(__dirname, "certs");
 let tasks = [];
 let people = [];
 let analyticsBoards = [];
+let sessions = {};
 
 const DEFAULT_TITLES = [
   "Junior",
@@ -494,13 +495,21 @@ module.exports = NodeHelper.create({
       }
 
       const port = this.config.adminPort;
+      const headers = { "Content-Type": "application/json" };
+      if (this.config.login && this.internalToken) {
+        headers["x-auth-token"] = this.internalToken;
+      }
       await fetchFn(`http://localhost:${port}/api/tasks/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(body)
       });
 
-      const res = await fetchFn(`http://localhost:${port}/api/tasks`);
+      const getHeaders = {};
+      if (this.config.login && this.internalToken) {
+        getHeaders["x-auth-token"] = this.internalToken;
+      }
+      const res = await fetchFn(`http://localhost:${port}/api/tasks`, { headers: getHeaders });
       const latest = await res.json();
 
       // Keep historical data for analytics by excluding only deleted and
@@ -523,12 +532,57 @@ module.exports = NodeHelper.create({
     app.use(bodyParser.json());
     app.use(express.static(path.join(__dirname, "public")));
 
+    const users = Array.isArray(self.config.users) ? self.config.users : [];
+    if (self.config.login) {
+      const token = Math.random().toString(36).slice(2);
+      sessions[token] = { username: "__internal__", permission: "write" };
+      self.internalToken = token;
+    }
+
+    app.post("/api/login", (req, res) => {
+      if (!self.config.login) return res.json({ loginRequired: false });
+      const { username, password } = req.body;
+      const user = users.find(u => u.username === username && u.password === password);
+      if (!user) return res.status(401).json({ error: "Invalid credentials" });
+      const token = Math.random().toString(36).slice(2);
+      sessions[token] = user;
+      res.json({ token, permission: user.permission });
+    });
+
+    app.get("/api/login", (req, res) => {
+      if (!self.config.login) return res.json({ loginRequired: false });
+      const token = req.headers["x-auth-token"];
+      const user = sessions[token];
+      if (user) {
+        return res.json({ loginRequired: true, loggedIn: true, permission: user.permission });
+      }
+      res.json({ loginRequired: true, loggedIn: false });
+    });
+
+    app.use((req, res, next) => {
+      if (!self.config.login) return next();
+      if (req.path === "/api/login") return next();
+      const token = req.headers["x-auth-token"];
+      const user = sessions[token];
+      if (!user) return res.status(401).json({ error: "Unauthorized" });
+      req.user = user;
+      next();
+    });
+
+    function requireWrite(req, res, next) {
+      if (!self.config.login) return next();
+      if (!req.user || req.user.permission !== "write") {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      next();
+    }
+
     app.get("/", (req, res) => {
       res.sendFile(path.join(__dirname, "public", "admin.html"));
     });
 
     app.get("/api/people", (req, res) => res.json(people));
-    app.post("/api/people", (req, res) => {
+    app.post("/api/people", requireWrite, (req, res) => {
       const { name } = req.body;
       if (!name) return res.status(400).json({ error: "Name is required" });
 
@@ -545,7 +599,7 @@ module.exports = NodeHelper.create({
       self.sendSocketNotification("PEOPLE_UPDATE", people);
       res.status(201).json(newPerson);
     });
-    app.delete("/api/people/:id", (req, res) => {
+    app.delete("/api/people/:id", requireWrite, (req, res) => {
       const id = parseInt(req.params.id, 10);
       people = people.filter(p => p.id !== id);
       tasks  = tasks.map(t => t.assignedTo === id ? { ...t, assignedTo: null } : t);
@@ -560,7 +614,7 @@ module.exports = NodeHelper.create({
     app.get("/api/tasks", (req, res) => {
       res.json(tasks);
     });
-    app.post("/api/tasks", (req, res) => {
+    app.post("/api/tasks", requireWrite, (req, res) => {
       const now = new Date();
       const newTask = {
         id: Date.now(),
@@ -579,7 +633,7 @@ module.exports = NodeHelper.create({
     });
 
     // Reorder tasks
-    app.put("/api/tasks/reorder", (req, res) => {
+    app.put("/api/tasks/reorder", requireWrite, (req, res) => {
       const ids = req.body;
       if (!Array.isArray(ids)) {
         return res.status(400).json({ error: "Expected an array of task ids" });
@@ -620,7 +674,7 @@ module.exports = NodeHelper.create({
       }
       res.json({ success: true });
     });
-    app.put("/api/tasks/:id", (req, res) => {
+    app.put("/api/tasks/:id", requireWrite, (req, res) => {
       const id   = parseInt(req.params.id, 10);
       const task = tasks.find(t => t.id === id);
       if (!task) return res.status(404).json({ error: "Task not found" });
@@ -660,7 +714,7 @@ module.exports = NodeHelper.create({
       if (!ok) return res.status(500).json({ error: "Failed to save data" });
       res.json(task);
     });
-    app.delete("/api/tasks/:id", (req, res) => {
+    app.delete("/api/tasks/:id", requireWrite, (req, res) => {
       const id = parseInt(req.params.id, 10);
       const task = tasks.find(t => t.id === id);
       if (!task) return res.status(404).json({ error: "Task not found" });
@@ -672,7 +726,7 @@ module.exports = NodeHelper.create({
     });
 
     app.get("/api/analyticsBoards", (req, res) => res.json(analyticsBoards));
-    app.post("/api/analyticsBoards", (req, res) => {
+    app.post("/api/analyticsBoards", requireWrite, (req, res) => {
       const newBoards = req.body;
       if (!Array.isArray(newBoards)) {
         return res.status(400).json({ error: "Expected an array of board types" });
@@ -689,7 +743,7 @@ module.exports = NodeHelper.create({
       delete safeSettings.pushoverApiKey;
       res.json({ ...safeSettings, leveling: safeSettings.leveling, settings: self.config.settings });
     });
-    app.put("/api/settings", (req, res) => {
+    app.put("/api/settings", requireWrite, (req, res) => {
       const newSettings = req.body;
       const wasAutoUpdate = settings.autoUpdate;
       if (typeof newSettings !== "object") {
@@ -727,7 +781,7 @@ module.exports = NodeHelper.create({
       }
     });
 
-    app.post("/api/ai-generate", (req, res) => self.aiGenerateTasks(req, res));
+    app.post("/api/ai-generate", requireWrite, (req, res) => self.aiGenerateTasks(req, res));
 
     this.server = app.listen(port, "0.0.0.0", () => {
       Log.log(`MMM-Chores admin (HTTP) running at http://0.0.0.0:${port}`);

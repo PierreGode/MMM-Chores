@@ -12,7 +12,23 @@
   <link href="admin.css" rel="stylesheet" />
 </head>
 <body>
-  <div class="container py-4 flex-grow-1 position-relative">
+  <div id="loginContainer" class="container py-5" style="max-width:400px; display:none;">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Login</h5>
+        <div class="mb-3">
+          <input type="text" id="loginUser" class="form-control" placeholder="Username" />
+        </div>
+        <div class="mb-3">
+          <input type="password" id="loginPass" class="form-control" placeholder="Password" />
+        </div>
+        <button id="loginBtn" class="btn btn-primary w-100">Login</button>
+        <div id="loginError" class="text-danger mt-2"></div>
+      </div>
+    </div>
+  </div>
+  <div id="app" style="display:none;">
+    <div class="container py-4 flex-grow-1 position-relative">
 
     <div class="top-controls">
       <div class="theme-switch">
@@ -131,10 +147,9 @@
       </div>
 
     </div>
-  </div>
-
-  <!-- Settings Modal -->
-  <div class="modal fade" id="settingsModal" tabindex="-1">
+    
+    <!-- Settings Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content card-shadow">
         <div class="modal-header">
@@ -222,11 +237,10 @@
         </div>
       </div>
     </div>
+    <footer class="text-center py-3 small text-muted" id="footerText">
+      MMM-Chores Built by Pierre Gode
+    </footer>
   </div>
-
-  <footer class="text-center py-3 small text-muted" id="footerText">
-    MMM-Chores Built by Pierre Gode
-  </footer>
 
   <script src="lang.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
