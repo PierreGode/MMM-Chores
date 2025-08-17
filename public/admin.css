@@ -251,3 +251,18 @@ h1, h2 {
 [data-theme="dark"] #peopleList small {
   color: #fff !important;
 }
+
+/* Login overlay */
+#loginContainer {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(6px);
+  z-index: 2000;
+}
+#loginContainer .card {
+  width: 320px;
+}
