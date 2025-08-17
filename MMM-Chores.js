@@ -27,6 +27,8 @@ Module.register("MMM-Chores", {
     pushoverApiKey: "",
     pushoverUser: "",
     pushoverEnabled: false,
+    login: false,
+    users: [],
     showAnalyticsOnMirror: false, // display analytics cards on the mirror
     analyticsCards: [],           // board types selected in the admin UI
     leveling: {

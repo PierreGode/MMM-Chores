@@ -16,13 +16,67 @@ let settingsMode = 'unlocked';
 let settingsChanged = false;
 let settingsSaved = false;
 let dateFormatting = '';
+let authToken = localStorage.getItem('choresToken') || null;
+let userPermission = 'write';
+
+function authHeaders() {
+  return authToken ? { 'x-auth-token': authToken } : {};
+}
+
+function authFetch(url, options = {}) {
+  options.headers = Object.assign({}, authHeaders(), options.headers || {});
+  return fetch(url, options);
+}
+
+async function checkLogin() {
+  const app = document.getElementById('app');
+  const loginDiv = document.getElementById('loginContainer');
+  const res = await fetch('/api/login', { headers: authHeaders() });
+  const data = await res.json();
+  if (!data.loginRequired) {
+    if (app) app.style.display = '';
+    initApp();
+    return;
+  }
+  if (data.loggedIn) {
+    userPermission = data.permission || 'write';
+    if (app) app.style.display = '';
+    initApp();
+    return;
+  }
+  if (loginDiv) loginDiv.style.display = '';
+  const btn = document.getElementById('loginBtn');
+  if (btn) {
+    btn.onclick = async () => {
+      const username = document.getElementById('loginUser').value;
+      const password = document.getElementById('loginPass').value;
+      const resp = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const out = await resp.json();
+      if (resp.ok && out.token) {
+        authToken = out.token;
+        localStorage.setItem('choresToken', authToken);
+        userPermission = out.permission || 'write';
+        loginDiv.style.display = 'none';
+        if (app) app.style.display = '';
+        initApp();
+      } else {
+        const err = document.getElementById('loginError');
+        if (err) err.textContent = out.error || 'Login failed';
+      }
+    };
+  }
+}
 
 // ==========================
 // API: Hämta inställningar från backend
 // ==========================
 async function fetchUserSettings() {
   try {
-    const res = await fetch('/api/settings');
+    const res = await authFetch('/api/settings');
     if (!res.ok) throw new Error('Failed fetching user settings');
     const data = await res.json();
     return data;
@@ -37,7 +91,7 @@ async function fetchUserSettings() {
 // ==========================
 async function saveUserLanguage(lang) {
   try {
-    await fetch('/api/settings', {
+    await authFetch('/api/settings', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ language: lang })
@@ -111,7 +165,7 @@ function initSettingsForm(settings) {
       }
     };
     try {
-      const res = await fetch('/api/settings', {
+      const res = await authFetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -246,13 +300,13 @@ function setLanguage(lang) {
 // Fetch People & Tasks
 // ==========================
 async function fetchPeople() {
-  const res = await fetch("/api/people");
+  const res = await authFetch("/api/people");
   peopleCache = await res.json();
   renderPeople();
 }
 
 async function fetchTasks() {
-  const res = await fetch("/api/tasks");
+  const res = await authFetch("/api/tasks");
   tasksCache = await res.json();
   tasksCache.sort((a, b) => {
     if (a.deleted && !b.deleted) return 1;
@@ -308,13 +362,14 @@ function renderPeople() {
 
     li.appendChild(info);
 
-    const btn = document.createElement("button");
-    btn.className = "btn btn-sm btn-outline-danger";
-    btn.title = LANGUAGES[currentLang].remove;
-    btn.innerHTML = '<i class="bi bi-trash"></i>';
-    btn.onclick = () => deletePerson(person.id);
-
-    li.appendChild(btn);
+    if (userPermission === 'write') {
+      const btn = document.createElement("button");
+      btn.className = "btn btn-sm btn-outline-danger";
+      btn.title = LANGUAGES[currentLang].remove;
+      btn.innerHTML = '<i class="bi bi-trash"></i>';
+      btn.onclick = () => deletePerson(person.id);
+      li.appendChild(btn);
+    }
     list.appendChild(li);
   }
 
@@ -345,6 +400,7 @@ function formatDate(dateStr) {
 }
 
 function renderTasks() {
+  const canWrite = userPermission === 'write';
   const list = document.getElementById("taskList");
   list.innerHTML = "";
 
@@ -368,8 +424,9 @@ function renderTasks() {
     chk.type = "checkbox";
     chk.checked = task.done;
     chk.className = "form-check-input me-3";
-    chk.addEventListener("change", async () => {
-      const updateObj = { done: chk.checked };
+    if (canWrite) {
+      chk.addEventListener("change", async () => {
+        const updateObj = { done: chk.checked };
 
       const now = new Date();
       const iso = now.toISOString();
@@ -392,6 +449,9 @@ function renderTasks() {
       }
       await updateTask(task.id, updateObj);
     });
+    } else {
+      chk.disabled = true;
+    }
 
   const span = document.createElement("span");
   const formatted = formatDate(task.date);
@@ -416,39 +476,46 @@ function renderTasks() {
       if (task.assignedTo === p.id) opt.selected = true;
       select.add(opt);
     });
-    
-    select.addEventListener("change", () => {
-      const val = select.value ? parseInt(select.value) : null;
-      const updateObj = { assignedTo: val };
-      if (val !== task.assignedTo) {
-        const now = new Date();
-        const iso = now.toISOString();
-        const pad = n => n.toString().padStart(2, "0");
-        const stamp = (prefix) => (
-          prefix +
-          pad(now.getMonth() + 1) +
-          pad(now.getDate()) +
-          pad(now.getHours()) +
-          pad(now.getMinutes())
-        );
-        updateObj.assignedDate = iso;
-        updateObj.assignedDateShort = stamp("A");
-      }
-      updateTask(task.id, updateObj);
-    });
 
-    const del = document.createElement("button");
-    del.className = "btn btn-sm btn-outline-danger me-1";
-    del.title = LANGUAGES[currentLang].remove;
-    del.innerHTML = '<i class="bi bi-trash"></i>';
-    del.addEventListener("click", () => deleteTask(task.id));
+    if (canWrite) {
+      select.addEventListener("change", () => {
+        const val = select.value ? parseInt(select.value) : null;
+        const updateObj = { assignedTo: val };
+        if (val !== task.assignedTo) {
+          const now = new Date();
+          const iso = now.toISOString();
+          const pad = n => n.toString().padStart(2, "0");
+          const stamp = (prefix) => (
+            prefix +
+            pad(now.getMonth() + 1) +
+            pad(now.getDate()) +
+            pad(now.getHours()) +
+            pad(now.getMinutes())
+          );
+          updateObj.assignedDate = iso;
+          updateObj.assignedDateShort = stamp("A");
+        }
+        updateTask(task.id, updateObj);
+      });
+    } else {
+      select.disabled = true;
+    }
 
-    const dragBtn = document.createElement("button");
-    dragBtn.className = "btn btn-sm btn-outline-secondary drag-handle me-1";
-    dragBtn.innerHTML = '<i class="bi bi-list"></i>';
+    let del, dragBtn;
+    if (canWrite) {
+      del = document.createElement("button");
+      del.className = "btn btn-sm btn-outline-danger me-1";
+      del.title = LANGUAGES[currentLang].remove;
+      del.innerHTML = '<i class="bi bi-trash"></i>';
+      del.addEventListener("click", () => deleteTask(task.id));
+
+      dragBtn = document.createElement("button");
+      dragBtn.className = "btn btn-sm btn-outline-secondary drag-handle me-1";
+      dragBtn.innerHTML = '<i class="bi bi-list"></i>';
+    }
 
 
-    if (!task.done) {
+    if (canWrite && !task.done) {
       const edit = document.createElement("button");
       edit.className = "btn btn-sm btn-outline-secondary me-1";
       edit.title = LANGUAGES[currentLang].edit;
@@ -466,8 +533,10 @@ function renderTasks() {
         await updateTask(task.id, { name: newName.trim(), date: newDate });
       });
       li.append(left, select, edit, del, dragBtn);
-    } else {
+    } else if (canWrite) {
       li.append(left, select, del, dragBtn);
+    } else {
+      li.append(left, select);
     }
 
     list.appendChild(li);
@@ -476,24 +545,27 @@ function renderTasks() {
 
   if (taskSortable) {
     taskSortable.destroy();
+    taskSortable = null;
   }
-  taskSortable = new Sortable(list, {
-    handle: '.drag-handle',
-    animation: 150,
-    onEnd: async (evt) => {
-      const visible = tasksCache.filter(t => !t.deleted);
-      const moved = visible.splice(evt.oldIndex, 1)[0];
-      visible.splice(evt.newIndex, 0, moved);
-      let i = 0;
-      tasksCache = tasksCache.map(t => t.deleted ? t : visible[i++]);
-      const ids = tasksCache.filter(t => !t.deleted).map(t => t.id);
-      await fetch('/api/tasks/reorder', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(ids)
-      });
-    }
-  });
+  if (canWrite) {
+    taskSortable = new Sortable(list, {
+      handle: '.drag-handle',
+      animation: 150,
+      onEnd: async (evt) => {
+        const visible = tasksCache.filter(t => !t.deleted);
+        const moved = visible.splice(evt.oldIndex, 1)[0];
+        visible.splice(evt.newIndex, 0, moved);
+        let i = 0;
+        tasksCache = tasksCache.map(t => t.deleted ? t : visible[i++]);
+        const ids = tasksCache.filter(t => !t.deleted).map(t => t.id);
+        await authFetch('/api/tasks/reorder', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(ids)
+        });
+      }
+    });
+  }
 }
 
 function getWeekNumber(d) {
@@ -615,7 +687,7 @@ document.getElementById("personForm").addEventListener("submit", async e => {
   e.preventDefault();
   const name = document.getElementById("personName").value.trim();
   if (!name) return;
-  await fetch("/api/people", {
+  await authFetch("/api/people", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name })
@@ -644,7 +716,7 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
     pad(now.getMinutes())
   );
 
-  await fetch("/api/tasks", {
+  await authFetch("/api/tasks", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -663,7 +735,7 @@ async function updateTask(id, changes) {
   Object.keys(changes).forEach(key => {
     if (changes[key] === null) changes[key] = undefined;
   });
-  await fetch(`/api/tasks/${id}`, {
+  await authFetch(`/api/tasks/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(changes)
@@ -672,13 +744,13 @@ async function updateTask(id, changes) {
 }
 
 async function deletePerson(id) {
-  await fetch(`/api/people/${id}`, { method: "DELETE" });
+  await authFetch(`/api/people/${id}`, { method: "DELETE" });
   await fetchPeople();
   await fetchTasks();
 }
 
 async function deleteTask(id) {
-  await fetch(`/api/tasks/${id}`, { method: "DELETE" });
+  await authFetch(`/api/tasks/${id}`, { method: "DELETE" });
   await fetchTasks();
 }
 
@@ -688,7 +760,7 @@ async function deleteTask(id) {
 // ==========================
 async function fetchSavedBoards() {
   try {
-    const res = await fetch('/api/analyticsBoards');
+    const res = await authFetch('/api/analyticsBoards');
     if (!res.ok) throw new Error('Failed fetching saved boards');
     return await res.json();
   } catch (e) {
@@ -699,7 +771,7 @@ async function fetchSavedBoards() {
 
 async function saveBoards(typesArray) {
   try {
-    await fetch('/api/analyticsBoards', {
+    await authFetch('/api/analyticsBoards', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(typesArray)
@@ -1056,8 +1128,14 @@ function setIcon(theme) {
     : "bi bi-brightness-high-fill";
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
+async function initApp() {
   const userSettings = await fetchUserSettings();
+  if (userPermission !== 'write') {
+    const personForm = document.getElementById('personForm');
+    if (personForm) personForm.style.display = 'none';
+    const taskForm = document.getElementById('taskForm');
+    if (taskForm) taskForm.style.display = 'none';
+  }
   if (typeof userSettings.levelingEnabled === "boolean") {
     levelingEnabled = userSettings.levelingEnabled;
   }
@@ -1158,7 +1236,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
   }
-});
+}
+
+document.addEventListener('DOMContentLoaded', checkLogin);
 
 // ==========================
 // ====== AI GENERATE =======
@@ -1200,7 +1280,7 @@ if (aiBtn) {
     aiBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>AI...`;
 
     try {
-      const res = await fetch('/api/ai-generate', { method: "POST" });
+      const res = await authFetch('/api/ai-generate', { method: "POST" });
       const data = await res.json();
 
       if (!data.success) {
