@@ -14,7 +14,7 @@ survives page refreshes and restarts.
 The **Show past tasks** setting lets you toggle whether overdue tasks that are
 not yet completed should remain visible on the mirror. Completed past tasks are
 always hidden.
-
+*Update 2025-08-18: added option for login and send notifications to Pushover
 *Update 2025-08-04: most settings are moved to admin webpage
 
 ## Screenshots
