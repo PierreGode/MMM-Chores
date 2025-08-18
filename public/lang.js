@@ -63,7 +63,15 @@ const LANGUAGES = {
     choresPerWeekLabel: "Chores per week estimate",
     maxLevelLabel: "Max level",
     pushoverEnabledLabel: "Enable Pushover",
-    reminderTimeLabel: "Reminder time"
+    reminderTimeLabel: "Reminder time",
+    backgroundLabel: "Background",
+    backgroundOptions: {
+      none: "None",
+      forest: "Autumn",
+      winter: "Winter",
+      summer: "Summer",
+      spring: "Spring"
+    }
   },
   sv: {
     title: "MMM-Chores Admin  ",
@@ -129,7 +137,15 @@ const LANGUAGES = {
     choresPerWeekLabel: "Sysslor per vecka",
     maxLevelLabel: "Maxnivå",
     pushoverEnabledLabel: "Aktivera Pushover",
-    reminderTimeLabel: "Påminnelsetid"
+    reminderTimeLabel: "Påminnelsetid",
+    backgroundLabel: "Bakgrund",
+    backgroundOptions: {
+      none: "Ingen",
+      forest: "Höst",
+      winter: "Vinter",
+      summer: "Sommar",
+      spring: "Vår"
+    }
   },
   fr: {
     title: "MMM-Chores Admin  ",
@@ -195,7 +211,15 @@ const LANGUAGES = {
     choresPerWeekLabel: "Corvées par semaine",
     maxLevelLabel: "Niveau maximum",
     pushoverEnabledLabel: "Activer Pushover",
-    reminderTimeLabel: "Heure de rappel"
+    reminderTimeLabel: "Heure de rappel",
+    backgroundLabel: "Arrière-plan",
+    backgroundOptions: {
+      none: "Aucun",
+      forest: "Automne",
+      winter: "Hiver",
+      summer: "Été",
+      spring: "Printemps"
+    }
   },
   es: {
     title: "MMM-Chores Admin  ",
@@ -261,7 +285,15 @@ const LANGUAGES = {
     choresPerWeekLabel: "Tareas por semana",
     maxLevelLabel: "Nivel máximo",
     pushoverEnabledLabel: "Habilitar Pushover",
-    reminderTimeLabel: "Hora del recordatorio"
+    reminderTimeLabel: "Hora del recordatorio",
+    backgroundLabel: "Fondo",
+    backgroundOptions: {
+      none: "Ninguno",
+      forest: "Otoño",
+      winter: "Invierno",
+      summer: "Verano",
+      spring: "Primavera"
+    }
   },
   de: {
     title: "MMM-Chores Admin  ",
@@ -327,7 +359,15 @@ const LANGUAGES = {
     choresPerWeekLabel: "Aufgaben pro Woche",
     maxLevelLabel: "Max-Level",
     pushoverEnabledLabel: "Pushover aktivieren",
-    reminderTimeLabel: "Erinnerungszeit"
+    reminderTimeLabel: "Erinnerungszeit",
+    backgroundLabel: "Hintergrund",
+    backgroundOptions: {
+      none: "Keiner",
+      forest: "Herbst",
+      winter: "Winter",
+      summer: "Sommer",
+      spring: "Frühling"
+    }
   },
   it: {
     title: "MMM-Chores Admin  ",
@@ -393,7 +433,15 @@ const LANGUAGES = {
     choresPerWeekLabel: "Compiti per settimana",
     maxLevelLabel: "Livello massimo",
     pushoverEnabledLabel: "Abilita Pushover",
-    reminderTimeLabel: "Ora del promemoria"
+    reminderTimeLabel: "Ora del promemoria",
+    backgroundLabel: "Sfondo",
+    backgroundOptions: {
+      none: "Nessuno",
+      forest: "Autunno",
+      winter: "Inverno",
+      summer: "Estate",
+      spring: "Primavera"
+    }
   },
   nl: {
     title: "MMM-Chores Admin  ",
@@ -459,7 +507,15 @@ const LANGUAGES = {
     choresPerWeekLabel: "Klussen per week",
     maxLevelLabel: "Max level",
     pushoverEnabledLabel: "Pushover inschakelen",
-    reminderTimeLabel: "Herinneringstijd"
+    reminderTimeLabel: "Herinneringstijd",
+    backgroundLabel: "Achtergrond",
+    backgroundOptions: {
+      none: "Geen",
+      forest: "Herfst",
+      winter: "Winter",
+      summer: "Zomer",
+      spring: "Lente"
+    }
   },
   pl: {
     title: "MMM-Chores Admin  ",
@@ -525,7 +581,15 @@ const LANGUAGES = {
     choresPerWeekLabel: "Zadania na tydzień",
     maxLevelLabel: "Maks. poziom",
     pushoverEnabledLabel: "Włącz Pushover",
-    reminderTimeLabel: "Czas przypomnienia"
+    reminderTimeLabel: "Czas przypomnienia",
+    backgroundLabel: "Tło",
+    backgroundOptions: {
+      none: "Brak",
+      forest: "Jesień",
+      winter: "Zima",
+      summer: "Lato",
+      spring: "Wiosna"
+    }
   },
   zh: {
     title: "MMM-Chores 管理  ",
@@ -591,7 +655,15 @@ const LANGUAGES = {
     choresPerWeekLabel: "每周任务数预估",
     maxLevelLabel: "最高等级",
     pushoverEnabledLabel: "启用 Pushover",
-    reminderTimeLabel: "提醒时间"
+    reminderTimeLabel: "提醒时间",
+    backgroundLabel: "背景",
+    backgroundOptions: {
+      none: "无",
+      forest: "秋天",
+      winter: "冬天",
+      summer: "夏天",
+      spring: "春天"
+    }
   },
   ar: {
     title: "إدارة MMM-Chores  ",
@@ -657,6 +729,14 @@ const LANGUAGES = {
     choresPerWeekLabel: "عدد المهام أسبوعيًا",
     maxLevelLabel: "أقصى مستوى",
     pushoverEnabledLabel: "تفعيل Pushover",
-    reminderTimeLabel: "وقت التذكير"
+    reminderTimeLabel: "وقت التذكير",
+    backgroundLabel: "الخلفية",
+    backgroundOptions: {
+      none: "لا شيء",
+      forest: "الخريف",
+      winter: "الشتاء",
+      summer: "الصيف",
+      spring: "الربيع"
+    }
   }
 };

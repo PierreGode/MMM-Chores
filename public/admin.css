@@ -259,7 +259,7 @@ h1, h2 {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-image: url("img/forest.png");
+  /* Background image set dynamically via JavaScript */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

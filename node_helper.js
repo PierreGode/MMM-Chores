@@ -314,6 +314,7 @@ module.exports = NodeHelper.create({
         autoUpdate: settings.autoUpdate ?? payload.autoUpdate,
         pushoverEnabled: settings.pushoverEnabled ?? payload.pushoverEnabled,
         reminderTime: settings.reminderTime ?? payload.reminderTime,
+        background: settings.background ?? payload.background,
         levelingEnabled: settings.levelingEnabled ?? (payload.leveling?.enabled !== false),
         leveling: {
           yearsToMaxLevel: settings.leveling?.yearsToMaxLevel ?? payload.leveling?.yearsToMaxLevel,
