@@ -255,6 +255,9 @@ function setLanguage(lang) {
   if (tabs[0]) tabs[0].textContent = t.tabs[0];
   if (tabs[1]) tabs[1].textContent = t.tabs[1];
 
+  const themeToggleBtn = document.getElementById('themeToggle');
+  if (themeToggleBtn) themeToggleBtn.title = t.toggleTheme || 'Toggle theme';
+
   const settingsBtn = document.getElementById("settingsBtn");
   if (settingsBtn) settingsBtn.title = t.settingsBtnTitle || 'Settings';
   const modalTitle = document.getElementById("settingsModalLabel");
@@ -263,6 +266,27 @@ function setLanguage(lang) {
   if (saveBtn) saveBtn.textContent = t.saveButton || 'Save';
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) logoutBtn.title = t.logout || 'Logout';
+  const showPastLbl = document.querySelector("label[for='settingsShowPast']");
+  if (showPastLbl) showPastLbl.textContent = t.showPastLabel || 'Show past tasks';
+  const showAnalyticsLbl = document.querySelector("label[for='settingsShowAnalytics']");
+  if (showAnalyticsLbl) showAnalyticsLbl.textContent = t.analyticsOnMirrorLabel || 'Analytics on mirror';
+  const useAiLbl = document.querySelector("label[for='settingsUseAI']");
+  if (useAiLbl) useAiLbl.textContent = t.useAiLabel || 'Use AI features';
+  const textSizeLbl = document.querySelector("label[for='settingsTextSize']");
+  if (textSizeLbl) textSizeLbl.textContent = t.textSizeLabel || 'Mirror text size';
+  const textSizeSelect = document.getElementById('settingsTextSize');
+  if (textSizeSelect && t.textSizeOptions) {
+    Array.from(textSizeSelect.options).forEach(opt => {
+      if (t.textSizeOptions[opt.value]) opt.textContent = t.textSizeOptions[opt.value];
+    });
+  }
+  const dateFmtLbl = document.querySelector("label[for='settingsDateFmt']");
+  if (dateFmtLbl) dateFmtLbl.textContent = t.dateFormatLabel || 'Date format';
+  const dateFmtSelect = document.getElementById('settingsDateFmt');
+  if (dateFmtSelect && t.dateFormatOptions) {
+    const noneOpt = Array.from(dateFmtSelect.options).find(o => o.value === '');
+    if (noneOpt) noneOpt.textContent = t.dateFormatOptions.none;
+  }
   const levelEnableLbl = document.querySelector("label[for='settingsLevelEnable']");
   if (levelEnableLbl) levelEnableLbl.textContent = t.levelingEnabledLabel;
   const autoUpdateLbl = document.querySelector("label[for='settingsAutoUpdate']");
