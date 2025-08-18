@@ -61,13 +61,25 @@ const LANGUAGES = {
     levelingEnabledLabel: "Enable leveling",
     yearsToMaxLabel: "Years to max level",
     choresPerWeekLabel: "Chores per week estimate",
-      maxLevelLabel: "Max level",
-      pushoverEnabledLabel: "Enable Pushover",
-      reminderTimeLabel: "Reminder time",
-      logout: "Logout",
-      backgroundLabel: "Background"
+    maxLevelLabel: "Max level",
+    pushoverEnabledLabel: "Enable Pushover",
+    reminderTimeLabel: "Reminder time",
+    logout: "Logout",
+    backgroundLabel: "Background",
+    backgroundOptions: {
+      none: "No background",
+      autumn: "Autumn",
+      winter: "Winter",
+      summer: "Summer",
+      spring: "Spring"
     },
-    sv: {
+    loginTitle: "Login",
+    loginUsername: "Username",
+    loginPassword: "Password",
+    loginButton: "Login",
+    loginError: "Login failed"
+  },
+  sv: {
     title: "MMM-Chores Admin  ",
     subtitle: "Hantera uppgifter, personer & analys",
     tabs: ["Dashboard", "Analys", "Inställningar"],
@@ -129,12 +141,24 @@ const LANGUAGES = {
     levelingEnabledLabel: "Aktivera nivåsystem",
     yearsToMaxLabel: "År till maxnivå",
     choresPerWeekLabel: "Sysslor per vecka",
-      maxLevelLabel: "Maxnivå",
-      pushoverEnabledLabel: "Aktivera Pushover",
-      reminderTimeLabel: "Påminnelsetid",
-      logout: "Logga ut",
-      backgroundLabel: "Bakgrund"
+    maxLevelLabel: "Maxnivå",
+    pushoverEnabledLabel: "Aktivera Pushover",
+    reminderTimeLabel: "Påminnelsetid",
+    logout: "Logga ut",
+    backgroundLabel: "Bakgrund",
+    backgroundOptions: {
+      none: "Ingen bakgrund",
+      autumn: "Höst",
+      winter: "Vinter",
+      summer: "Sommar",
+      spring: "Vår"
     },
+    loginTitle: "Logga in",
+    loginUsername: "Användarnamn",
+    loginPassword: "Lösenord",
+    loginButton: "Logga in",
+    loginError: "Inloggning misslyckades"
+  },
   fr: {
     title: "MMM-Chores Admin  ",
     subtitle: "Gérer les tâches, les personnes et les analyses",
@@ -196,11 +220,25 @@ const LANGUAGES = {
     levelingTitle: "Niveaux",
     levelingEnabledLabel: "Activer le système de niveaux",
     yearsToMaxLabel: "Années jusqu'au niveau max",
-    choresPerWeekLabel: "Corvées par semaine",
-    maxLevelLabel: "Niveau maximum",
-    pushoverEnabledLabel: "Activer Pushover",
-    reminderTimeLabel: "Heure de rappel"
-  },
+      choresPerWeekLabel: "Corvées par semaine",
+      maxLevelLabel: "Niveau maximum",
+      pushoverEnabledLabel: "Activer Pushover",
+      reminderTimeLabel: "Heure de rappel",
+      logout: "Déconnexion",
+      backgroundLabel: "Arrière-plan",
+      backgroundOptions: {
+        none: "Pas de fond",
+        autumn: "Automne",
+        winter: "Hiver",
+        summer: "Été",
+        spring: "Printemps"
+      },
+      loginTitle: "Connexion",
+      loginUsername: "Nom d'utilisateur",
+      loginPassword: "Mot de passe",
+      loginButton: "Se connecter",
+      loginError: "Échec de la connexion"
+    },
   es: {
     title: "MMM-Chores Admin  ",
     subtitle: "Gestionar tareas, personas y análisis",
@@ -262,11 +300,25 @@ const LANGUAGES = {
     levelingTitle: "Niveles",
     levelingEnabledLabel: "Activar sistema de niveles",
     yearsToMaxLabel: "Años hasta nivel máximo",
-    choresPerWeekLabel: "Tareas por semana",
-    maxLevelLabel: "Nivel máximo",
-    pushoverEnabledLabel: "Habilitar Pushover",
-    reminderTimeLabel: "Hora del recordatorio"
-  },
+      choresPerWeekLabel: "Tareas por semana",
+      maxLevelLabel: "Nivel máximo",
+      pushoverEnabledLabel: "Habilitar Pushover",
+      reminderTimeLabel: "Hora del recordatorio",
+      logout: "Cerrar sesión",
+      backgroundLabel: "Fondo",
+      backgroundOptions: {
+        none: "Sin fondo",
+        autumn: "Otoño",
+        winter: "Invierno",
+        summer: "Verano",
+        spring: "Primavera"
+      },
+      loginTitle: "Iniciar sesión",
+      loginUsername: "Usuario",
+      loginPassword: "Contraseña",
+      loginButton: "Entrar",
+      loginError: "Error de inicio de sesión"
+    },
   de: {
     title: "MMM-Chores Admin  ",
     subtitle: "Aufgaben, Personen & Analysen verwalten",
@@ -328,11 +380,25 @@ const LANGUAGES = {
     levelingTitle: "Levelsystem",
     levelingEnabledLabel: "Levelsystem aktivieren",
     yearsToMaxLabel: "Jahre bis Max-Level",
-    choresPerWeekLabel: "Aufgaben pro Woche",
-    maxLevelLabel: "Max-Level",
-    pushoverEnabledLabel: "Pushover aktivieren",
-    reminderTimeLabel: "Erinnerungszeit"
-  },
+      choresPerWeekLabel: "Aufgaben pro Woche",
+      maxLevelLabel: "Max-Level",
+      pushoverEnabledLabel: "Pushover aktivieren",
+      reminderTimeLabel: "Erinnerungszeit",
+      logout: "Abmelden",
+      backgroundLabel: "Hintergrund",
+      backgroundOptions: {
+        none: "Kein Hintergrund",
+        autumn: "Herbst",
+        winter: "Winter",
+        summer: "Sommer",
+        spring: "Frühling"
+      },
+      loginTitle: "Anmeldung",
+      loginUsername: "Benutzername",
+      loginPassword: "Passwort",
+      loginButton: "Anmelden",
+      loginError: "Anmeldung fehlgeschlagen"
+    },
   it: {
     title: "MMM-Chores Admin  ",
     subtitle: "Gestisci compiti, persone e analisi",
@@ -394,11 +460,25 @@ const LANGUAGES = {
     levelingTitle: "Livelli",
     levelingEnabledLabel: "Abilita sistema di livelli",
     yearsToMaxLabel: "Anni al livello massimo",
-    choresPerWeekLabel: "Compiti per settimana",
-    maxLevelLabel: "Livello massimo",
-    pushoverEnabledLabel: "Abilita Pushover",
-    reminderTimeLabel: "Ora del promemoria"
-  },
+      choresPerWeekLabel: "Compiti per settimana",
+      maxLevelLabel: "Livello massimo",
+      pushoverEnabledLabel: "Abilita Pushover",
+      reminderTimeLabel: "Ora del promemoria",
+      logout: "Disconnetti",
+      backgroundLabel: "Sfondo",
+      backgroundOptions: {
+        none: "Nessuno sfondo",
+        autumn: "Autunno",
+        winter: "Inverno",
+        summer: "Estate",
+        spring: "Primavera"
+      },
+      loginTitle: "Accesso",
+      loginUsername: "Nome utente",
+      loginPassword: "Password",
+      loginButton: "Accedi",
+      loginError: "Accesso non riuscito"
+    },
   nl: {
     title: "MMM-Chores Admin  ",
     subtitle: "Beheer taken, mensen & analyses",
@@ -460,11 +540,25 @@ const LANGUAGES = {
     levelingTitle: "Niveaus",
     levelingEnabledLabel: "Levelsysteem inschakelen",
     yearsToMaxLabel: "Jaren tot max level",
-    choresPerWeekLabel: "Klussen per week",
-    maxLevelLabel: "Max level",
-    pushoverEnabledLabel: "Pushover inschakelen",
-    reminderTimeLabel: "Herinneringstijd"
-  },
+      choresPerWeekLabel: "Klussen per week",
+      maxLevelLabel: "Max level",
+      pushoverEnabledLabel: "Pushover inschakelen",
+      reminderTimeLabel: "Herinneringstijd",
+      logout: "Afmelden",
+      backgroundLabel: "Achtergrond",
+      backgroundOptions: {
+        none: "Geen achtergrond",
+        autumn: "Herfst",
+        winter: "Winter",
+        summer: "Zomer",
+        spring: "Lente"
+      },
+      loginTitle: "Inloggen",
+      loginUsername: "Gebruikersnaam",
+      loginPassword: "Wachtwoord",
+      loginButton: "Inloggen",
+      loginError: "Inloggen mislukt"
+    },
   pl: {
     title: "MMM-Chores Admin  ",
     subtitle: "Zarządzaj zadaniami, ludźmi i analizami",
@@ -526,11 +620,25 @@ const LANGUAGES = {
     levelingTitle: "Poziomy",
     levelingEnabledLabel: "Włącz system poziomów",
     yearsToMaxLabel: "Lata do maks. poziomu",
-    choresPerWeekLabel: "Zadania na tydzień",
-    maxLevelLabel: "Maks. poziom",
-    pushoverEnabledLabel: "Włącz Pushover",
-    reminderTimeLabel: "Czas przypomnienia"
-  },
+      choresPerWeekLabel: "Zadania na tydzień",
+      maxLevelLabel: "Maks. poziom",
+      pushoverEnabledLabel: "Włącz Pushover",
+      reminderTimeLabel: "Czas przypomnienia",
+      logout: "Wyloguj",
+      backgroundLabel: "Tło",
+      backgroundOptions: {
+        none: "Brak tła",
+        autumn: "Jesień",
+        winter: "Zima",
+        summer: "Lato",
+        spring: "Wiosna"
+      },
+      loginTitle: "Logowanie",
+      loginUsername: "Nazwa użytkownika",
+      loginPassword: "Hasło",
+      loginButton: "Zaloguj się",
+      loginError: "Logowanie nieudane"
+    },
   zh: {
     title: "MMM-Chores 管理  ",
     subtitle: "管理任务、人员和分析",
@@ -592,11 +700,25 @@ const LANGUAGES = {
     levelingTitle: "等级",
     levelingEnabledLabel: "启用等级系统",
     yearsToMaxLabel: "达到最高等级的年数",
-    choresPerWeekLabel: "每周任务数预估",
-    maxLevelLabel: "最高等级",
-    pushoverEnabledLabel: "启用 Pushover",
-    reminderTimeLabel: "提醒时间"
-  },
+      choresPerWeekLabel: "每周任务数预估",
+      maxLevelLabel: "最高等级",
+      pushoverEnabledLabel: "启用 Pushover",
+      reminderTimeLabel: "提醒时间",
+      logout: "退出登录",
+      backgroundLabel: "背景",
+      backgroundOptions: {
+        none: "无背景",
+        autumn: "秋季",
+        winter: "冬季",
+        summer: "夏季",
+        spring: "春季"
+      },
+      loginTitle: "登录",
+      loginUsername: "用户名",
+      loginPassword: "密码",
+      loginButton: "登录",
+      loginError: "登录失败"
+    },
   ar: {
     title: "إدارة MMM-Chores  ",
     subtitle: "إدارة المهام، الأشخاص والتحليلات",
@@ -658,9 +780,23 @@ const LANGUAGES = {
     levelingTitle: "المستويات",
     levelingEnabledLabel: "تفعيل نظام المستويات",
     yearsToMaxLabel: "السنوات حتى أعلى مستوى",
-    choresPerWeekLabel: "عدد المهام أسبوعيًا",
-    maxLevelLabel: "أقصى مستوى",
-    pushoverEnabledLabel: "تفعيل Pushover",
-    reminderTimeLabel: "وقت التذكير"
-  }
-};
+      choresPerWeekLabel: "عدد المهام أسبوعيًا",
+      maxLevelLabel: "أقصى مستوى",
+      pushoverEnabledLabel: "تفعيل Pushover",
+      reminderTimeLabel: "وقت التذكير",
+      logout: "تسجيل الخروج",
+      backgroundLabel: "الخلفية",
+      backgroundOptions: {
+        none: "بدون خلفية",
+        autumn: "الخريف",
+        winter: "الشتاء",
+        summer: "الصيف",
+        spring: "الربيع"
+      },
+      loginTitle: "تسجيل الدخول",
+      loginUsername: "اسم المستخدم",
+      loginPassword: "كلمة المرور",
+      loginButton: "تسجيل الدخول",
+      loginError: "فشل تسجيل الدخول"
+    }
+  };
