@@ -500,6 +500,26 @@ function formatDate(dateStr) {
   return fmt;
 }
 
+function calculateAssigneeWidth() {
+  const names = peopleCache.map(p => p.name);
+  if (LANGUAGES[currentLang] && LANGUAGES[currentLang].unassigned) {
+    names.push(LANGUAGES[currentLang].unassigned);
+  }
+  const longest = names.reduce((a, b) => (b.length > a.length ? b : a), "");
+  if (!longest) return 0;
+  const temp = document.createElement("select");
+  temp.className = "form-select";
+  temp.style.visibility = "hidden";
+  temp.style.position = "absolute";
+  temp.style.width = "auto";
+  const opt = new Option(longest, "");
+  temp.add(opt);
+  document.body.appendChild(temp);
+  const width = temp.getBoundingClientRect().width;
+  document.body.removeChild(temp);
+  return width;
+}
+
 function renderTasks() {
   const canWrite = userPermission === 'write';
   const list = document.getElementById("taskList");
@@ -513,13 +533,16 @@ function renderTasks() {
     return;
   }
 
+  const selectWidth = calculateAssigneeWidth();
+
   for (const task of tasksCache.filter(t => !t.deleted)) {
     const li = document.createElement("li");
-    li.className = "list-group-item d-flex justify-content-between align-items-center";
+    li.className = "list-group-item d-flex align-items-center";
     li.dataset.id = task.id;
 
     const left = document.createElement("div");
-    left.className = "d-flex align-items-center";
+    left.className = "d-flex align-items-center flex-grow-1";
+    left.style.minWidth = "0";
 
     const chk = document.createElement("input");
     chk.type = "checkbox";
@@ -555,6 +578,8 @@ function renderTasks() {
     }
 
   const span = document.createElement("span");
+  span.className = "flex-grow-1";
+  span.style.minWidth = "0";
   const formatted = formatDate(task.date);
   span.innerHTML = `<strong>${task.name}</strong>`;
   if (formatted) {
@@ -571,6 +596,10 @@ function renderTasks() {
 
     const select = document.createElement("select");
     select.className = "form-select mx-3";
+    if (selectWidth) {
+      select.style.width = `${selectWidth}px`;
+      select.style.minWidth = `${selectWidth}px`;
+    }
     select.add(new Option(LANGUAGES[currentLang].unassigned, ""));
     peopleCache.forEach(p => {
       const opt = new Option(p.name, p.id);
