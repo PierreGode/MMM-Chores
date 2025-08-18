@@ -18,6 +18,7 @@ let settingsSaved = false;
 let dateFormatting = '';
 let authToken = localStorage.getItem('choresToken') || null;
 let userPermission = 'write';
+let loginEnabled = true;
 
 function authHeaders() {
   return authToken ? { 'x-auth-token': authToken } : {};
@@ -55,7 +56,10 @@ async function checkLogin() {
   const loginDiv = document.getElementById('loginContainer');
   const res = await fetch('/api/login', { headers: authHeaders() });
   const data = await res.json();
-  if (!data.loginRequired) {
+  loginEnabled = data.loginRequired;
+  if (!loginEnabled) {
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) logoutBtn.style.display = 'none';
     if (loginDiv) loginDiv.style.display = 'none';
     if (app) app.style.display = '';
     initApp();
@@ -1274,7 +1278,9 @@ async function initApp() {
   }
 
   const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) {
+  if (!loginEnabled) {
+    if (logoutBtn) logoutBtn.style.display = 'none';
+  } else if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
       try { await authFetch('/api/logout', { method: 'POST' }); } catch (e) {}
       localStorage.removeItem('choresToken');
