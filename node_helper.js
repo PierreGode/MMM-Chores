@@ -312,11 +312,12 @@ module.exports = NodeHelper.create({
         showAnalyticsOnMirror: settings.showAnalyticsOnMirror ?? payload.showAnalyticsOnMirror,
         useAI: settings.useAI ?? payload.useAI,
         autoUpdate: settings.autoUpdate ?? payload.autoUpdate,
-        pushoverEnabled: settings.pushoverEnabled ?? payload.pushoverEnabled,
-        reminderTime: settings.reminderTime ?? payload.reminderTime,
-        levelingEnabled: settings.levelingEnabled ?? (payload.leveling?.enabled !== false),
-        leveling: {
-          yearsToMaxLevel: settings.leveling?.yearsToMaxLevel ?? payload.leveling?.yearsToMaxLevel,
+          pushoverEnabled: settings.pushoverEnabled ?? payload.pushoverEnabled,
+          reminderTime: settings.reminderTime ?? payload.reminderTime,
+          background: settings.background ?? payload.background ?? 'forest.png',
+          levelingEnabled: settings.levelingEnabled ?? (payload.leveling?.enabled !== false),
+          leveling: {
+            yearsToMaxLevel: settings.leveling?.yearsToMaxLevel ?? payload.leveling?.yearsToMaxLevel,
           choresPerWeekEstimate: settings.leveling?.choresPerWeekEstimate ?? payload.leveling?.choresPerWeekEstimate,
           maxLevel: settings.leveling?.maxLevel ?? payload.leveling?.maxLevel
         }
@@ -583,15 +584,22 @@ module.exports = NodeHelper.create({
       res.json({ token, permission: user.permission });
     });
 
-    app.get("/api/login", (req, res) => {
-      if (!self.config.login) return res.json({ loginRequired: false });
-      const token = req.headers["x-auth-token"];
-      const user = sessions[token];
-      if (user) {
-        return res.json({ loginRequired: true, loggedIn: true, permission: user.permission });
-      }
-      res.json({ loginRequired: true, loggedIn: false });
-    });
+      app.get("/api/login", (req, res) => {
+        if (!self.config.login) return res.json({ loginRequired: false });
+        const token = req.headers["x-auth-token"];
+        const user = sessions[token];
+        if (user) {
+          return res.json({ loginRequired: true, loggedIn: true, permission: user.permission });
+        }
+        res.json({ loginRequired: true, loggedIn: false });
+      });
+
+      app.post("/api/logout", (req, res) => {
+        if (!self.config.login) return res.json({ success: true });
+        const token = req.headers["x-auth-token"];
+        if (token && sessions[token]) delete sessions[token];
+        res.json({ success: true });
+      });
 
     app.use((req, res, next) => {
       if (!self.config.login) return next();

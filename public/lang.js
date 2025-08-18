@@ -61,11 +61,13 @@ const LANGUAGES = {
     levelingEnabledLabel: "Enable leveling",
     yearsToMaxLabel: "Years to max level",
     choresPerWeekLabel: "Chores per week estimate",
-    maxLevelLabel: "Max level",
-    pushoverEnabledLabel: "Enable Pushover",
-    reminderTimeLabel: "Reminder time"
-  },
-  sv: {
+      maxLevelLabel: "Max level",
+      pushoverEnabledLabel: "Enable Pushover",
+      reminderTimeLabel: "Reminder time",
+      logout: "Logout",
+      backgroundLabel: "Background"
+    },
+    sv: {
     title: "MMM-Chores Admin  ",
     subtitle: "Hantera uppgifter, personer & analys",
     tabs: ["Dashboard", "Analys", "Inställningar"],
@@ -127,10 +129,12 @@ const LANGUAGES = {
     levelingEnabledLabel: "Aktivera nivåsystem",
     yearsToMaxLabel: "År till maxnivå",
     choresPerWeekLabel: "Sysslor per vecka",
-    maxLevelLabel: "Maxnivå",
-    pushoverEnabledLabel: "Aktivera Pushover",
-    reminderTimeLabel: "Påminnelsetid"
-  },
+      maxLevelLabel: "Maxnivå",
+      pushoverEnabledLabel: "Aktivera Pushover",
+      reminderTimeLabel: "Påminnelsetid",
+      logout: "Logga ut",
+      backgroundLabel: "Bakgrund"
+    },
   fr: {
     title: "MMM-Chores Admin  ",
     subtitle: "Gérer les tâches, les personnes et les analyses",

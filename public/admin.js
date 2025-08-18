@@ -28,7 +28,29 @@ function authFetch(url, options = {}) {
   return fetch(url, options);
 }
 
+function setBackground(image) {
+  const body = document.body;
+  const loginDiv = document.getElementById('loginContainer');
+  if (image) {
+    const url = `img/${image}`;
+    if (body) {
+      body.style.backgroundImage = `url('${url}')`;
+      body.style.backgroundSize = 'cover';
+      body.style.backgroundRepeat = 'no-repeat';
+      body.style.backgroundPosition = 'center';
+    }
+    if (loginDiv) {
+      loginDiv.style.backgroundImage = `url('${url}')`;
+    }
+  } else {
+    if (body) body.style.backgroundImage = '';
+    if (loginDiv) loginDiv.style.backgroundImage = 'none';
+  }
+}
+
 async function checkLogin() {
+  const savedBg = localStorage.getItem('choresBackground');
+  setBackground(savedBg === null ? 'forest.png' : savedBg);
   const app = document.getElementById('app');
   const loginDiv = document.getElementById('loginContainer');
   const res = await fetch('/api/login', { headers: authHeaders() });
@@ -116,12 +138,13 @@ function initSettingsForm(settings) {
   const useAI = document.getElementById('settingsUseAI');
   const showAnalytics = document.getElementById('settingsShowAnalytics');
   const levelEnable = document.getElementById('settingsLevelEnable');
-  const autoUpdate = document.getElementById('settingsAutoUpdate');
-  const pushoverEnable = document.getElementById('settingsPushoverEnable');
-  const reminderTime = document.getElementById('settingsReminderTime');
-  const yearsInput = document.getElementById('settingsYears');
-  const perWeekInput = document.getElementById('settingsPerWeek');
-  const maxLevelInput = document.getElementById('settingsMaxLevel');
+    const autoUpdate = document.getElementById('settingsAutoUpdate');
+    const pushoverEnable = document.getElementById('settingsPushoverEnable');
+    const reminderTime = document.getElementById('settingsReminderTime');
+    const yearsInput = document.getElementById('settingsYears');
+    const perWeekInput = document.getElementById('settingsPerWeek');
+    const maxLevelInput = document.getElementById('settingsMaxLevel');
+    const backgroundSelect = document.getElementById('settingsBackground');
 
   if (showPast) showPast.checked = !!settings.showPast;
   if (textSize) textSize.value = settings.textMirrorSize || 'small';
@@ -131,15 +154,16 @@ function initSettingsForm(settings) {
   if (levelEnable) levelEnable.checked = settings.levelingEnabled !== false;
   if (autoUpdate) autoUpdate.checked = !!settings.autoUpdate;
   if (pushoverEnable) pushoverEnable.checked = !!settings.pushoverEnabled;
-  if (reminderTime) reminderTime.value = settings.reminderTime || '';
-  if (yearsInput) yearsInput.value = settings.leveling?.yearsToMaxLevel || 3;
-  if (perWeekInput) perWeekInput.value = settings.leveling?.choresPerWeekEstimate || 4;
-  if (maxLevelInput) maxLevelInput.value = settings.leveling?.maxLevel || 100;
+    if (reminderTime) reminderTime.value = settings.reminderTime || '';
+    if (yearsInput) yearsInput.value = settings.leveling?.yearsToMaxLevel || 3;
+    if (perWeekInput) perWeekInput.value = settings.leveling?.choresPerWeekEstimate || 4;
+    if (maxLevelInput) maxLevelInput.value = settings.leveling?.maxLevel || 100;
+    if (backgroundSelect) backgroundSelect.value = settings.background || 'forest.png';
 
   settingsChanged = false;
   settingsSaved = false;
 
-  const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, pushoverEnable, reminderTime, yearsInput, perWeekInput, maxLevelInput];
+    const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, pushoverEnable, reminderTime, yearsInput, perWeekInput, maxLevelInput, backgroundSelect];
   inputs.forEach(el => {
     if (el) {
       el.addEventListener('input', () => { settingsChanged = true; });
@@ -150,22 +174,23 @@ function initSettingsForm(settings) {
   form.addEventListener('submit', async e => {
     e.preventDefault();
     settingsSaved = true;
-    const payload = {
-      showPast: showPast.checked,
-      textMirrorSize: textSize.value,
-      dateFormatting: dateFmt.value,
-      useAI: useAI.checked,
-      showAnalyticsOnMirror: showAnalytics.checked,
-      levelingEnabled: levelEnable.checked,
-      autoUpdate: autoUpdate.checked,
-      pushoverEnabled: pushoverEnable.checked,
-      reminderTime: reminderTime.value,
-      leveling: {
-        yearsToMaxLevel: parseFloat(yearsInput.value) || 3,
-        choresPerWeekEstimate: parseFloat(perWeekInput.value) || 4,
-        maxLevel: parseInt(maxLevelInput.value, 10) || 100
-      }
-    };
+      const payload = {
+        showPast: showPast.checked,
+        textMirrorSize: textSize.value,
+        dateFormatting: dateFmt.value,
+        useAI: useAI.checked,
+        showAnalyticsOnMirror: showAnalytics.checked,
+        levelingEnabled: levelEnable.checked,
+        autoUpdate: autoUpdate.checked,
+        pushoverEnabled: pushoverEnable.checked,
+        reminderTime: reminderTime.value,
+        background: backgroundSelect.value,
+        leveling: {
+          yearsToMaxLevel: parseFloat(yearsInput.value) || 3,
+          choresPerWeekEstimate: parseFloat(perWeekInput.value) || 4,
+          maxLevel: parseInt(maxLevelInput.value, 10) || 100
+        }
+      };
     try {
       const res = await authFetch('/api/settings', {
         method: 'PUT',
@@ -222,6 +247,8 @@ function setLanguage(lang) {
   if (modalTitle) modalTitle.textContent = t.settingsTitle || 'Settings';
   const saveBtn = document.getElementById("settingsSaveBtn");
   if (saveBtn) saveBtn.textContent = t.saveButton || 'Save';
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) logoutBtn.title = t.logout || 'Logout';
   const levelEnableLbl = document.querySelector("label[for='settingsLevelEnable']");
   if (levelEnableLbl) levelEnableLbl.textContent = t.levelingEnabledLabel;
   const autoUpdateLbl = document.querySelector("label[for='settingsAutoUpdate']");
@@ -230,6 +257,8 @@ function setLanguage(lang) {
   if (pushoverEnableLbl) pushoverEnableLbl.textContent = t.pushoverEnabledLabel || 'Enable Pushover';
   const reminderTimeLbl = document.querySelector("label[for='settingsReminderTime']");
   if (reminderTimeLbl) reminderTimeLbl.textContent = t.reminderTimeLabel || 'Reminder time';
+  const backgroundLbl = document.querySelector("label[for='settingsBackground']");
+  if (backgroundLbl) backgroundLbl.textContent = t.backgroundLabel || 'Background';
   const yearsLbl = document.querySelector("label[for='settingsYears']");
   if (yearsLbl) yearsLbl.textContent = t.yearsToMaxLabel;
   const perWeekLbl = document.querySelector("label[for='settingsPerWeek']");
@@ -329,6 +358,10 @@ async function applySettings(newSettings) {
   }
   if (newSettings.dateFormatting !== undefined) {
     dateFormatting = newSettings.dateFormatting;
+  }
+  if (newSettings.background !== undefined) {
+    setBackground(newSettings.background);
+    localStorage.setItem('choresBackground', newSettings.background || '');
   }
   await fetchPeople();
   await fetchTasks();
@@ -1178,16 +1211,24 @@ async function initApp() {
     aiButton.style.display = "none";
   }
 
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+      try { await authFetch('/api/logout', { method: 'POST' }); } catch (e) {}
+      localStorage.removeItem('choresToken');
+      window.location.reload();
+    });
+  }
+
   initSettingsForm(userSettings);
 
   setLanguage(currentLang);
-  await fetchPeople();
-  await fetchTasks();
+  await applySettings(userSettings);
 
   const savedBoards = await fetchSavedBoards();
-  if (savedBoards.length) {
-    savedBoards.forEach(type => addChart(type));
-  }
+    if (savedBoards.length) {
+      savedBoards.forEach(type => addChart(type));
+    }
 
   const settingsBtn = document.getElementById("settingsBtn");
   const settingsModalEl = document.getElementById("settingsModal");
