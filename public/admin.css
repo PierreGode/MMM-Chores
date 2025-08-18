@@ -192,13 +192,14 @@ h1, h2 {
   border-radius: 2em;
 }
 
-/* Fixed width for assignee dropdowns */
+/* Wider assignee dropdown with 100px compressible width */
 .task-assign-select {
-  width: 120px;
-  flex: 0 0 120px;
+  width: 240px;
+  flex: 0 1 240px;
+  min-width: 140px;
 }
 
-/* Task row layout: dynamic left, solid right */
+/* Task row layout: dynamic left, mostly fixed right */
 .task-left {
   flex: 1 1 auto;
   min-width: 0;
@@ -212,7 +213,7 @@ h1, h2 {
 }
 
 .task-actions {
-  flex-shrink: 0;
+  flex: 0 1 auto;
 }
 
 /* Drag handle */
