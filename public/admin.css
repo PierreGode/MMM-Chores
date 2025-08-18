@@ -177,15 +177,25 @@ h1, h2 {
   color: var(--text);
 }
 
-/* Oversized checkboxes */
+/* Consistent checkbox size */
 .form-check-input {
-  appearance: auto;
-  -webkit-appearance: checkbox;
-  -moz-appearance: checkbox;
-  width: 1.4rem;
-  height: 1.4rem;
-  border-radius: 0.25rem !important;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 0.25rem;
   border: 1px solid var(--text);
+}
+
+/* Preserve switch proportions */
+.form-switch .form-check-input {
+  width: 2em;
+  height: 1em;
+  border-radius: 2em;
+}
+
+/* Fixed width for assignee dropdowns */
+.task-assign-select {
+  width: 120px;
+  flex: 0 0 120px;
 }
 
 /* Drag handle */

@@ -570,7 +570,7 @@ function renderTasks() {
     left.appendChild(span);
 
     const select = document.createElement("select");
-    select.className = "form-select mx-3";
+    select.className = "form-select mx-3 task-assign-select";
     select.add(new Option(LANGUAGES[currentLang].unassigned, ""));
     peopleCache.forEach(p => {
       const opt = new Option(p.name, p.id);
