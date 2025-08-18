@@ -88,7 +88,10 @@ function scheduleReminder(self) {
   Log.log(`Pushover reminder scheduled for ${next.toString()}`);
   reminderTimer = setTimeout(() => {
     reminderTimer = null;
-    const unfinished = tasks.filter(t => !t.done && !t.deleted);
+    const todayStr = getLocalISO(new Date()).slice(0, 10);
+    const unfinished = tasks.filter(
+      t => !t.done && !t.deleted && t.date && t.date <= todayStr
+    );
     if (unfinished.length) {
       const list = unfinished.map(t => `• ${t.name}`).join("\n");
       sendPushover(self.config, settings, `Uncompleted tasks:\n${list}`);
