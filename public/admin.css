@@ -259,10 +259,7 @@ h1, h2 {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-image: url("../img/forest.png");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background: url("/img/forest.png") center/cover no-repeat;
   z-index: 2000;
 }
 #loginContainer .card {

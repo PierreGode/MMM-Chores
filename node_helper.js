@@ -563,6 +563,7 @@ module.exports = NodeHelper.create({
 
     app.use(bodyParser.json());
     app.use(express.static(path.join(__dirname, "public")));
+    app.use("/img", express.static(path.join(__dirname, "img")));
 
     const users = Array.isArray(self.config.users) ? self.config.users : [];
     if (self.config.login) {
