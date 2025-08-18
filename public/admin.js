@@ -89,7 +89,7 @@ async function checkLogin() {
         initApp();
       } else {
         const err = document.getElementById('loginError');
-        if (err) err.textContent = out.error || 'Login failed';
+        if (err) err.textContent = out.error || LANGUAGES[currentLang].loginError || 'Login failed';
       }
     };
   }
@@ -223,6 +223,7 @@ function setLanguage(lang) {
   if (!LANGUAGES[lang]) return;
   currentLang = lang;
   localStorage.setItem("mmm-chores-lang", lang);
+  document.documentElement.setAttribute('lang', lang);
 
   const t = LANGUAGES[lang];
 
@@ -236,6 +237,19 @@ function setLanguage(lang) {
 
   document.querySelector(".hero h1").textContent = t.title;
   document.querySelector(".hero small").textContent = t.subtitle;
+
+  const loginTitle = document.querySelector('#loginContainer h2');
+  if (loginTitle) loginTitle.textContent = t.loginTitle || 'Login';
+  const loginUserLbl = document.querySelector("label[for='loginUser']");
+  if (loginUserLbl) loginUserLbl.textContent = t.loginUsername || 'Username';
+  const loginUserInput = document.getElementById('loginUser');
+  if (loginUserInput) loginUserInput.placeholder = t.loginUsername || 'Username';
+  const loginPassLbl = document.querySelector("label[for='loginPass']");
+  if (loginPassLbl) loginPassLbl.textContent = t.loginPassword || 'Password';
+  const loginPassInput = document.getElementById('loginPass');
+  if (loginPassInput) loginPassInput.placeholder = t.loginPassword || 'Password';
+  const loginBtnEl = document.getElementById('loginBtn');
+  if (loginBtnEl) loginBtnEl.textContent = t.loginButton || 'Login';
 
   const tabs = document.querySelectorAll(".nav-link");
   if (tabs[0]) tabs[0].textContent = t.tabs[0];
@@ -259,6 +273,30 @@ function setLanguage(lang) {
   if (reminderTimeLbl) reminderTimeLbl.textContent = t.reminderTimeLabel || 'Reminder time';
   const backgroundLbl = document.querySelector("label[for='settingsBackground']");
   if (backgroundLbl) backgroundLbl.textContent = t.backgroundLabel || 'Background';
+  const backgroundSelect = document.getElementById('settingsBackground');
+  if (backgroundSelect && t.backgroundOptions) {
+    Array.from(backgroundSelect.options).forEach(opt => {
+      let key;
+      switch (opt.value) {
+        case "":
+          key = 'none';
+          break;
+        case 'forest.png':
+          key = 'autumn';
+          break;
+        case 'winter.png':
+          key = 'winter';
+          break;
+        case 'summer.png':
+          key = 'summer';
+          break;
+        case 'spring.png':
+          key = 'spring';
+          break;
+      }
+      if (key && t.backgroundOptions[key]) opt.textContent = t.backgroundOptions[key];
+    });
+  }
   const yearsLbl = document.querySelector("label[for='settingsYears']");
   if (yearsLbl) yearsLbl.textContent = t.yearsToMaxLabel;
   const perWeekLbl = document.querySelector("label[for='settingsPerWeek']");
@@ -1281,7 +1319,11 @@ async function initApp() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', checkLogin);
+document.addEventListener('DOMContentLoaded', () => {
+  currentLang = localStorage.getItem('mmm-chores-lang') || currentLang;
+  setLanguage(currentLang);
+  checkLogin();
+});
 
 // ==========================
 // ====== AI GENERATE =======
