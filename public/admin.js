@@ -515,7 +515,7 @@ function renderTasks() {
 
   for (const task of tasksCache.filter(t => !t.deleted)) {
     const li = document.createElement("li");
-    li.className = "list-group-item d-flex justify-content-between align-items-center";
+    li.className = "list-group-item d-flex align-items-center";
     li.dataset.id = task.id;
 
     const left = document.createElement("div");
@@ -569,8 +569,11 @@ function renderTasks() {
     left.appendChild(chk);
     left.appendChild(span);
 
+    const actions = document.createElement("div");
+    actions.className = "d-flex align-items-center ms-auto";
+
     const select = document.createElement("select");
-    select.className = "form-select mx-3 task-assign-select";
+    select.className = "form-select task-assign-select me-2";
     select.add(new Option(LANGUAGES[currentLang].unassigned, ""));
     peopleCache.forEach(p => {
       const opt = new Option(p.name, p.id);
@@ -602,6 +605,8 @@ function renderTasks() {
       select.disabled = true;
     }
 
+    actions.appendChild(select);
+
     let del, dragBtn;
     if (canWrite) {
       del = document.createElement("button");
@@ -611,7 +616,7 @@ function renderTasks() {
       del.addEventListener("click", () => deleteTask(task.id));
 
       dragBtn = document.createElement("button");
-      dragBtn.className = "btn btn-sm btn-outline-secondary drag-handle me-1";
+      dragBtn.className = "btn btn-sm btn-outline-secondary drag-handle";
       dragBtn.innerHTML = '<i class="bi bi-list"></i>';
     }
 
@@ -633,11 +638,13 @@ function renderTasks() {
         }
         await updateTask(task.id, { name: newName.trim(), date: newDate });
       });
-      li.append(left, select, edit, del, dragBtn);
+      actions.append(edit, del, dragBtn);
+      li.append(left, actions);
     } else if (canWrite) {
-      li.append(left, select, del, dragBtn);
+      actions.append(del, dragBtn);
+      li.append(left, actions);
     } else {
-      li.append(left, select);
+      li.append(left, actions);
     }
 
     list.appendChild(li);
