@@ -198,6 +198,23 @@ h1, h2 {
   flex: 0 0 120px;
 }
 
+/* Task row layout: dynamic left, solid right */
+.task-left {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.task-name {
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-actions {
+  flex-shrink: 0;
+}
+
 /* Drag handle */
 .drag-handle {
   cursor: grab;

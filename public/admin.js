@@ -519,7 +519,7 @@ function renderTasks() {
     li.dataset.id = task.id;
 
     const left = document.createElement("div");
-    left.className = "d-flex align-items-center";
+    left.className = "d-flex align-items-center task-left";
 
     const chk = document.createElement("input");
     chk.type = "checkbox";
@@ -555,6 +555,7 @@ function renderTasks() {
     }
 
   const span = document.createElement("span");
+  span.className = "task-name";
   const formatted = formatDate(task.date);
   span.innerHTML = `<strong>${task.name}</strong>`;
   if (formatted) {
@@ -570,7 +571,7 @@ function renderTasks() {
     left.appendChild(span);
 
     const actions = document.createElement("div");
-    actions.className = "d-flex align-items-center ms-auto";
+    actions.className = "d-flex align-items-center ms-auto task-actions";
 
     const select = document.createElement("select");
     select.className = "form-select task-assign-select me-2";
