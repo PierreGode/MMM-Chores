@@ -43,6 +43,7 @@ npm install
 La mayoría de los ajustes ahora se pueden editar en el portal de administración mediante el botón de engranaje **Settings**.
 Una opción adicional **Enable autoupdate** puede obtener los últimos cambios mediante `git pull` y recargar el módulo automáticamente. Las actualizaciones automáticas se ejecutan una vez al día a las **04:00** hora local.
 Las notificaciones de Pushover se pueden activar o desactivar desde el portal de administración, mientras que `pushoverApiKey` y `pushoverUser` deben definirse en tu `config.js` de MagicMirror.
+También puedes especificar una hora de recordatorio diaria en la configuración del administrador para recibir un mensaje de Pushover con las tareas sin completar vencidas hoy o antes.
 Añade el módulo a `config.js` así:
 ```js
 {
