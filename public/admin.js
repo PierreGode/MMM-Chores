@@ -118,7 +118,6 @@ function initSettingsForm(settings) {
   const levelEnable = document.getElementById('settingsLevelEnable');
   const autoUpdate = document.getElementById('settingsAutoUpdate');
   const pushoverEnable = document.getElementById('settingsPushoverEnable');
-  const pushoverUser = document.getElementById('settingsPushoverUser');
   const yearsInput = document.getElementById('settingsYears');
   const perWeekInput = document.getElementById('settingsPerWeek');
   const maxLevelInput = document.getElementById('settingsMaxLevel');
@@ -131,7 +130,6 @@ function initSettingsForm(settings) {
   if (levelEnable) levelEnable.checked = settings.levelingEnabled !== false;
   if (autoUpdate) autoUpdate.checked = !!settings.autoUpdate;
   if (pushoverEnable) pushoverEnable.checked = !!settings.pushoverEnabled;
-  if (pushoverUser) pushoverUser.value = settings.pushoverUser || '';
   if (yearsInput) yearsInput.value = settings.leveling?.yearsToMaxLevel || 3;
   if (perWeekInput) perWeekInput.value = settings.leveling?.choresPerWeekEstimate || 4;
   if (maxLevelInput) maxLevelInput.value = settings.leveling?.maxLevel || 100;
@@ -139,7 +137,7 @@ function initSettingsForm(settings) {
   settingsChanged = false;
   settingsSaved = false;
 
-  const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, pushoverEnable, pushoverUser, yearsInput, perWeekInput, maxLevelInput];
+  const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, pushoverEnable, yearsInput, perWeekInput, maxLevelInput];
   inputs.forEach(el => {
     if (el) {
       el.addEventListener('input', () => { settingsChanged = true; });
@@ -159,7 +157,6 @@ function initSettingsForm(settings) {
       levelingEnabled: levelEnable.checked,
       autoUpdate: autoUpdate.checked,
       pushoverEnabled: pushoverEnable.checked,
-      pushoverUser: pushoverUser.value,
       leveling: {
         yearsToMaxLevel: parseFloat(yearsInput.value) || 3,
         choresPerWeekEstimate: parseFloat(perWeekInput.value) || 4,
@@ -228,8 +225,6 @@ function setLanguage(lang) {
   if (autoUpdateLbl) autoUpdateLbl.textContent = t.autoUpdateLabel || 'Enable autoupdate';
   const pushoverEnableLbl = document.querySelector("label[for='settingsPushoverEnable']");
   if (pushoverEnableLbl) pushoverEnableLbl.textContent = t.pushoverEnabledLabel || 'Enable Pushover';
-  const pushoverUserLbl = document.querySelector("label[for='settingsPushoverUser']");
-  if (pushoverUserLbl) pushoverUserLbl.textContent = t.pushoverUserLabel || 'Pushover User Key';
   const yearsLbl = document.querySelector("label[for='settingsYears']");
   if (yearsLbl) yearsLbl.textContent = t.yearsToMaxLabel;
   const perWeekLbl = document.querySelector("label[for='settingsPerWeek']");

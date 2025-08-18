@@ -44,7 +44,7 @@ npm install
 ## Configuration
 Most settings are now editable in the admin portal via the cogwheel **Settings** button.
 An additional option **Enable autoupdate** can pull the latest changes via `git pull` and reload the module automatically and Autoupdates run once per day at **04:00** local time.
-Pushover notifications can also be managed from the admin portal (user key and toggle), while the `pushoverApiKey` must be defined in your MagicMirror `config.js`.
+Pushover notifications can be toggled from the admin portal, while the `pushoverApiKey` and `pushoverUser` must be defined in your MagicMirror `config.js`.
 Add the module to `config.js` like so:
 ```js
 {
@@ -56,6 +56,7 @@ Add the module to `config.js` like so:
     adminPort: 5003,
     openaiApiKey: "your-openApi-key here",
     pushoverApiKey: "your-pushover-api-key",
+    pushoverUser: "your-pushover-user-key",
     login: false,
     users: [
       { username: "admin", password: "secret", permission: "write" },
@@ -155,7 +156,7 @@ Go to http://yourmirrorIP:5003/ #page will be reachable within same network.
 ## Push Notifications
 
 If you wish to use push notifications follow guide below.
-Alternatively, you can use [Pushover](https://pushover.net/) by providing a `pushoverApiKey` in your module config and enabling Pushover with a user key from the admin settings.
+Alternatively, you can use [Pushover](https://pushover.net/) by providing both a `pushoverApiKey` and `pushoverUser` in your module config and enabling Pushover in the admin settings.
 
 ![cert](img/screenshot3_cert.png)
 

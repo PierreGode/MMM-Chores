@@ -69,10 +69,10 @@ function scheduleAutoUpdate() {
 }
 
 function sendPushover(config, settings, message) {
-  if (!config.pushoverApiKey || !settings.pushoverEnabled || !settings.pushoverUser) return;
+  if (!config.pushoverApiKey || !settings.pushoverEnabled || !config.pushoverUser) return;
   const params = new URLSearchParams({
     token: config.pushoverApiKey,
-    user: settings.pushoverUser,
+    user: config.pushoverUser,
     message
   });
   fetchFn("https://api.pushover.net/1/messages.json", {
@@ -108,6 +108,7 @@ function loadData() {
       settings        = j.settings        || {};
       if (settings.openaiApiKey !== undefined) delete settings.openaiApiKey;
       if (settings.pushoverApiKey !== undefined) delete settings.pushoverApiKey;
+      if (settings.pushoverUser !== undefined) delete settings.pushoverUser;
 
       updatePeopleLevels({});
 
@@ -282,7 +283,6 @@ module.exports = NodeHelper.create({
         useAI: settings.useAI ?? payload.useAI,
         autoUpdate: settings.autoUpdate ?? payload.autoUpdate,
         pushoverEnabled: settings.pushoverEnabled ?? payload.pushoverEnabled,
-        pushoverUser: settings.pushoverUser ?? payload.pushoverUser,
         levelingEnabled: settings.levelingEnabled ?? (payload.leveling?.enabled !== false),
         leveling: {
           yearsToMaxLevel: settings.leveling?.yearsToMaxLevel ?? payload.leveling?.yearsToMaxLevel,
@@ -743,6 +743,7 @@ module.exports = NodeHelper.create({
       const safeSettings = { ...settings };
       delete safeSettings.openaiApiKey;
       delete safeSettings.pushoverApiKey;
+      delete safeSettings.pushoverUser;
       res.json({ ...safeSettings, leveling: safeSettings.leveling, settings: self.config.settings });
     });
     app.put("/api/settings", requireWrite, (req, res) => {
@@ -756,7 +757,7 @@ module.exports = NodeHelper.create({
         self.config.leveling = { ...self.config.leveling, ...newSettings.leveling };
       }
       Object.entries(newSettings).forEach(([key, val]) => {
-        if (key === "leveling" || key === "openaiApiKey" || key === "pushoverApiKey") return;
+        if (key === "leveling" || key === "openaiApiKey" || key === "pushoverApiKey" || key === "pushoverUser") return;
         settings[key] = val;
         if (self.config) {
           if (key === "levelingEnabled") {
