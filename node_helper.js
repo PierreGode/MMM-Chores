@@ -45,6 +45,7 @@ const DEFAULT_TITLES = [
 
 let settings = {};
 let autoUpdateTimer = null;
+let reminderTimer = null;
 
 function getLocalISO(date = new Date()) {
   const offsetMs = date.getTimezoneOffset() * 60000;
@@ -65,6 +66,34 @@ function scheduleAutoUpdate() {
   autoUpdateTimer = setTimeout(() => {
     autoUpdateTimer = null;
     runAutoUpdate();
+  }, delay);
+}
+
+function scheduleReminder(self) {
+  if (reminderTimer) {
+    clearTimeout(reminderTimer);
+    reminderTimer = null;
+  }
+  if (!settings.reminderTime || !settings.pushoverEnabled) return;
+  if (!self.config || !self.config.pushoverApiKey || !self.config.pushoverUser) return;
+  const [h, m] = settings.reminderTime.split(":").map(n => parseInt(n, 10));
+  if (isNaN(h) || isNaN(m)) return;
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(h, m, 0, 0);
+  if (next <= now) {
+    next.setDate(next.getDate() + 1);
+  }
+  const delay = next - now;
+  Log.log(`Pushover reminder scheduled for ${next.toString()}`);
+  reminderTimer = setTimeout(() => {
+    reminderTimer = null;
+    const unfinished = tasks.filter(t => !t.done && !t.deleted);
+    if (unfinished.length) {
+      const list = unfinished.map(t => `• ${t.name}`).join("\n");
+      sendPushover(self.config, settings, `Uncompleted tasks:\n${list}`);
+    }
+    scheduleReminder(self);
   }, delay);
 }
 
@@ -268,6 +297,7 @@ module.exports = NodeHelper.create({
     if (settings.autoUpdate) {
       scheduleAutoUpdate();
     }
+    scheduleReminder(this);
   },
 
   socketNotificationReceived(notification, payload) {
@@ -283,6 +313,7 @@ module.exports = NodeHelper.create({
         useAI: settings.useAI ?? payload.useAI,
         autoUpdate: settings.autoUpdate ?? payload.autoUpdate,
         pushoverEnabled: settings.pushoverEnabled ?? payload.pushoverEnabled,
+        reminderTime: settings.reminderTime ?? payload.reminderTime,
         levelingEnabled: settings.levelingEnabled ?? (payload.leveling?.enabled !== false),
         leveling: {
           yearsToMaxLevel: settings.leveling?.yearsToMaxLevel ?? payload.leveling?.yearsToMaxLevel,
@@ -295,6 +326,7 @@ module.exports = NodeHelper.create({
         leveling: { ...payload.leveling, ...settings.leveling, enabled: settings.levelingEnabled }
       });
       saveData();
+      scheduleReminder(this);
       if (!this.server) {
         this.initServer(payload.adminPort);
       } else {
@@ -782,6 +814,7 @@ module.exports = NodeHelper.create({
           autoUpdateTimer = null;
         }
       }
+      scheduleReminder(self);
     });
 
     app.post("/api/ai-generate", requireWrite, (req, res) => self.aiGenerateTasks(req, res));
