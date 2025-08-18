@@ -42,7 +42,7 @@ npm install
 ## Configuración
 La mayoría de los ajustes ahora se pueden editar en el portal de administración mediante el botón de engranaje **Settings**.
 Una opción adicional **Enable autoupdate** puede obtener los últimos cambios mediante `git pull` y recargar el módulo automáticamente. Las actualizaciones automáticas se ejecutan una vez al día a las **04:00** hora local.
-Las notificaciones de Pushover también se pueden gestionar desde el portal de administración (clave de usuario y activación), mientras que `pushoverApiKey` debe definirse en tu `config.js` de MagicMirror.
+Las notificaciones de Pushover se pueden activar o desactivar desde el portal de administración, mientras que `pushoverApiKey` y `pushoverUser` deben definirse en tu `config.js` de MagicMirror.
 Añade el módulo a `config.js` así:
 ```js
 {
@@ -54,6 +54,7 @@ Añade el módulo a `config.js` así:
     adminPort: 5003,
     openaiApiKey: "your-openApi-key here",
     pushoverApiKey: "your-pushover-api-key",
+    pushoverUser: "your-pushover-user-key",
     login: false,
     users: [
       { username: "admin", password: "secret", permission: "write" },
@@ -147,7 +148,7 @@ Ve a http://yourmirrorIP:5003/ #la página será accesible dentro de la misma re
 ## Notificaciones Push
 
 Si deseas usar notificaciones push sigue la guía a continuación.
-Alternativamente, puedes usar [Pushover](https://pushover.net/) proporcionando un `pushoverApiKey` en la configuración del módulo y habilitando Pushover con una clave de usuario desde la configuración del administrador.
+Alternativamente, puedes usar [Pushover](https://pushover.net/) proporcionando `pushoverApiKey` y `pushoverUser` en la configuración del módulo y habilitando Pushover en la configuración del administrador.
 
 ![cert](img/screenshot3_cert.png)
 
