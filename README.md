@@ -45,6 +45,7 @@ npm install
 Most settings are now editable in the admin portal via the cogwheel **Settings** button.
 An additional option **Enable autoupdate** can pull the latest changes via `git pull` and reload the module automatically and Autoupdates run once per day at **04:00** local time.
 Pushover notifications can be toggled from the admin portal, while the `pushoverApiKey` and `pushoverUser` must be defined in your MagicMirror `config.js`.
+You can also specify a daily reminder time in the admin settings to receive a Pushover message listing unfinished tasks.
 Add the module to `config.js` like so:
 ```js
 {

@@ -27,6 +27,7 @@ Module.register("MMM-Chores", {
     pushoverApiKey: "",
     pushoverUser: "",
     pushoverEnabled: false,
+    reminderTime: "",
     login: false,
     users: [],
     showAnalyticsOnMirror: false, // display analytics cards on the mirror
