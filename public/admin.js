@@ -18,6 +18,12 @@ let settingsSaved = false;
 let dateFormatting = '';
 let authToken = localStorage.getItem('choresToken') || null;
 let userPermission = 'write';
+const BACKGROUND_MAP = {
+  forest: 'forest.png',
+  winter: 'winter.png',
+  summer: 'summer.png',
+  spring: 'spring.png'
+};
 
 function authHeaders() {
   return authToken ? { 'x-auth-token': authToken } : {};
@@ -103,6 +109,21 @@ async function saveUserLanguage(lang) {
   }
 }
 
+function applyBackground(bg) {
+  const url = BACKGROUND_MAP[bg] ? `url("img/${BACKGROUND_MAP[bg]}")` : '';
+  document.body.style.backgroundImage = url;
+  document.body.style.backgroundSize = url ? 'cover' : '';
+  document.body.style.backgroundPosition = url ? 'center' : '';
+  document.body.style.backgroundRepeat = url ? 'no-repeat' : '';
+  const loginDiv = document.getElementById('loginContainer');
+  if (loginDiv) {
+    loginDiv.style.backgroundImage = url;
+    loginDiv.style.backgroundSize = url ? 'cover' : '';
+    loginDiv.style.backgroundPosition = url ? 'center' : '';
+    loginDiv.style.backgroundRepeat = url ? 'no-repeat' : '';
+  }
+}
+
 // ==========================
 // Init settings form and save handler
 // ==========================
@@ -119,6 +140,7 @@ function initSettingsForm(settings) {
   const autoUpdate = document.getElementById('settingsAutoUpdate');
   const pushoverEnable = document.getElementById('settingsPushoverEnable');
   const reminderTime = document.getElementById('settingsReminderTime');
+  const backgroundSelect = document.getElementById('settingsBackground');
   const yearsInput = document.getElementById('settingsYears');
   const perWeekInput = document.getElementById('settingsPerWeek');
   const maxLevelInput = document.getElementById('settingsMaxLevel');
@@ -132,6 +154,7 @@ function initSettingsForm(settings) {
   if (autoUpdate) autoUpdate.checked = !!settings.autoUpdate;
   if (pushoverEnable) pushoverEnable.checked = !!settings.pushoverEnabled;
   if (reminderTime) reminderTime.value = settings.reminderTime || '';
+  if (backgroundSelect) backgroundSelect.value = settings.background || '';
   if (yearsInput) yearsInput.value = settings.leveling?.yearsToMaxLevel || 3;
   if (perWeekInput) perWeekInput.value = settings.leveling?.choresPerWeekEstimate || 4;
   if (maxLevelInput) maxLevelInput.value = settings.leveling?.maxLevel || 100;
@@ -139,7 +162,7 @@ function initSettingsForm(settings) {
   settingsChanged = false;
   settingsSaved = false;
 
-  const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, pushoverEnable, reminderTime, yearsInput, perWeekInput, maxLevelInput];
+  const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, pushoverEnable, reminderTime, backgroundSelect, yearsInput, perWeekInput, maxLevelInput];
   inputs.forEach(el => {
     if (el) {
       el.addEventListener('input', () => { settingsChanged = true; });
@@ -160,6 +183,7 @@ function initSettingsForm(settings) {
       autoUpdate: autoUpdate.checked,
       pushoverEnabled: pushoverEnable.checked,
       reminderTime: reminderTime.value,
+      background: backgroundSelect.value,
       leveling: {
         yearsToMaxLevel: parseFloat(yearsInput.value) || 3,
         choresPerWeekEstimate: parseFloat(perWeekInput.value) || 4,
@@ -230,6 +254,15 @@ function setLanguage(lang) {
   if (pushoverEnableLbl) pushoverEnableLbl.textContent = t.pushoverEnabledLabel || 'Enable Pushover';
   const reminderTimeLbl = document.querySelector("label[for='settingsReminderTime']");
   if (reminderTimeLbl) reminderTimeLbl.textContent = t.reminderTimeLabel || 'Reminder time';
+  const bgLbl = document.querySelector("label[for='settingsBackground']");
+  if (bgLbl) bgLbl.textContent = t.backgroundLabel || 'Background';
+  const bgSelect = document.getElementById('settingsBackground');
+  if (bgSelect && t.backgroundOptions) {
+    Array.from(bgSelect.options).forEach(opt => {
+      const key = opt.value || 'none';
+      if (t.backgroundOptions[key]) opt.textContent = t.backgroundOptions[key];
+    });
+  }
   const yearsLbl = document.querySelector("label[for='settingsYears']");
   if (yearsLbl) yearsLbl.textContent = t.yearsToMaxLabel;
   const perWeekLbl = document.querySelector("label[for='settingsPerWeek']");
@@ -329,6 +362,9 @@ async function applySettings(newSettings) {
   }
   if (newSettings.dateFormatting !== undefined) {
     dateFormatting = newSettings.dateFormatting;
+  }
+  if (newSettings.background !== undefined) {
+    applyBackground(newSettings.background);
   }
   await fetchPeople();
   await fetchTasks();
@@ -1150,6 +1186,7 @@ async function initApp() {
     currentLang = localStorage.getItem("mmm-chores-lang") || 'en';
   }
   dateFormatting = userSettings.dateFormatting || '';
+  applyBackground(userSettings.background);
 
   const selector = document.createElement("select");
   selector.className = "language-select";
