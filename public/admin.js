@@ -242,6 +242,8 @@ function setLanguage(lang) {
 
   const settingsBtn = document.getElementById("settingsBtn");
   if (settingsBtn) settingsBtn.title = t.settingsBtnTitle || 'Settings';
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) logoutBtn.title = t.logoutBtnTitle || 'Logout';
   const modalTitle = document.getElementById("settingsModalLabel");
   if (modalTitle) modalTitle.textContent = t.settingsTitle || 'Settings';
   const saveBtn = document.getElementById("settingsSaveBtn");
@@ -1224,6 +1226,14 @@ async function initApp() {
   const savedBoards = await fetchSavedBoards();
   if (savedBoards.length) {
     savedBoards.forEach(type => addChart(type));
+  }
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      authToken = null;
+      localStorage.removeItem('choresToken');
+      window.location.reload();
+    });
   }
 
   const settingsBtn = document.getElementById("settingsBtn");
