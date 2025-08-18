@@ -52,7 +52,11 @@ async function checkLogin() {
     initApp();
     return;
   }
-  if (loginDiv) loginDiv.style.display = '';
+  if (loginDiv) {
+    loginDiv.style.display = '';
+    const initialSettings = await fetchUserSettings();
+    applyBackground(initialSettings.background);
+  }
   const btn = document.getElementById('loginBtn');
   if (btn) {
     btn.onclick = async () => {
@@ -1287,9 +1291,7 @@ async function initApp() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  const initialSettings = await fetchUserSettings();
-  applyBackground(initialSettings.background);
+document.addEventListener('DOMContentLoaded', () => {
   checkLogin();
 });
 
