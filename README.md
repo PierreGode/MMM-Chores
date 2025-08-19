@@ -23,6 +23,8 @@ always hidden.
 
 
 ![backend](img/image.png)
+![settings](img/settings.png)
+
 
 ## Installation
 
