@@ -45,9 +45,15 @@ npm install
 
 ## Configuration
 Most settings are now editable in the admin portal via the cogwheel **Settings** button.
+
 An additional option **Enable autoupdate** can pull the latest changes via `git pull` and reload the module automatically and Autoupdates run once per day at **04:00** local time.
+
 Pushover notifications can be toggled from the admin portal, while the `pushoverApiKey` and `pushoverUser` must be defined in your MagicMirror `config.js`.
+
 You can also specify a daily reminder time in the admin settings to receive a Pushover message listing unfinished tasks due today or earlier.
+
+When `login` is set to `true`, define one or more `users` with `username`, `password` and `permission` (`"read"` or `"write"`). Users with read permission may view all tasks but cannot create, delete or modify them.
+
 Add the module to `config.js` like so:
 ```js
 {
@@ -65,7 +71,7 @@ Add the module to `config.js` like so:
       { username: "admin", password: "secret", permission: "write" },
       { username: "viewer", password: "viewer", permission: "read" }
     ],
-    settings: "unlocked", // set a 6 digit pin like "000000" to lock settings popup with a personal pin, change 000000 to any 6 digit password you want, or comment this out to lock settings completly
+    settings: "unlocked", //  set a 6 digit pin like "000000" to lock settings popup with a personal pin, change 000000 to any 6 digit password you want, or comment this out to lock settings completly
 // other options can be set in the admin portal
     levelTitles: [
     // titles for every 10 levels
@@ -84,7 +90,7 @@ Add the module to `config.js` like so:
 },
 ```
 
-When `login` is set to `true`, define one or more `users` with `username`, `password` and `permission` (`"read"` or `"write"`). Users with read permission may view all tasks but cannot create, delete or modify them.
+
 
 levels could also be rewards
 ```js
