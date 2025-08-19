@@ -532,11 +532,14 @@ function renderTasks() {
 
   for (const task of tasksCache.filter(t => !t.deleted)) {
     const li = document.createElement("li");
-    li.className = "list-group-item d-flex justify-content-between align-items-center";
+    li.className = "list-group-item d-flex align-items-center";
     li.dataset.id = task.id;
 
     const left = document.createElement("div");
     left.className = "d-flex align-items-center";
+
+    const actions = document.createElement("div");
+    actions.className = "d-flex align-items-center ms-auto gap-1";
 
     const chk = document.createElement("input");
     chk.type = "checkbox";
@@ -589,29 +592,31 @@ function renderTasks() {
     left.appendChild(chk);
     left.appendChild(span);
 
-    let del, dragBtn;
     if (canWrite) {
-      del = document.createElement("button");
-      del.className = "btn btn-sm btn-outline-danger me-1";
+      const del = document.createElement("button");
+      del.className = "btn btn-sm btn-outline-danger";
       del.title = LANGUAGES[currentLang].remove;
       del.innerHTML = '<i class="bi bi-trash"></i>';
       del.addEventListener("click", () => deleteTask(task.id));
 
-      dragBtn = document.createElement("button");
-      dragBtn.className = "btn btn-sm btn-outline-secondary drag-handle me-1";
+      const dragBtn = document.createElement("button");
+      dragBtn.className = "btn btn-sm btn-outline-secondary drag-handle";
       dragBtn.innerHTML = '<i class="bi bi-list"></i>';
+
+      if (!task.done) {
+        const edit = document.createElement("button");
+        edit.className = "btn btn-sm btn-outline-secondary";
+        edit.title = LANGUAGES[currentLang].edit;
+        edit.innerHTML = '<i class="bi bi-pencil"></i>';
+        edit.addEventListener("click", () => openEditModal(task));
+        actions.appendChild(edit);
+      }
+      actions.appendChild(del);
+      actions.appendChild(dragBtn);
     }
 
-
-    if (canWrite && !task.done) {
-      const edit = document.createElement("button");
-      edit.className = "btn btn-sm btn-outline-secondary me-1";
-      edit.title = LANGUAGES[currentLang].edit;
-      edit.innerHTML = '<i class="bi bi-pencil"></i>';
-      edit.addEventListener("click", () => openEditModal(task));
-      li.append(left, edit, del, dragBtn);
-    } else if (canWrite) {
-      li.append(left, del, dragBtn);
+    if (actions.childElementCount > 0) {
+      li.append(left, actions);
     } else {
       li.append(left);
     }
