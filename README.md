@@ -161,6 +161,7 @@ MagicMirror display the assigned person's name will include a small
 Go to http://yourmirrorIP:5003/ #page will be reachable within same network.
 > [!CAUTION]
 > DO NOT expose application with portforward
+> No.. the login will not protect you a trained goldfish can hack it.
 
 ## Push Notifications
 
