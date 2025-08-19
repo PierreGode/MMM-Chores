@@ -513,13 +513,16 @@ function renderTasks() {
     return;
   }
 
+  const longestNameLen = peopleCache.reduce((m, p) => Math.max(m, p.name.length), 0);
+  const selectWidth = `${longestNameLen + 2}ch`;
+
   for (const task of tasksCache.filter(t => !t.deleted)) {
     const li = document.createElement("li");
-    li.className = "list-group-item d-flex justify-content-between align-items-center";
+    li.className = "list-group-item d-flex align-items-center";
     li.dataset.id = task.id;
 
     const left = document.createElement("div");
-    left.className = "d-flex align-items-center";
+    left.className = "d-flex align-items-center flex-grow-1";
 
     const chk = document.createElement("input");
     chk.type = "checkbox";
@@ -555,6 +558,8 @@ function renderTasks() {
     }
 
   const span = document.createElement("span");
+  span.classList.add("flex-grow-1");
+  span.style.minWidth = "8ch";
   const formatted = formatDate(task.date);
   span.innerHTML = `<strong>${task.name}</strong>`;
   if (formatted) {
@@ -570,7 +575,8 @@ function renderTasks() {
     left.appendChild(span);
 
     const select = document.createElement("select");
-    select.className = "form-select mx-3";
+    select.className = "form-select ms-auto me-3 flex-shrink-0";
+    select.style.width = selectWidth;
     select.add(new Option(LANGUAGES[currentLang].unassigned, ""));
     peopleCache.forEach(p => {
       const opt = new Option(p.name, p.id);
