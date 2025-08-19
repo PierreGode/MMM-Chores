@@ -21,8 +21,8 @@ always hidden.
   
 ![frontend](img/screenshot1_frontend.png)
 
-![backend](img/IMG_0005.jpeg)
-![backend](img/IMG_0006.jpeg)
+
+![backend](img/image.png)
 
 ## Installation
 
