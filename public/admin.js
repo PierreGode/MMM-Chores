@@ -19,6 +19,8 @@ let dateFormatting = '';
 let authToken = localStorage.getItem('choresToken') || null;
 let userPermission = 'write';
 let loginEnabled = true;
+let editTaskId = null;
+let editTaskModal = null;
 
 function authHeaders() {
   return authToken ? { 'x-auth-token': authToken } : {};
@@ -473,7 +475,22 @@ function renderPeople() {
     }
     list.appendChild(li);
   }
-
+  const taskPerson = document.getElementById('taskPerson');
+  const editPerson = document.getElementById('editTaskPerson');
+  if (taskPerson) {
+    taskPerson.innerHTML = '';
+    taskPerson.add(new Option(LANGUAGES[currentLang].unassigned, ''));
+    peopleCache.forEach(p => {
+      taskPerson.add(new Option(p.name, p.id));
+    });
+  }
+  if (editPerson) {
+    editPerson.innerHTML = '';
+    editPerson.add(new Option(LANGUAGES[currentLang].unassigned, ''));
+    peopleCache.forEach(p => {
+      editPerson.add(new Option(p.name, p.id));
+    });
+  }
 }
 
 function formatDate(dateStr) {
@@ -565,42 +582,12 @@ function renderTasks() {
     span.innerHTML += ` <span class="badge bg-info text-dark">${recurText}</span>`;
   }
   if (task.done) span.classList.add("task-done");
+  const person = peopleCache.find(p => p.id === task.assignedTo);
+  const personName = person ? person.name : LANGUAGES[currentLang].unassigned;
+  span.innerHTML += ` - ${personName}`;
 
     left.appendChild(chk);
     left.appendChild(span);
-
-    const select = document.createElement("select");
-    select.className = "form-select mx-3";
-    select.add(new Option(LANGUAGES[currentLang].unassigned, ""));
-    peopleCache.forEach(p => {
-      const opt = new Option(p.name, p.id);
-      if (task.assignedTo === p.id) opt.selected = true;
-      select.add(opt);
-    });
-
-    if (canWrite) {
-      select.addEventListener("change", () => {
-        const val = select.value ? parseInt(select.value) : null;
-        const updateObj = { assignedTo: val };
-        if (val !== task.assignedTo) {
-          const now = new Date();
-          const iso = now.toISOString();
-          const pad = n => n.toString().padStart(2, "0");
-          const stamp = (prefix) => (
-            prefix +
-            pad(now.getMonth() + 1) +
-            pad(now.getDate()) +
-            pad(now.getHours()) +
-            pad(now.getMinutes())
-          );
-          updateObj.assignedDate = iso;
-          updateObj.assignedDateShort = stamp("A");
-        }
-        updateTask(task.id, updateObj);
-      });
-    } else {
-      select.disabled = true;
-    }
 
     let del, dragBtn;
     if (canWrite) {
@@ -621,23 +608,12 @@ function renderTasks() {
       edit.className = "btn btn-sm btn-outline-secondary me-1";
       edit.title = LANGUAGES[currentLang].edit;
       edit.innerHTML = '<i class="bi bi-pencil"></i>';
-      edit.addEventListener("click", async () => {
-        const newName = prompt(LANGUAGES[currentLang].taskNamePlaceholder, task.name);
-        if (newName === null) return;
-        let newDate = prompt("YYYY-MM-DD", task.date);
-        if (newDate === null) return;
-        newDate = newDate.trim();
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
-          alert("Invalid date format. Use YYYY-MM-DD.");
-          return;
-        }
-        await updateTask(task.id, { name: newName.trim(), date: newDate });
-      });
-      li.append(left, select, edit, del, dragBtn);
+      edit.addEventListener("click", () => openEditModal(task));
+      li.append(left, edit, del, dragBtn);
     } else if (canWrite) {
-      li.append(left, select, del, dragBtn);
+      li.append(left, del, dragBtn);
     } else {
-      li.append(left, select);
+      li.append(left);
     }
 
     list.appendChild(li);
@@ -667,6 +643,21 @@ function renderTasks() {
       }
     });
   }
+}
+
+function openEditModal(task) {
+  editTaskId = task.id;
+  const nameInput = document.getElementById('editTaskName');
+  const dateInput = document.getElementById('editTaskDate');
+  const personSelect = document.getElementById('editTaskPerson');
+  if (nameInput) nameInput.value = task.name;
+  if (dateInput) dateInput.value = task.date || '';
+  if (personSelect) personSelect.value = task.assignedTo || '';
+  if (!editTaskModal) {
+    const modalEl = document.getElementById('editTaskModal');
+    if (modalEl) editTaskModal = new bootstrap.Modal(modalEl);
+  }
+  if (editTaskModal) editTaskModal.show();
 }
 
 function getWeekNumber(d) {
@@ -803,6 +794,7 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
   const name = document.getElementById("taskName").value.trim();
   let date = document.getElementById("taskDate").value;
   const recurring = document.getElementById("taskRecurring").value;
+  const assigned = document.getElementById("taskPerson").value;
   if (!name) return;
   if (!date) date = new Date().toISOString().split("T")[0];
 
@@ -824,12 +816,27 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
       name,
       date,
       recurring,
+      assignedTo: assigned ? parseInt(assigned) : null,
       created: iso,
       createdShort: stamp("C")
     })
   });
   e.target.reset();
   await fetchTasks();
+});
+
+document.getElementById('editTaskForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const name = document.getElementById('editTaskName').value.trim();
+  const date = document.getElementById('editTaskDate').value;
+  const assigned = document.getElementById('editTaskPerson').value;
+  await updateTask(editTaskId, {
+    name,
+    date,
+    assignedTo: assigned ? parseInt(assigned) : null
+  });
+  if (editTaskModal) editTaskModal.hide();
+  editTaskId = null;
 });
 
 async function updateTask(id, changes) {

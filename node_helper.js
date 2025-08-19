@@ -669,7 +669,7 @@ module.exports = NodeHelper.create({
         created: getLocalISO(now),
         order: tasks.filter(t => !t.deleted).length,
         done: false,
-        assignedTo: null,
+        assignedTo: req.body.assignedTo ? parseInt(req.body.assignedTo, 10) : null,
         recurring: req.body.recurring || "none",
       };
       Log.log("POST /api/tasks", newTask);
