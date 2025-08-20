@@ -14,17 +14,19 @@
 <body>
   <div id="loginContainer" class="login-overlay" style="display:none;">
     <div class="card card-shadow p-4">
-      <h2 class="text-center mb-4">Login</h2>
-      <div class="mb-3">
-        <label for="loginUser" class="form-label">Username</label>
-        <input type="text" id="loginUser" class="form-control" placeholder="Username" />
-      </div>
-      <div class="mb-3">
-        <label for="loginPass" class="form-label">Password</label>
-        <input type="password" id="loginPass" class="form-control" placeholder="Password" />
-      </div>
-      <button id="loginBtn" class="btn btn-primary w-100">Login</button>
-      <div id="loginError" class="text-danger mt-2"></div>
+      <form id="loginForm">
+        <h2 class="text-center mb-4">Login</h2>
+        <div class="mb-3">
+          <label for="loginUser" class="form-label">Username</label>
+          <input type="text" id="loginUser" class="form-control" placeholder="Username" />
+        </div>
+        <div class="mb-3">
+          <label for="loginPass" class="form-label">Password</label>
+          <input type="password" id="loginPass" class="form-control" placeholder="Password" />
+        </div>
+        <button type="submit" id="loginBtn" class="btn btn-primary w-100">Login</button>
+        <div id="loginError" class="text-danger mt-2"></div>
+      </form>
     </div>
   </div>
   <div id="app" style="display:none;">

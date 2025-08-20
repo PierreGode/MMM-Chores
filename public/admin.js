@@ -75,9 +75,10 @@ async function checkLogin() {
     return;
   }
   if (loginDiv) loginDiv.style.display = '';
-  const btn = document.getElementById('loginBtn');
-  if (btn) {
-    btn.onclick = async () => {
+  const form = document.getElementById('loginForm');
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
       const username = document.getElementById('loginUser').value;
       const password = document.getElementById('loginPass').value;
       const resp = await fetch('/api/login', {
@@ -97,7 +98,7 @@ async function checkLogin() {
         const err = document.getElementById('loginError');
         if (err) err.textContent = out.error || LANGUAGES[currentLang].loginError || 'Login failed';
       }
-    };
+    });
   }
 }
 
