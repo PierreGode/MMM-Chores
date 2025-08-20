@@ -196,6 +196,12 @@ h1, h2 {
   color: var(--text);
 }
 
+/* Analytics add-chart dropdown spacing and width */
+#addChartSelect {
+  max-width: 300px;
+  margin-left: 1rem;
+}
+
 /* Oversized checkboxes */
 .form-check-input {
   appearance: auto;
