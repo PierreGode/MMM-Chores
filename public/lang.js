@@ -68,7 +68,10 @@ const LANGUAGES = {
     },
     dateFormatLabel: "Date format",
     dateFormatOptions: {
-      none: "Do not show date"
+      none: "Do not show date",
+      day: "Weekday",
+      "dd:mm": "dd:mm",
+      "mm:dd": "mm:dd"
     },
     autoUpdateLabel: "Enable autoupdate",
     levelingTitle: "Leveling",
@@ -162,7 +165,10 @@ const LANGUAGES = {
     },
     dateFormatLabel: "Datumformat",
     dateFormatOptions: {
-      none: "Visa inget datum"
+      none: "Visa inget datum",
+      day: "Veckodag",
+      "dd:mm": "dd:mm",
+      "mm:dd": "mm:dd"
     },
     autoUpdateLabel: "Aktivera automatisk uppdatering",
     levelingTitle: "Nivåer",
@@ -256,7 +262,10 @@ const LANGUAGES = {
     },
     dateFormatLabel: "Format de date",
     dateFormatOptions: {
-      none: "Ne pas afficher la date"
+      none: "Ne pas afficher la date",
+      day: "Jour de la semaine",
+      "dd:mm": "jj:mm",
+      "mm:dd": "mm:jj"
     },
     autoUpdateLabel: "Activer la mise à jour automatique",
     levelingTitle: "Niveaux",
@@ -350,7 +359,10 @@ const LANGUAGES = {
     },
     dateFormatLabel: "Formato de fecha",
     dateFormatOptions: {
-      none: "No mostrar fecha"
+      none: "No mostrar fecha",
+      day: "Día de la semana",
+      "dd:mm": "dd:mm",
+      "mm:dd": "mm:dd"
     },
     autoUpdateLabel: "Habilitar actualización automática",
     levelingTitle: "Niveles",
@@ -444,7 +456,10 @@ const LANGUAGES = {
     },
     dateFormatLabel: "Datumsformat",
     dateFormatOptions: {
-      none: "Datum nicht anzeigen"
+      none: "Datum nicht anzeigen",
+      day: "Wochentag",
+      "dd:mm": "dd:mm",
+      "mm:dd": "mm:dd"
     },
     autoUpdateLabel: "Automatische Aktualisierung aktivieren",
     levelingTitle: "Levelsystem",
@@ -538,7 +553,10 @@ const LANGUAGES = {
     },
     dateFormatLabel: "Formato data",
     dateFormatOptions: {
-      none: "Non mostrare data"
+      none: "Non mostrare data",
+      day: "Giorno della settimana",
+      "dd:mm": "gg:mm",
+      "mm:dd": "mm:gg"
     },
     autoUpdateLabel: "Abilita aggiornamento automatico",
     levelingTitle: "Livelli",
@@ -632,7 +650,10 @@ const LANGUAGES = {
     },
     dateFormatLabel: "Datumformaat",
     dateFormatOptions: {
-      none: "Datum niet tonen"
+      none: "Datum niet tonen",
+      day: "Weekdag",
+      "dd:mm": "dd:mm",
+      "mm:dd": "mm:dd"
     },
     autoUpdateLabel: "Automatische update inschakelen",
     levelingTitle: "Niveaus",
@@ -726,7 +747,10 @@ const LANGUAGES = {
     },
     dateFormatLabel: "Format daty",
     dateFormatOptions: {
-      none: "Nie pokazuj daty"
+      none: "Nie pokazuj daty",
+      day: "Dzień tygodnia",
+      "dd:mm": "dd:mm",
+      "mm:dd": "mm:dd"
     },
     autoUpdateLabel: "Włącz automatyczną aktualizację",
     levelingTitle: "Poziomy",
@@ -820,7 +844,10 @@ const LANGUAGES = {
     },
     dateFormatLabel: "日期格式",
     dateFormatOptions: {
-      none: "不显示日期"
+      none: "不显示日期",
+      day: "星期",
+      "dd:mm": "dd:mm",
+      "mm:dd": "mm:dd"
     },
     autoUpdateLabel: "启用自动更新",
     levelingTitle: "等级",
@@ -914,7 +941,10 @@ const LANGUAGES = {
     },
     dateFormatLabel: "تنسيق التاريخ",
     dateFormatOptions: {
-      none: "لا تعرض التاريخ"
+      none: "لا تعرض التاريخ",
+      day: "اليوم",
+      "dd:mm": "dd:mm",
+      "mm:dd": "mm:dd"
     },
     autoUpdateLabel: "تفعيل التحديث التلقائي",
     levelingTitle: "المستويات",

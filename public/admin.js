@@ -177,6 +177,24 @@ function initSettingsForm(settings) {
     }
   });
 
+  function toggleLevelInputs() {
+    const show = levelEnable && levelEnable.checked;
+    const groups = [
+      document.getElementById('settingsYearsGroup'),
+      document.getElementById('settingsPerWeekGroup'),
+      document.getElementById('settingsMaxLevelGroup')
+    ];
+    groups.forEach(g => { if (g) g.style.display = show ? '' : 'none'; });
+  }
+
+  if (levelEnable) {
+    levelEnable.addEventListener('change', () => {
+      settingsChanged = true;
+      toggleLevelInputs();
+    });
+    toggleLevelInputs();
+  }
+
   form.addEventListener('submit', async e => {
     e.preventDefault();
     settingsSaved = true;
@@ -290,8 +308,10 @@ function setLanguage(lang) {
   if (dateFmtLbl) dateFmtLbl.textContent = t.dateFormatLabel || 'Date format';
   const dateFmtSelect = document.getElementById('settingsDateFmt');
   if (dateFmtSelect && t.dateFormatOptions) {
-    const noneOpt = Array.from(dateFmtSelect.options).find(o => o.value === '');
-    if (noneOpt) noneOpt.textContent = t.dateFormatOptions.none;
+    Array.from(dateFmtSelect.options).forEach(opt => {
+      const key = opt.value || 'none';
+      if (t.dateFormatOptions[key]) opt.textContent = t.dateFormatOptions[key];
+    });
   }
   const levelEnableLbl = document.querySelector("label[for='settingsLevelEnable']");
   if (levelEnableLbl) levelEnableLbl.textContent = t.levelingEnabledLabel;
@@ -498,6 +518,7 @@ function formatDate(dateStr) {
   const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
   if (!match) return dateStr;
   const [, yyyy, mm, dd] = match;
+  const date = new Date(dateStr);
 
   let fmt =
     dateFormatting !== undefined && dateFormatting !== null
@@ -505,6 +526,12 @@ function formatDate(dateStr) {
       : 'yyyy-mm-dd';
 
   if (fmt === '') return '';
+
+  if (fmt === 'day') {
+    return date.toLocaleDateString(undefined, { weekday: 'long' });
+  }
+  if (fmt === 'dd:mm') return `${dd}:${mm}`;
+  if (fmt === 'mm:dd') return `${mm}:${dd}`;
 
   fmt = fmt.replace(/yyyy/gi, yyyy);
   fmt = fmt.replace(/mm/gi, mm);
@@ -576,18 +603,17 @@ function renderTasks() {
 
   const span = document.createElement("span");
   const formatted = formatDate(task.date);
-  span.innerHTML = `<strong>${task.name}</strong>`;
+  const person = peopleCache.find(p => p.id === task.assignedTo);
+  const personName = person ? person.name : LANGUAGES[currentLang].unassigned;
+  span.innerHTML = `<strong>${task.name}</strong> - ${personName}`;
   if (formatted) {
-    span.innerHTML += ` <small class="task-date">(${formatted})</small>`;
+    span.innerHTML += ` <small class="task-date">${formatted}</small>`;
   }
   if (task.recurring && task.recurring !== "none") {
     const recurText = LANGUAGES[currentLang].taskRecurring[task.recurring] || task.recurring;
     span.innerHTML += ` <span class="badge bg-info text-dark">${recurText}</span>`;
   }
   if (task.done) span.classList.add("task-done");
-  const person = peopleCache.find(p => p.id === task.assignedTo);
-  const personName = person ? person.name : LANGUAGES[currentLang].unassigned;
-  span.innerHTML += ` - ${personName}`;
 
     left.appendChild(chk);
     left.appendChild(span);

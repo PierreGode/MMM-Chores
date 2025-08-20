@@ -183,10 +183,9 @@ Module.register("MMM-Chores", {
     if (!dateStr) return "";
     const match = dateStr.match(/(\d{4})-(\d{2})-(\d{2})/);
     if (!match) return dateStr;
-    const [ , yyyy, mm, dd ] = match;
+    const [, yyyy, mm, dd] = match;
+    const date = new Date(dateStr);
 
-    // Use module config for formatting. If set to empty string, hide the date
-    // entirely. Only fall back to the default when no value is specified.
     let result =
       this.config.dateFormatting !== undefined &&
       this.config.dateFormatting !== null
@@ -195,13 +194,18 @@ Module.register("MMM-Chores", {
 
     if (result === "") return "";
 
-    // Ersätt både små och stora bokstäver för yyyy, mm, dd
+    if (result === "day") {
+      return date.toLocaleDateString(undefined, { weekday: "long" });
+    }
+    if (result === "dd:mm") return `${dd}:${mm}`;
+    if (result === "mm:dd") return `${mm}:${dd}`;
+
+    // Replace yyyy, mm, dd placeholders
     result = result.replace(/yyyy/gi, yyyy);
     result = result.replace(/mm/gi, mm);
     result = result.replace(/dd/gi, dd);
 
-    // Extra stöd för stora bokstäver som kan missas pga regex
-    // (Om användaren skriver t.ex "DD" istället för "dd")
+    // Support uppercase variants
     result = result.replace(/YYYY/g, yyyy);
     result = result.replace(/MM/g, mm);
     result = result.replace(/DD/g, dd);
@@ -442,8 +446,7 @@ Module.register("MMM-Chores", {
       });
       li.appendChild(cb);
 
-      const dateText = this.formatDate(task.date);
-      const text = document.createTextNode(`${task.name} ${dateText}`);
+      const text = document.createTextNode(task.name);
       li.appendChild(text);
 
       if (task.assignedTo) {
@@ -460,6 +463,15 @@ Module.register("MMM-Chores", {
         }
         assignedEl.innerHTML = html;
         li.appendChild(assignedEl);
+      }
+
+      const dateText = this.formatDate(task.date);
+      if (dateText) {
+        const dateEl = document.createElement("span");
+        dateEl.className = "xsmall dimmed";
+        dateEl.style.marginLeft = "6px";
+        dateEl.innerHTML = dateText;
+        li.appendChild(dateEl);
       }
 
       ul.appendChild(li);

@@ -253,11 +253,9 @@
               <label class="form-label" for="settingsDateFmt">Date format</label>
               <select id="settingsDateFmt" class="form-select">
                 <option value="">Do not show date</option>
-                <option value="yyyy-mm-dd">yyyy-mm-dd</option>
-                <option value="mm-dd">mm-dd</option>
-                <option value="mm-dd-yyyy">mm-dd-yyyy</option>
-                <option value="mm-dd">mm-dd</option>
-                <option value="dd">dd</option>
+                <option value="day">Day (e.g. Monday)</option>
+                <option value="dd:mm">dd:mm</option>
+                <option value="mm:dd">mm:dd</option>
               </select>
             </div>
             <div class="col-12 col-sm-6">
@@ -270,15 +268,15 @@
                 <option value="spring.png">Spring</option>
               </select>
             </div>
-            <div class="col-12 col-sm-6">
+            <div class="col-12 col-sm-6" id="settingsYearsGroup">
               <label class="form-label" for="settingsYears">Years to max level</label>
               <input type="number" id="settingsYears" class="form-control" />
             </div>
-            <div class="col-12 col-sm-6">
+            <div class="col-12 col-sm-6" id="settingsPerWeekGroup">
               <label class="form-label" for="settingsPerWeek">Chores per week estimate</label>
               <input type="number" id="settingsPerWeek" class="form-control" />
             </div>
-            <div class="col-12 col-sm-6">
+            <div class="col-12 col-sm-6" id="settingsMaxLevelGroup">
               <label class="form-label" for="settingsMaxLevel">Max level</label>
               <input type="number" id="settingsMaxLevel" class="form-control" />
             </div>
