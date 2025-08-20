@@ -121,6 +121,8 @@ h1, h2 {
   background: var(--card-bg);
   border-bottom: none;
   font-weight: 600;
+  border-top-left-radius: calc(1rem - 1px);
+  border-top-right-radius: calc(1rem - 1px);
 }
 
 /* Dark mode adjustment for analytics board headers */
@@ -138,6 +140,23 @@ h1, h2 {
 }
 .list-group-item:hover {
   background: var(--list-hover);
+}
+
+/* Fix border-radius for list items inside card-shadow to prevent sharp corners */
+.card-shadow .list-group-item {
+  border-radius: 0;
+}
+.card-shadow .list-group-item:first-child {
+  border-top-left-radius: calc(1rem - 1px);
+  border-top-right-radius: calc(1rem - 1px);
+}
+.card-shadow .list-group-item:last-child {
+  border-bottom-left-radius: calc(1rem - 1px);
+  border-bottom-right-radius: calc(1rem - 1px);
+}
+/* Handle case where there's only one list item */
+.card-shadow .list-group-item:only-child {
+  border-radius: calc(1rem - 1px);
 }
 
 /* Input fields */
