@@ -13,16 +13,26 @@ survives page refreshes and restarts.
 
 The **Show past tasks** setting lets you toggle whether overdue tasks that are
 not yet completed should remain visible on the mirror. Completed past tasks are
-always hidden.
+always hidden.<p>
 
-*Update 2025-08-04: most settings are moved to admin webpage
+*Update 2025-08-04: most settings are moved to admin webpage<p>
+
+> [!NOTE]
+> *Update 2025-08-20: 
+> added optional login with possibility to add both write permission user and read only user.<p>
+> added pushover notification possibility+ configuration to set daily reminders at specific time.<p>
+> added background images " 4 seasons"<p>
+> -reworked task list, moved up user assignment to creation space<p>
+> -reworked edit option to be a form to be able to update task description, user and date<p>
 
 ## Screenshots
   
 ![frontend](img/screenshot1_frontend.png)
 
-![backend](img/IMG_0005.jpeg)
-![backend](img/IMG_0006.jpeg)
+
+![backend](img/image.png)
+![settings](img/settings.png)
+
 
 ## Installation
 
@@ -43,7 +53,15 @@ npm install
 
 ## Configuration
 Most settings are now editable in the admin portal via the cogwheel **Settings** button.
+
 An additional option **Enable autoupdate** can pull the latest changes via `git pull` and reload the module automatically and Autoupdates run once per day at **04:00** local time.
+
+Pushover notifications can be toggled from the admin portal, while the `pushoverApiKey` and `pushoverUser` must be defined in your MagicMirror `config.js`.
+
+You can also specify a daily reminder time in the admin settings to receive a Pushover message listing unfinished tasks due today or earlier.
+
+When `login` is set to `true`, define one or more `users` with `username`, `password` and `permission` (`"read"` or `"write"`). Users with read permission may view all tasks but cannot create, delete or modify them.
+
 Add the module to `config.js` like so:
 ```js
 {
@@ -54,7 +72,14 @@ Add the module to `config.js` like so:
     updateInterval: 60 * 1000,
     adminPort: 5003,
     openaiApiKey: "your-openApi-key here",
-    settings: "unlocked", // set a 6 digit pin like "000000" to lock settings popup with a personal pin, change 000000 to any 6 digit password you want, or comment this out to lock settings completly
+    pushoverApiKey: "your-pushover-api-key",
+    pushoverUser: "your-pushover-user-key",
+    login: false,
+    users: [
+      { username: "admin", password: "secret", permission: "write" },
+      { username: "viewer", password: "viewer", permission: "read" }
+    ],
+    settings: "unlocked", //  set a 6 digit pin like "000000" to lock settings popup with a personal pin, change 000000 to any 6 digit password you want, or comment this out to lock settings completly
 // other options can be set in the admin portal
     levelTitles: [
     // titles for every 10 levels
@@ -72,6 +97,8 @@ Add the module to `config.js` like so:
   }
 },
 ```
+
+
 
 levels could also be rewards
 ```js
@@ -142,10 +169,12 @@ MagicMirror display the assigned person's name will include a small
 Go to http://yourmirrorIP:5003/ #page will be reachable within same network.
 > [!CAUTION]
 > DO NOT expose application with portforward
+> <p></p> No.. the login will not protect you, a trained goldfish can hack it.
 
 ## Push Notifications
 
-If you wish to use push notifications follow guide below. 
+If you wish to use push notifications follow guide below.
+Alternatively, you can use [Pushover](https://pushover.net/) by providing both a `pushoverApiKey` and `pushoverUser` in your module config and enabling Pushover in the admin settings.
 
 ![cert](img/screenshot3_cert.png)
 

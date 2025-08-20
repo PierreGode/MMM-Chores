@@ -24,6 +24,12 @@ Module.register("MMM-Chores", {
     textMirrorSize: "small",     // small, medium or large
     useAI: true,                  // hide AI features when false
     openaiApiKey: "",
+    pushoverApiKey: "",
+    pushoverUser: "",
+    pushoverEnabled: false,
+    reminderTime: "",
+    login: false,
+    users: [],
     showAnalyticsOnMirror: false, // display analytics cards on the mirror
     analyticsCards: [],           // board types selected in the admin UI
     leveling: {
@@ -123,6 +129,13 @@ Module.register("MMM-Chores", {
         setTimeout(() => { this.titleChangeMessage = null; this.updateDom(); }, 5000);
       }
       this.updateDom();
+    }
+    if (notification === "PUSHOVER_CONFIG_ERROR") {
+      this.sendNotification("SHOW_ALERT", {
+        type: "notification",
+        title: "MMM-Chores",
+        message: payload || "Please set pushoverApiKey and pushoverUser in config.js to use Pushover notifications."
+      });
     }
   },
 

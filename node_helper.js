@@ -28,6 +28,8 @@ const CERT_DIR  = path.join(__dirname, "certs");
 let tasks = [];
 let people = [];
 let analyticsBoards = [];
+let sessions = {};
+const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 const DEFAULT_TITLES = [
   "Junior",
@@ -44,6 +46,7 @@ const DEFAULT_TITLES = [
 
 let settings = {};
 let autoUpdateTimer = null;
+let reminderTimer = null;
 
 function getLocalISO(date = new Date()) {
   const offsetMs = date.getTimezoneOffset() * 60000;
@@ -65,6 +68,66 @@ function scheduleAutoUpdate() {
     autoUpdateTimer = null;
     runAutoUpdate();
   }, delay);
+}
+
+function scheduleReminder(self) {
+  if (reminderTimer) {
+    clearTimeout(reminderTimer);
+    reminderTimer = null;
+  }
+  if (!settings.reminderTime || !settings.pushoverEnabled) return;
+  if (!self.config || !self.config.pushoverApiKey || !self.config.pushoverUser) {
+    Log.error("MMM-Chores: pushoverApiKey and pushoverUser must be set in config.js when Pushover is enabled");
+    self.sendSocketNotification(
+      "PUSHOVER_CONFIG_ERROR",
+      "Please set pushoverApiKey and pushoverUser in config.js to use Pushover notifications."
+    );
+    return;
+  }
+  const [h, m] = settings.reminderTime.split(":").map(n => parseInt(n, 10));
+  if (isNaN(h) || isNaN(m)) return;
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(h, m, 0, 0);
+  if (next <= now) {
+    next.setDate(next.getDate() + 1);
+  }
+  const delay = next - now;
+  Log.log(`Pushover reminder scheduled for ${next.toString()}`);
+  reminderTimer = setTimeout(() => {
+    reminderTimer = null;
+    const todayStr = getLocalISO(new Date()).slice(0, 10);
+    const unfinished = tasks.filter(
+      t => !t.done && !t.deleted && t.date && t.date <= todayStr
+    );
+    if (unfinished.length) {
+      const list = unfinished.map(t => `• ${t.name}`).join("\n");
+      sendPushover(self, settings, `Uncompleted tasks:\n${list}`);
+    }
+    scheduleReminder(self);
+  }, delay);
+}
+
+function sendPushover(self, settings, message) {
+  const config = self.config || {};
+  if (!settings.pushoverEnabled) return;
+  if (!config.pushoverApiKey || !config.pushoverUser) {
+    Log.error("MMM-Chores: pushoverApiKey and pushoverUser must be set in config.js when Pushover is enabled");
+    self.sendSocketNotification(
+      "PUSHOVER_CONFIG_ERROR",
+      "Please set pushoverApiKey and pushoverUser in config.js to use Pushover notifications."
+    );
+    return;
+  }
+  const params = new URLSearchParams({
+    token: config.pushoverApiKey,
+    user: config.pushoverUser,
+    message
+  });
+  fetchFn("https://api.pushover.net/1/messages.json", {
+    method: "POST",
+    body: params
+  }).catch(err => Log.error("MMM-Chores: Failed to send Pushover notification", err));
 }
 
 function loadData() {
@@ -93,6 +156,8 @@ function loadData() {
       analyticsBoards = j.analyticsBoards || [];
       settings        = j.settings        || {};
       if (settings.openaiApiKey !== undefined) delete settings.openaiApiKey;
+      if (settings.pushoverApiKey !== undefined) delete settings.pushoverApiKey;
+      if (settings.pushoverUser !== undefined) delete settings.pushoverUser;
 
       updatePeopleLevels({});
 
@@ -252,6 +317,7 @@ module.exports = NodeHelper.create({
     if (settings.autoUpdate) {
       scheduleAutoUpdate();
     }
+    scheduleReminder(this);
   },
 
   socketNotificationReceived(notification, payload) {
@@ -266,9 +332,12 @@ module.exports = NodeHelper.create({
         showAnalyticsOnMirror: settings.showAnalyticsOnMirror ?? payload.showAnalyticsOnMirror,
         useAI: settings.useAI ?? payload.useAI,
         autoUpdate: settings.autoUpdate ?? payload.autoUpdate,
-        levelingEnabled: settings.levelingEnabled ?? (payload.leveling?.enabled !== false),
-        leveling: {
-          yearsToMaxLevel: settings.leveling?.yearsToMaxLevel ?? payload.leveling?.yearsToMaxLevel,
+          pushoverEnabled: settings.pushoverEnabled ?? payload.pushoverEnabled,
+          reminderTime: settings.reminderTime ?? payload.reminderTime,
+          background: settings.background ?? payload.background ?? 'forest.png',
+          levelingEnabled: settings.levelingEnabled ?? (payload.leveling?.enabled !== false),
+          leveling: {
+            yearsToMaxLevel: settings.leveling?.yearsToMaxLevel ?? payload.leveling?.yearsToMaxLevel,
           choresPerWeekEstimate: settings.leveling?.choresPerWeekEstimate ?? payload.leveling?.choresPerWeekEstimate,
           maxLevel: settings.leveling?.maxLevel ?? payload.leveling?.maxLevel
         }
@@ -278,6 +347,7 @@ module.exports = NodeHelper.create({
         leveling: { ...payload.leveling, ...settings.leveling, enabled: settings.levelingEnabled }
       });
       saveData();
+      scheduleReminder(this);
       if (!this.server) {
         this.initServer(payload.adminPort);
       } else {
@@ -478,13 +548,21 @@ module.exports = NodeHelper.create({
       }
 
       const port = this.config.adminPort;
+      const headers = { "Content-Type": "application/json" };
+      if (this.config.login && this.internalToken) {
+        headers["x-auth-token"] = this.internalToken;
+      }
       await fetchFn(`http://localhost:${port}/api/tasks/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(body)
       });
 
-      const res = await fetchFn(`http://localhost:${port}/api/tasks`);
+      const getHeaders = {};
+      if (this.config.login && this.internalToken) {
+        getHeaders["x-auth-token"] = this.internalToken;
+      }
+      const res = await fetchFn(`http://localhost:${port}/api/tasks`, { headers: getHeaders });
       const latest = await res.json();
 
       // Keep historical data for analytics by excluding only deleted and
@@ -506,13 +584,82 @@ module.exports = NodeHelper.create({
 
     app.use(bodyParser.json());
     app.use(express.static(path.join(__dirname, "public")));
+    app.use("/img", express.static(path.join(__dirname, "img")));
+    app.use("/MMM-Chores/img", express.static(path.join(__dirname, "img")));
+
+    const users = Array.isArray(self.config.users) ? self.config.users : [];
+    if (self.config.login) {
+      const token = Math.random().toString(36).slice(2);
+      sessions[token] = {
+        username: "__internal__",
+        permission: "write",
+        expires: Infinity
+      };
+      self.internalToken = token;
+    }
+
+    app.post("/api/login", (req, res) => {
+      if (!self.config.login) return res.json({ loginRequired: false });
+      const { username, password } = req.body;
+      const user = users.find(u => u.username === username && u.password === password);
+      if (!user) return res.status(401).json({ error: "Invalid credentials" });
+      const token = Math.random().toString(36).slice(2);
+      sessions[token] = {
+        ...user,
+        expires: Date.now() + SESSION_DURATION_MS
+      };
+      res.json({ token, permission: user.permission });
+    });
+
+      app.get("/api/login", (req, res) => {
+        if (!self.config.login) return res.json({ loginRequired: false });
+        const token = req.headers["x-auth-token"];
+        const user = sessions[token];
+        if (user && user.expires > Date.now()) {
+          user.expires = Date.now() + SESSION_DURATION_MS;
+          return res.json({ loginRequired: true, loggedIn: true, permission: user.permission });
+        }
+        if (token && sessions[token]) delete sessions[token];
+        res.json({ loginRequired: true, loggedIn: false });
+      });
+
+      app.post("/api/logout", (req, res) => {
+        if (!self.config.login) return res.json({ success: true });
+        const token = req.headers["x-auth-token"];
+        if (token && sessions[token]) delete sessions[token];
+        res.json({ success: true });
+      });
+
+    app.use((req, res, next) => {
+      if (!self.config.login) return next();
+      // Allow the login API and root admin page without authentication so the
+      // login overlay can be displayed in the browser.
+      if (req.path === "/api/login" || req.path === "/") return next();
+      const token = req.headers["x-auth-token"];
+      const user = sessions[token];
+      if (!user || user.expires <= Date.now()) {
+        if (token && sessions[token]) delete sessions[token];
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      user.expires = Date.now() + SESSION_DURATION_MS;
+      req.user = user;
+      next();
+    });
+
+    function requireWrite(req, res, next) {
+      if (!self.config.login) return next();
+      if (!req.user || req.user.permission !== "write") {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      next();
+    }
 
     app.get("/", (req, res) => {
       res.sendFile(path.join(__dirname, "public", "admin.html"));
     });
 
     app.get("/api/people", (req, res) => res.json(people));
-    app.post("/api/people", (req, res) => {
+    app.post("/api/people", requireWrite, (req, res) => {
       const { name } = req.body;
       if (!name) return res.status(400).json({ error: "Name is required" });
 
@@ -529,7 +676,7 @@ module.exports = NodeHelper.create({
       self.sendSocketNotification("PEOPLE_UPDATE", people);
       res.status(201).json(newPerson);
     });
-    app.delete("/api/people/:id", (req, res) => {
+    app.delete("/api/people/:id", requireWrite, (req, res) => {
       const id = parseInt(req.params.id, 10);
       people = people.filter(p => p.id !== id);
       tasks  = tasks.map(t => t.assignedTo === id ? { ...t, assignedTo: null } : t);
@@ -544,7 +691,7 @@ module.exports = NodeHelper.create({
     app.get("/api/tasks", (req, res) => {
       res.json(tasks);
     });
-    app.post("/api/tasks", (req, res) => {
+    app.post("/api/tasks", requireWrite, (req, res) => {
       const now = new Date();
       const newTask = {
         id: Date.now(),
@@ -552,17 +699,18 @@ module.exports = NodeHelper.create({
         created: getLocalISO(now),
         order: tasks.filter(t => !t.deleted).length,
         done: false,
-        assignedTo: null,
+        assignedTo: req.body.assignedTo ? parseInt(req.body.assignedTo, 10) : null,
         recurring: req.body.recurring || "none",
       };
       Log.log("POST /api/tasks", newTask);
       tasks.push(newTask);
+      sendPushover(self, settings, `New task: ${newTask.name}`);
       const ok = broadcastTasks(self);
       res.status(ok ? 201 : 500).json(ok ? newTask : { error: "Failed to save data" });
     });
 
     // Reorder tasks
-    app.put("/api/tasks/reorder", (req, res) => {
+    app.put("/api/tasks/reorder", requireWrite, (req, res) => {
       const ids = req.body;
       if (!Array.isArray(ids)) {
         return res.status(400).json({ error: "Expected an array of task ids" });
@@ -603,7 +751,7 @@ module.exports = NodeHelper.create({
       }
       res.json({ success: true });
     });
-    app.put("/api/tasks/:id", (req, res) => {
+    app.put("/api/tasks/:id", requireWrite, (req, res) => {
       const id   = parseInt(req.params.id, 10);
       const task = tasks.find(t => t.id === id);
       if (!task) return res.status(404).json({ error: "Task not found" });
@@ -637,10 +785,13 @@ module.exports = NodeHelper.create({
       }
 
       const ok = broadcastTasks(self);
+      if (!prevDone && task.done) {
+        sendPushover(self, settings, `Task completed: ${task.name}`);
+      }
       if (!ok) return res.status(500).json({ error: "Failed to save data" });
       res.json(task);
     });
-    app.delete("/api/tasks/:id", (req, res) => {
+    app.delete("/api/tasks/:id", requireWrite, (req, res) => {
       const id = parseInt(req.params.id, 10);
       const task = tasks.find(t => t.id === id);
       if (!task) return res.status(404).json({ error: "Task not found" });
@@ -652,7 +803,7 @@ module.exports = NodeHelper.create({
     });
 
     app.get("/api/analyticsBoards", (req, res) => res.json(analyticsBoards));
-    app.post("/api/analyticsBoards", (req, res) => {
+    app.post("/api/analyticsBoards", requireWrite, (req, res) => {
       const newBoards = req.body;
       if (!Array.isArray(newBoards)) {
         return res.status(400).json({ error: "Expected an array of board types" });
@@ -666,20 +817,27 @@ module.exports = NodeHelper.create({
     app.get("/api/settings", (req, res) => {
       const safeSettings = { ...settings };
       delete safeSettings.openaiApiKey;
+      delete safeSettings.pushoverApiKey;
+      delete safeSettings.pushoverUser;
       res.json({ ...safeSettings, leveling: safeSettings.leveling, settings: self.config.settings });
     });
-    app.put("/api/settings", (req, res) => {
+    app.put("/api/settings", requireWrite, (req, res) => {
       const newSettings = req.body;
       const wasAutoUpdate = settings.autoUpdate;
       if (typeof newSettings !== "object") {
         return res.status(400).json({ error: "Invalid settings data" });
+      }
+      if (newSettings.pushoverEnabled && (!self.config.pushoverApiKey || !self.config.pushoverUser)) {
+        return res.status(400).json({
+          error: "Please set pushoverApiKey and pushoverUser in config.js to use Pushover notifications."
+        });
       }
       if (newSettings.leveling) {
         settings.leveling = { ...settings.leveling, ...newSettings.leveling };
         self.config.leveling = { ...self.config.leveling, ...newSettings.leveling };
       }
       Object.entries(newSettings).forEach(([key, val]) => {
-        if (key === "leveling" || key === "openaiApiKey") return;
+        if (key === "leveling" || key === "openaiApiKey" || key === "pushoverApiKey" || key === "pushoverUser") return;
         settings[key] = val;
         if (self.config) {
           if (key === "levelingEnabled") {
@@ -704,9 +862,10 @@ module.exports = NodeHelper.create({
           autoUpdateTimer = null;
         }
       }
+      scheduleReminder(self);
     });
 
-    app.post("/api/ai-generate", (req, res) => self.aiGenerateTasks(req, res));
+    app.post("/api/ai-generate", requireWrite, (req, res) => self.aiGenerateTasks(req, res));
 
     this.server = app.listen(port, "0.0.0.0", () => {
       Log.log(`MMM-Chores admin (HTTP) running at http://0.0.0.0:${port}`);

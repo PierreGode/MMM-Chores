@@ -121,6 +121,8 @@ h1, h2 {
   background: var(--card-bg);
   border-bottom: none;
   font-weight: 600;
+  border-top-left-radius: calc(1rem - 1px);
+  border-top-right-radius: calc(1rem - 1px);
 }
 
 /* Dark mode adjustment for analytics board headers */
@@ -138,6 +140,23 @@ h1, h2 {
 }
 .list-group-item:hover {
   background: var(--list-hover);
+}
+
+/* Fix border-radius for list items inside card-shadow to prevent sharp corners */
+.card-shadow .list-group-item {
+  border-radius: 0;
+}
+.card-shadow .list-group-item:first-child {
+  border-top-left-radius: calc(1rem - 1px);
+  border-top-right-radius: calc(1rem - 1px);
+}
+.card-shadow .list-group-item:last-child {
+  border-bottom-left-radius: calc(1rem - 1px);
+  border-bottom-right-radius: calc(1rem - 1px);
+}
+/* Handle case where there's only one list item */
+.card-shadow .list-group-item:only-child {
+  border-radius: calc(1rem - 1px);
 }
 
 /* Input fields */
@@ -163,6 +182,11 @@ h1, h2 {
   padding: 0;
 }
 
+/* In input groups, allow icon buttons to match the input height */
+.input-group .btn-icon {
+  height: auto;
+}
+
 /* Completed task style */
 .task-done {
   text-decoration: line-through;
@@ -175,6 +199,12 @@ h1, h2 {
 }
 [data-theme="dark"] .task-date {
   color: var(--text);
+}
+
+/* Analytics add-chart dropdown spacing and width */
+#addChartSelect {
+  max-width: 300px;
+  margin-left: 1rem;
 }
 
 /* Oversized checkboxes */
@@ -250,4 +280,21 @@ h1, h2 {
 /* Ensure level text remains visible on dark backgrounds */
 [data-theme="dark"] #peopleList small {
   color: #fff !important;
+}
+
+/* Login overlay */
+#loginContainer {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-image: url("img/forest.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 2000;
+}
+#loginContainer .card {
+  width: 320px;
 }

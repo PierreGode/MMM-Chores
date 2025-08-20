@@ -16,13 +16,106 @@ let settingsMode = 'unlocked';
 let settingsChanged = false;
 let settingsSaved = false;
 let dateFormatting = '';
+let authToken = localStorage.getItem('choresToken') || null;
+let userPermission = 'write';
+let loginEnabled = true;
+let editTaskId = null;
+let editTaskModal = null;
+
+function authHeaders() {
+  return authToken ? { 'x-auth-token': authToken } : {};
+}
+
+function authFetch(url, options = {}) {
+  options.headers = Object.assign({}, authHeaders(), options.headers || {});
+  return fetch(url, options).then(res => {
+    if (res.status === 401) {
+      authToken = null;
+      localStorage.removeItem('choresToken');
+      checkLogin();
+      throw new Error('Unauthorized');
+    }
+    return res;
+  });
+}
+
+function setBackground(image) {
+  const body = document.body;
+  const loginDiv = document.getElementById('loginContainer');
+  if (image) {
+    const url = `img/${image}`;
+    if (body) {
+      body.style.backgroundImage = `url('${url}')`;
+      body.style.backgroundSize = 'cover';
+      body.style.backgroundRepeat = 'no-repeat';
+      body.style.backgroundPosition = 'center';
+    }
+    if (loginDiv) {
+      loginDiv.style.backgroundImage = `url('${url}')`;
+    }
+  } else {
+    if (body) body.style.backgroundImage = '';
+    if (loginDiv) loginDiv.style.backgroundImage = 'none';
+  }
+}
+
+async function checkLogin() {
+  const savedBg = localStorage.getItem('choresBackground');
+  setBackground(savedBg === null ? 'forest.png' : savedBg);
+  const app = document.getElementById('app');
+  const loginDiv = document.getElementById('loginContainer');
+  const res = await fetch('/api/login', { headers: authHeaders() });
+  const data = await res.json();
+  loginEnabled = data.loginRequired;
+  if (!loginEnabled) {
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) logoutBtn.style.display = 'none';
+    if (loginDiv) loginDiv.style.display = 'none';
+    if (app) app.style.display = '';
+    initApp();
+    return;
+  }
+  if (data.loggedIn) {
+    userPermission = data.permission || 'write';
+    if (loginDiv) loginDiv.style.display = 'none';
+    if (app) app.style.display = '';
+    initApp();
+    return;
+  }
+  if (loginDiv) loginDiv.style.display = '';
+  const form = document.getElementById('loginForm');
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('loginUser').value;
+      const password = document.getElementById('loginPass').value;
+      const resp = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const out = await resp.json();
+      if (resp.ok && out.token) {
+        authToken = out.token;
+        localStorage.setItem('choresToken', authToken);
+        userPermission = out.permission || 'write';
+        loginDiv.style.display = 'none';
+        if (app) app.style.display = '';
+        initApp();
+      } else {
+        const err = document.getElementById('loginError');
+        if (err) err.textContent = out.error || LANGUAGES[currentLang].loginError || 'Login failed';
+      }
+    });
+  }
+}
 
 // ==========================
 // API: Hämta inställningar från backend
 // ==========================
 async function fetchUserSettings() {
   try {
-    const res = await fetch('/api/settings');
+    const res = await authFetch('/api/settings');
     if (!res.ok) throw new Error('Failed fetching user settings');
     const data = await res.json();
     return data;
@@ -37,7 +130,7 @@ async function fetchUserSettings() {
 // ==========================
 async function saveUserLanguage(lang) {
   try {
-    await fetch('/api/settings', {
+    await authFetch('/api/settings', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ language: lang })
@@ -60,10 +153,14 @@ function initSettingsForm(settings) {
   const useAI = document.getElementById('settingsUseAI');
   const showAnalytics = document.getElementById('settingsShowAnalytics');
   const levelEnable = document.getElementById('settingsLevelEnable');
-  const autoUpdate = document.getElementById('settingsAutoUpdate');
-  const yearsInput = document.getElementById('settingsYears');
-  const perWeekInput = document.getElementById('settingsPerWeek');
-  const maxLevelInput = document.getElementById('settingsMaxLevel');
+    const autoUpdate = document.getElementById('settingsAutoUpdate');
+    const pushoverEnable = document.getElementById('settingsPushoverEnable');
+    const reminderTime = document.getElementById('settingsReminderTime');
+    const reminderContainer = reminderTime ? reminderTime.parentElement : null;
+    const yearsInput = document.getElementById('settingsYears');
+    const perWeekInput = document.getElementById('settingsPerWeek');
+    const maxLevelInput = document.getElementById('settingsMaxLevel');
+    const backgroundSelect = document.getElementById('settingsBackground');
 
   if (showPast) showPast.checked = !!settings.showPast;
   if (textSize) textSize.value = settings.textMirrorSize || 'small';
@@ -72,14 +169,36 @@ function initSettingsForm(settings) {
   if (showAnalytics) showAnalytics.checked = !!settings.showAnalyticsOnMirror;
   if (levelEnable) levelEnable.checked = settings.levelingEnabled !== false;
   if (autoUpdate) autoUpdate.checked = !!settings.autoUpdate;
-  if (yearsInput) yearsInput.value = settings.leveling?.yearsToMaxLevel || 3;
-  if (perWeekInput) perWeekInput.value = settings.leveling?.choresPerWeekEstimate || 4;
-  if (maxLevelInput) maxLevelInput.value = settings.leveling?.maxLevel || 100;
+  if (pushoverEnable) pushoverEnable.checked = !!settings.pushoverEnabled;
+    if (reminderTime) reminderTime.value = settings.reminderTime || '';
+    if (yearsInput) yearsInput.value = settings.leveling?.yearsToMaxLevel || 3;
+    if (perWeekInput) perWeekInput.value = settings.leveling?.choresPerWeekEstimate || 4;
+    if (maxLevelInput) maxLevelInput.value = settings.leveling?.maxLevel || 100;
+    if (backgroundSelect) backgroundSelect.value = settings.background || 'forest.png';
+
+  const levelingFields = document.querySelectorAll('.leveling-settings');
+  const toggleLevelingFields = () => {
+    const show = levelEnable && levelEnable.checked;
+    levelingFields.forEach(el => el.classList.toggle('d-none', !show));
+  };
+  if (levelEnable) {
+    levelEnable.addEventListener('change', toggleLevelingFields);
+  }
+  toggleLevelingFields();
+
+  const toggleReminderField = () => {
+    const show = pushoverEnable && pushoverEnable.checked;
+    if (reminderContainer) reminderContainer.classList.toggle('d-none', !show);
+  };
+  if (pushoverEnable) {
+    pushoverEnable.addEventListener('change', toggleReminderField);
+  }
+  toggleReminderField();
 
   settingsChanged = false;
   settingsSaved = false;
 
-  const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, yearsInput, perWeekInput, maxLevelInput];
+    const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, pushoverEnable, reminderTime, yearsInput, perWeekInput, maxLevelInput, backgroundSelect];
   inputs.forEach(el => {
     if (el) {
       el.addEventListener('input', () => { settingsChanged = true; });
@@ -90,22 +209,25 @@ function initSettingsForm(settings) {
   form.addEventListener('submit', async e => {
     e.preventDefault();
     settingsSaved = true;
-    const payload = {
-      showPast: showPast.checked,
-      textMirrorSize: textSize.value,
-      dateFormatting: dateFmt.value,
-      useAI: useAI.checked,
-      showAnalyticsOnMirror: showAnalytics.checked,
-      levelingEnabled: levelEnable.checked,
-      autoUpdate: autoUpdate.checked,
-      leveling: {
-        yearsToMaxLevel: parseFloat(yearsInput.value) || 3,
-        choresPerWeekEstimate: parseFloat(perWeekInput.value) || 4,
-        maxLevel: parseInt(maxLevelInput.value, 10) || 100
-      }
-    };
+      const payload = {
+        showPast: showPast.checked,
+        textMirrorSize: textSize.value,
+        dateFormatting: dateFmt.value,
+        useAI: useAI.checked,
+        showAnalyticsOnMirror: showAnalytics.checked,
+        levelingEnabled: levelEnable.checked,
+        autoUpdate: autoUpdate.checked,
+        pushoverEnabled: pushoverEnable.checked,
+        reminderTime: reminderTime.value,
+        background: backgroundSelect.value,
+        leveling: {
+          yearsToMaxLevel: parseFloat(yearsInput.value) || 3,
+          choresPerWeekEstimate: parseFloat(perWeekInput.value) || 4,
+          maxLevel: parseInt(maxLevelInput.value, 10) || 100
+        }
+      };
     try {
-      const res = await fetch('/api/settings', {
+      const res = await authFetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -115,6 +237,9 @@ function initSettingsForm(settings) {
         await applySettings(data.settings || payload);
         const instance = bootstrap.Modal.getInstance(document.getElementById('settingsModal'));
         if (instance) instance.hide();
+      } else {
+        const out = await res.json().catch(() => ({}));
+        alert(out.error || 'Failed saving settings');
       }
     } catch (err) {
       console.error('Failed saving settings', err);
@@ -136,6 +261,7 @@ function setLanguage(lang) {
   if (!LANGUAGES[lang]) return;
   currentLang = lang;
   localStorage.setItem("mmm-chores-lang", lang);
+  document.documentElement.setAttribute('lang', lang);
 
   const t = LANGUAGES[lang];
 
@@ -150,9 +276,25 @@ function setLanguage(lang) {
   document.querySelector(".hero h1").textContent = t.title;
   document.querySelector(".hero small").textContent = t.subtitle;
 
+  const loginTitle = document.querySelector('#loginContainer h2');
+  if (loginTitle) loginTitle.textContent = t.loginTitle || 'Login';
+  const loginUserLbl = document.querySelector("label[for='loginUser']");
+  if (loginUserLbl) loginUserLbl.textContent = t.loginUsername || 'Username';
+  const loginUserInput = document.getElementById('loginUser');
+  if (loginUserInput) loginUserInput.placeholder = t.loginUsername || 'Username';
+  const loginPassLbl = document.querySelector("label[for='loginPass']");
+  if (loginPassLbl) loginPassLbl.textContent = t.loginPassword || 'Password';
+  const loginPassInput = document.getElementById('loginPass');
+  if (loginPassInput) loginPassInput.placeholder = t.loginPassword || 'Password';
+  const loginBtnEl = document.getElementById('loginBtn');
+  if (loginBtnEl) loginBtnEl.textContent = t.loginButton || 'Login';
+
   const tabs = document.querySelectorAll(".nav-link");
   if (tabs[0]) tabs[0].textContent = t.tabs[0];
   if (tabs[1]) tabs[1].textContent = t.tabs[1];
+
+  const themeToggleBtn = document.getElementById('themeToggle');
+  if (themeToggleBtn) themeToggleBtn.title = t.toggleTheme || 'Toggle theme';
 
   const settingsBtn = document.getElementById("settingsBtn");
   if (settingsBtn) settingsBtn.title = t.settingsBtnTitle || 'Settings';
@@ -160,10 +302,63 @@ function setLanguage(lang) {
   if (modalTitle) modalTitle.textContent = t.settingsTitle || 'Settings';
   const saveBtn = document.getElementById("settingsSaveBtn");
   if (saveBtn) saveBtn.textContent = t.saveButton || 'Save';
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) logoutBtn.title = t.logout || 'Logout';
+  const showPastLbl = document.querySelector("label[for='settingsShowPast']");
+  if (showPastLbl) showPastLbl.textContent = t.showPastLabel || 'Show past tasks';
+  const showAnalyticsLbl = document.querySelector("label[for='settingsShowAnalytics']");
+  if (showAnalyticsLbl) showAnalyticsLbl.textContent = t.analyticsOnMirrorLabel || 'Analytics on mirror';
+  const useAiLbl = document.querySelector("label[for='settingsUseAI']");
+  if (useAiLbl) useAiLbl.textContent = t.useAiLabel || 'Use AI features';
+  const textSizeLbl = document.querySelector("label[for='settingsTextSize']");
+  if (textSizeLbl) textSizeLbl.textContent = t.textSizeLabel || 'Mirror text size';
+  const textSizeSelect = document.getElementById('settingsTextSize');
+  if (textSizeSelect && t.textSizeOptions) {
+    Array.from(textSizeSelect.options).forEach(opt => {
+      if (t.textSizeOptions[opt.value]) opt.textContent = t.textSizeOptions[opt.value];
+    });
+  }
+  const dateFmtLbl = document.querySelector("label[for='settingsDateFmt']");
+  if (dateFmtLbl) dateFmtLbl.textContent = t.dateFormatLabel || 'Date format';
+  const dateFmtSelect = document.getElementById('settingsDateFmt');
+  if (dateFmtSelect && t.dateFormatOptions) {
+    const noneOpt = Array.from(dateFmtSelect.options).find(o => o.value === '');
+    if (noneOpt) noneOpt.textContent = t.dateFormatOptions.none;
+  }
   const levelEnableLbl = document.querySelector("label[for='settingsLevelEnable']");
   if (levelEnableLbl) levelEnableLbl.textContent = t.levelingEnabledLabel;
   const autoUpdateLbl = document.querySelector("label[for='settingsAutoUpdate']");
   if (autoUpdateLbl) autoUpdateLbl.textContent = t.autoUpdateLabel || 'Enable autoupdate';
+  const pushoverEnableLbl = document.querySelector("label[for='settingsPushoverEnable']");
+  if (pushoverEnableLbl) pushoverEnableLbl.textContent = t.pushoverEnabledLabel || 'Enable Pushover';
+  const reminderTimeLbl = document.querySelector("label[for='settingsReminderTime']");
+  if (reminderTimeLbl) reminderTimeLbl.textContent = t.reminderTimeLabel || 'Reminder time';
+  const backgroundLbl = document.querySelector("label[for='settingsBackground']");
+  if (backgroundLbl) backgroundLbl.textContent = t.backgroundLabel || 'Background';
+  const backgroundSelect = document.getElementById('settingsBackground');
+  if (backgroundSelect && t.backgroundOptions) {
+    Array.from(backgroundSelect.options).forEach(opt => {
+      let key;
+      switch (opt.value) {
+        case "":
+          key = 'none';
+          break;
+        case 'forest.png':
+          key = 'autumn';
+          break;
+        case 'winter.png':
+          key = 'winter';
+          break;
+        case 'summer.png':
+          key = 'summer';
+          break;
+        case 'spring.png':
+          key = 'spring';
+          break;
+      }
+      if (key && t.backgroundOptions[key]) opt.textContent = t.backgroundOptions[key];
+    });
+  }
   const yearsLbl = document.querySelector("label[for='settingsYears']");
   if (yearsLbl) yearsLbl.textContent = t.yearsToMaxLabel;
   const perWeekLbl = document.querySelector("label[for='settingsPerWeek']");
@@ -236,13 +431,13 @@ function setLanguage(lang) {
 // Fetch People & Tasks
 // ==========================
 async function fetchPeople() {
-  const res = await fetch("/api/people");
+  const res = await authFetch("/api/people");
   peopleCache = await res.json();
   renderPeople();
 }
 
 async function fetchTasks() {
-  const res = await fetch("/api/tasks");
+  const res = await authFetch("/api/tasks");
   tasksCache = await res.json();
   tasksCache.sort((a, b) => {
     if (a.deleted && !b.deleted) return 1;
@@ -263,6 +458,10 @@ async function applySettings(newSettings) {
   }
   if (newSettings.dateFormatting !== undefined) {
     dateFormatting = newSettings.dateFormatting;
+  }
+  if (newSettings.background !== undefined) {
+    setBackground(newSettings.background);
+    localStorage.setItem('choresBackground', newSettings.background || '');
   }
   await fetchPeople();
   await fetchTasks();
@@ -298,16 +497,32 @@ function renderPeople() {
 
     li.appendChild(info);
 
-    const btn = document.createElement("button");
-    btn.className = "btn btn-sm btn-outline-danger";
-    btn.title = LANGUAGES[currentLang].remove;
-    btn.innerHTML = '<i class="bi bi-trash"></i>';
-    btn.onclick = () => deletePerson(person.id);
-
-    li.appendChild(btn);
+    if (userPermission === 'write') {
+      const btn = document.createElement("button");
+      btn.className = "btn btn-sm btn-outline-danger";
+      btn.title = LANGUAGES[currentLang].remove;
+      btn.innerHTML = '<i class="bi bi-trash"></i>';
+      btn.onclick = () => deletePerson(person.id);
+      li.appendChild(btn);
+    }
     list.appendChild(li);
   }
-
+  const taskPerson = document.getElementById('taskPerson');
+  const editPerson = document.getElementById('editTaskPerson');
+  if (taskPerson) {
+    taskPerson.innerHTML = '';
+    taskPerson.add(new Option(LANGUAGES[currentLang].unassigned, ''));
+    peopleCache.forEach(p => {
+      taskPerson.add(new Option(p.name, p.id));
+    });
+  }
+  if (editPerson) {
+    editPerson.innerHTML = '';
+    editPerson.add(new Option(LANGUAGES[currentLang].unassigned, ''));
+    peopleCache.forEach(p => {
+      editPerson.add(new Option(p.name, p.id));
+    });
+  }
 }
 
 function formatDate(dateStr) {
@@ -335,6 +550,7 @@ function formatDate(dateStr) {
 }
 
 function renderTasks() {
+  const canWrite = userPermission === 'write';
   const list = document.getElementById("taskList");
   list.innerHTML = "";
 
@@ -348,18 +564,22 @@ function renderTasks() {
 
   for (const task of tasksCache.filter(t => !t.deleted)) {
     const li = document.createElement("li");
-    li.className = "list-group-item d-flex justify-content-between align-items-center";
+    li.className = "list-group-item d-flex align-items-center";
     li.dataset.id = task.id;
 
     const left = document.createElement("div");
     left.className = "d-flex align-items-center";
 
+    const actions = document.createElement("div");
+    actions.className = "d-flex align-items-center ms-auto gap-1";
+
     const chk = document.createElement("input");
     chk.type = "checkbox";
     chk.checked = task.done;
     chk.className = "form-check-input me-3";
-    chk.addEventListener("change", async () => {
-      const updateObj = { done: chk.checked };
+    if (canWrite) {
+      chk.addEventListener("change", async () => {
+        const updateObj = { done: chk.checked };
 
       const now = new Date();
       const iso = now.toISOString();
@@ -382,6 +602,9 @@ function renderTasks() {
       }
       await updateTask(task.id, updateObj);
     });
+    } else {
+      chk.disabled = true;
+    }
 
   const span = document.createElement("span");
   const formatted = formatDate(task.date);
@@ -394,70 +617,40 @@ function renderTasks() {
     span.innerHTML += ` <span class="badge bg-info text-dark">${recurText}</span>`;
   }
   if (task.done) span.classList.add("task-done");
+  const person = peopleCache.find(p => p.id === task.assignedTo);
+  const personName = person ? person.name : LANGUAGES[currentLang].unassigned;
+  span.innerHTML += ` - ${personName}`;
 
     left.appendChild(chk);
     left.appendChild(span);
 
-    const select = document.createElement("select");
-    select.className = "form-select mx-3";
-    select.add(new Option(LANGUAGES[currentLang].unassigned, ""));
-    peopleCache.forEach(p => {
-      const opt = new Option(p.name, p.id);
-      if (task.assignedTo === p.id) opt.selected = true;
-      select.add(opt);
-    });
-    
-    select.addEventListener("change", () => {
-      const val = select.value ? parseInt(select.value) : null;
-      const updateObj = { assignedTo: val };
-      if (val !== task.assignedTo) {
-        const now = new Date();
-        const iso = now.toISOString();
-        const pad = n => n.toString().padStart(2, "0");
-        const stamp = (prefix) => (
-          prefix +
-          pad(now.getMonth() + 1) +
-          pad(now.getDate()) +
-          pad(now.getHours()) +
-          pad(now.getMinutes())
-        );
-        updateObj.assignedDate = iso;
-        updateObj.assignedDateShort = stamp("A");
+    if (canWrite) {
+      const del = document.createElement("button");
+      del.className = "btn btn-sm btn-outline-danger";
+      del.title = LANGUAGES[currentLang].remove;
+      del.innerHTML = '<i class="bi bi-trash"></i>';
+      del.addEventListener("click", () => deleteTask(task.id));
+
+      const dragBtn = document.createElement("button");
+      dragBtn.className = "btn btn-sm btn-outline-secondary drag-handle";
+      dragBtn.innerHTML = '<i class="bi bi-list"></i>';
+
+      if (!task.done) {
+        const edit = document.createElement("button");
+        edit.className = "btn btn-sm btn-outline-secondary";
+        edit.title = LANGUAGES[currentLang].edit;
+        edit.innerHTML = '<i class="bi bi-pencil"></i>';
+        edit.addEventListener("click", () => openEditModal(task));
+        actions.appendChild(edit);
       }
-      updateTask(task.id, updateObj);
-    });
+      actions.appendChild(del);
+      actions.appendChild(dragBtn);
+    }
 
-    const del = document.createElement("button");
-    del.className = "btn btn-sm btn-outline-danger me-1";
-    del.title = LANGUAGES[currentLang].remove;
-    del.innerHTML = '<i class="bi bi-trash"></i>';
-    del.addEventListener("click", () => deleteTask(task.id));
-
-    const dragBtn = document.createElement("button");
-    dragBtn.className = "btn btn-sm btn-outline-secondary drag-handle me-1";
-    dragBtn.innerHTML = '<i class="bi bi-list"></i>';
-
-
-    if (!task.done) {
-      const edit = document.createElement("button");
-      edit.className = "btn btn-sm btn-outline-secondary me-1";
-      edit.title = LANGUAGES[currentLang].edit;
-      edit.innerHTML = '<i class="bi bi-pencil"></i>';
-      edit.addEventListener("click", async () => {
-        const newName = prompt(LANGUAGES[currentLang].taskNamePlaceholder, task.name);
-        if (newName === null) return;
-        let newDate = prompt("YYYY-MM-DD", task.date);
-        if (newDate === null) return;
-        newDate = newDate.trim();
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(newDate)) {
-          alert("Invalid date format. Use YYYY-MM-DD.");
-          return;
-        }
-        await updateTask(task.id, { name: newName.trim(), date: newDate });
-      });
-      li.append(left, select, edit, del, dragBtn);
+    if (actions.childElementCount > 0) {
+      li.append(left, actions);
     } else {
-      li.append(left, select, del, dragBtn);
+      li.append(left);
     }
 
     list.appendChild(li);
@@ -466,24 +659,42 @@ function renderTasks() {
 
   if (taskSortable) {
     taskSortable.destroy();
+    taskSortable = null;
   }
-  taskSortable = new Sortable(list, {
-    handle: '.drag-handle',
-    animation: 150,
-    onEnd: async (evt) => {
-      const visible = tasksCache.filter(t => !t.deleted);
-      const moved = visible.splice(evt.oldIndex, 1)[0];
-      visible.splice(evt.newIndex, 0, moved);
-      let i = 0;
-      tasksCache = tasksCache.map(t => t.deleted ? t : visible[i++]);
-      const ids = tasksCache.filter(t => !t.deleted).map(t => t.id);
-      await fetch('/api/tasks/reorder', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(ids)
-      });
-    }
-  });
+  if (canWrite) {
+    taskSortable = new Sortable(list, {
+      handle: '.drag-handle',
+      animation: 150,
+      onEnd: async (evt) => {
+        const visible = tasksCache.filter(t => !t.deleted);
+        const moved = visible.splice(evt.oldIndex, 1)[0];
+        visible.splice(evt.newIndex, 0, moved);
+        let i = 0;
+        tasksCache = tasksCache.map(t => t.deleted ? t : visible[i++]);
+        const ids = tasksCache.filter(t => !t.deleted).map(t => t.id);
+        await authFetch('/api/tasks/reorder', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(ids)
+        });
+      }
+    });
+  }
+}
+
+function openEditModal(task) {
+  editTaskId = task.id;
+  const nameInput = document.getElementById('editTaskName');
+  const dateInput = document.getElementById('editTaskDate');
+  const personSelect = document.getElementById('editTaskPerson');
+  if (nameInput) nameInput.value = task.name;
+  if (dateInput) dateInput.value = task.date || '';
+  if (personSelect) personSelect.value = task.assignedTo || '';
+  if (!editTaskModal) {
+    const modalEl = document.getElementById('editTaskModal');
+    if (modalEl) editTaskModal = new bootstrap.Modal(modalEl);
+  }
+  if (editTaskModal) editTaskModal.show();
 }
 
 function getWeekNumber(d) {
@@ -605,7 +816,7 @@ document.getElementById("personForm").addEventListener("submit", async e => {
   e.preventDefault();
   const name = document.getElementById("personName").value.trim();
   if (!name) return;
-  await fetch("/api/people", {
+  await authFetch("/api/people", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ name })
@@ -620,6 +831,7 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
   const name = document.getElementById("taskName").value.trim();
   let date = document.getElementById("taskDate").value;
   const recurring = document.getElementById("taskRecurring").value;
+  const assigned = document.getElementById("taskPerson").value;
   if (!name) return;
   if (!date) date = new Date().toISOString().split("T")[0];
 
@@ -634,13 +846,14 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
     pad(now.getMinutes())
   );
 
-  await fetch("/api/tasks", {
+  await authFetch("/api/tasks", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       name,
       date,
       recurring,
+      assignedTo: assigned ? parseInt(assigned) : null,
       created: iso,
       createdShort: stamp("C")
     })
@@ -649,11 +862,25 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
   await fetchTasks();
 });
 
+document.getElementById('editTaskForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const name = document.getElementById('editTaskName').value.trim();
+  const date = document.getElementById('editTaskDate').value;
+  const assigned = document.getElementById('editTaskPerson').value;
+  await updateTask(editTaskId, {
+    name,
+    date,
+    assignedTo: assigned ? parseInt(assigned) : null
+  });
+  if (editTaskModal) editTaskModal.hide();
+  editTaskId = null;
+});
+
 async function updateTask(id, changes) {
   Object.keys(changes).forEach(key => {
     if (changes[key] === null) changes[key] = undefined;
   });
-  await fetch(`/api/tasks/${id}`, {
+  await authFetch(`/api/tasks/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(changes)
@@ -662,13 +889,13 @@ async function updateTask(id, changes) {
 }
 
 async function deletePerson(id) {
-  await fetch(`/api/people/${id}`, { method: "DELETE" });
+  await authFetch(`/api/people/${id}`, { method: "DELETE" });
   await fetchPeople();
   await fetchTasks();
 }
 
 async function deleteTask(id) {
-  await fetch(`/api/tasks/${id}`, { method: "DELETE" });
+  await authFetch(`/api/tasks/${id}`, { method: "DELETE" });
   await fetchTasks();
 }
 
@@ -678,7 +905,7 @@ async function deleteTask(id) {
 // ==========================
 async function fetchSavedBoards() {
   try {
-    const res = await fetch('/api/analyticsBoards');
+    const res = await authFetch('/api/analyticsBoards');
     if (!res.ok) throw new Error('Failed fetching saved boards');
     return await res.json();
   } catch (e) {
@@ -689,7 +916,7 @@ async function fetchSavedBoards() {
 
 async function saveBoards(typesArray) {
   try {
-    await fetch('/api/analyticsBoards', {
+    await authFetch('/api/analyticsBoards', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(typesArray)
@@ -1046,8 +1273,14 @@ function setIcon(theme) {
     : "bi bi-brightness-high-fill";
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
+async function initApp() {
   const userSettings = await fetchUserSettings();
+  if (userPermission !== 'write') {
+    const personForm = document.getElementById('personForm');
+    if (personForm) personForm.style.display = 'none';
+    const taskForm = document.getElementById('taskForm');
+    if (taskForm) taskForm.style.display = 'none';
+  }
   if (typeof userSettings.levelingEnabled === "boolean") {
     levelingEnabled = userSettings.levelingEnabled;
   }
@@ -1088,16 +1321,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     aiButton.style.display = "none";
   }
 
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (!loginEnabled) {
+    if (logoutBtn) logoutBtn.style.display = 'none';
+  } else if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+      try { await authFetch('/api/logout', { method: 'POST' }); } catch (e) {}
+      localStorage.removeItem('choresToken');
+      window.location.reload();
+    });
+  }
+
   initSettingsForm(userSettings);
 
   setLanguage(currentLang);
-  await fetchPeople();
-  await fetchTasks();
+  await applySettings(userSettings);
 
   const savedBoards = await fetchSavedBoards();
-  if (savedBoards.length) {
-    savedBoards.forEach(type => addChart(type));
-  }
+    if (savedBoards.length) {
+      savedBoards.forEach(type => addChart(type));
+    }
 
   const settingsBtn = document.getElementById("settingsBtn");
   const settingsModalEl = document.getElementById("settingsModal");
@@ -1148,6 +1391,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
   }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  currentLang = localStorage.getItem('mmm-chores-lang') || currentLang;
+  setLanguage(currentLang);
+  checkLogin();
 });
 
 // ==========================
@@ -1190,7 +1439,7 @@ if (aiBtn) {
     aiBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span>AI...`;
 
     try {
-      const res = await fetch('/api/ai-generate', { method: "POST" });
+      const res = await authFetch('/api/ai-generate', { method: "POST" });
       const data = await res.json();
 
       if (!data.success) {
