@@ -182,6 +182,11 @@ h1, h2 {
   padding: 0;
 }
 
+/* In input groups, allow icon buttons to match the input height */
+.input-group .btn-icon {
+  height: auto;
+}
+
 /* Completed task style */
 .task-done {
   text-decoration: line-through;
