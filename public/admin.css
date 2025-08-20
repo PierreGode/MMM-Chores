@@ -121,6 +121,8 @@ h1, h2 {
   background: var(--card-bg);
   border-bottom: none;
   font-weight: 600;
+  border-top-left-radius: calc(1rem - 1px);
+  border-top-right-radius: calc(1rem - 1px);
 }
 
 /* Dark mode adjustment for analytics board headers */
