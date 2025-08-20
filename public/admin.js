@@ -28,7 +28,15 @@ function authHeaders() {
 
 function authFetch(url, options = {}) {
   options.headers = Object.assign({}, authHeaders(), options.headers || {});
-  return fetch(url, options);
+  return fetch(url, options).then(res => {
+    if (res.status === 401) {
+      authToken = null;
+      localStorage.removeItem('choresToken');
+      checkLogin();
+      throw new Error('Unauthorized');
+    }
+    return res;
+  });
 }
 
 function setBackground(image) {
