@@ -22,6 +22,28 @@ let loginEnabled = true;
 let editTaskId = null;
 let editTaskModal = null;
 
+const REMINDER_TIME_LOCALES = {
+  en: "en-US",
+  sv: "sv-SE",
+  fr: "fr-FR",
+  es: "es-ES",
+  de: "de-DE",
+  it: "it-IT",
+  nl: "nl-NL",
+  pl: "pl-PL",
+  zh: "zh-CN",
+  ar: "ar-SA"
+};
+
+function updateReminderTimeLocale(lang) {
+  const el = document.getElementById("settingsReminderTime");
+  if (!el) return;
+  const val = el.value;
+  el.value = "";
+  el.setAttribute("lang", REMINDER_TIME_LOCALES[lang] || REMINDER_TIME_LOCALES.en);
+  el.value = val;
+}
+
 function authHeaders() {
   return authToken ? { 'x-auth-token': authToken } : {};
 }
@@ -161,7 +183,10 @@ function initSettingsForm(settings) {
   if (levelEnable) levelEnable.checked = settings.levelingEnabled !== false;
   if (autoUpdate) autoUpdate.checked = !!settings.autoUpdate;
   if (pushoverEnable) pushoverEnable.checked = !!settings.pushoverEnabled;
-    if (reminderTime) reminderTime.value = settings.reminderTime || '';
+  if (reminderTime) {
+    reminderTime.value = settings.reminderTime || '';
+    updateReminderTimeLocale(currentLang);
+  }
     if (yearsInput) yearsInput.value = settings.leveling?.yearsToMaxLevel || 3;
     if (perWeekInput) perWeekInput.value = settings.leveling?.choresPerWeekEstimate || 4;
     if (maxLevelInput) maxLevelInput.value = settings.leveling?.maxLevel || 100;
@@ -312,6 +337,7 @@ function setLanguage(lang) {
   if (pushoverEnableLbl) pushoverEnableLbl.textContent = t.pushoverEnabledLabel || 'Enable Pushover';
   const reminderTimeLbl = document.querySelector("label[for='settingsReminderTime']");
   if (reminderTimeLbl) reminderTimeLbl.textContent = t.reminderTimeLabel || 'Reminder time';
+  updateReminderTimeLocale(lang);
   const backgroundLbl = document.querySelector("label[for='settingsBackground']");
   if (backgroundLbl) backgroundLbl.textContent = t.backgroundLabel || 'Background';
   const backgroundSelect = document.getElementById('settingsBackground');
