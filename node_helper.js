@@ -29,6 +29,7 @@ let tasks = [];
 let people = [];
 let analyticsBoards = [];
 let sessions = {};
+const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 const DEFAULT_TITLES = [
   "Junior",
@@ -573,7 +574,11 @@ module.exports = NodeHelper.create({
     const users = Array.isArray(self.config.users) ? self.config.users : [];
     if (self.config.login) {
       const token = Math.random().toString(36).slice(2);
-      sessions[token] = { username: "__internal__", permission: "write" };
+      sessions[token] = {
+        username: "__internal__",
+        permission: "write",
+        expires: Infinity
+      };
       self.internalToken = token;
     }
 
@@ -583,7 +588,10 @@ module.exports = NodeHelper.create({
       const user = users.find(u => u.username === username && u.password === password);
       if (!user) return res.status(401).json({ error: "Invalid credentials" });
       const token = Math.random().toString(36).slice(2);
-      sessions[token] = user;
+      sessions[token] = {
+        ...user,
+        expires: Date.now() + SESSION_DURATION_MS
+      };
       res.json({ token, permission: user.permission });
     });
 
@@ -591,9 +599,11 @@ module.exports = NodeHelper.create({
         if (!self.config.login) return res.json({ loginRequired: false });
         const token = req.headers["x-auth-token"];
         const user = sessions[token];
-        if (user) {
+        if (user && user.expires > Date.now()) {
+          user.expires = Date.now() + SESSION_DURATION_MS;
           return res.json({ loginRequired: true, loggedIn: true, permission: user.permission });
         }
+        if (token && sessions[token]) delete sessions[token];
         res.json({ loginRequired: true, loggedIn: false });
       });
 
@@ -611,7 +621,11 @@ module.exports = NodeHelper.create({
       if (req.path === "/api/login" || req.path === "/") return next();
       const token = req.headers["x-auth-token"];
       const user = sessions[token];
-      if (!user) return res.status(401).json({ error: "Unauthorized" });
+      if (!user || user.expires <= Date.now()) {
+        if (token && sessions[token]) delete sessions[token];
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      user.expires = Date.now() + SESSION_DURATION_MS;
       req.user = user;
       next();
     });
