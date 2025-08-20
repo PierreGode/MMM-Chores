@@ -76,7 +76,14 @@ function scheduleReminder(self) {
     reminderTimer = null;
   }
   if (!settings.reminderTime || !settings.pushoverEnabled) return;
-  if (!self.config || !self.config.pushoverApiKey || !self.config.pushoverUser) return;
+  if (!self.config || !self.config.pushoverApiKey || !self.config.pushoverUser) {
+    Log.error("MMM-Chores: pushoverApiKey and pushoverUser must be set in config.js when Pushover is enabled");
+    self.sendSocketNotification(
+      "PUSHOVER_CONFIG_ERROR",
+      "Please set pushoverApiKey and pushoverUser in config.js to use Pushover notifications."
+    );
+    return;
+  }
   const [h, m] = settings.reminderTime.split(":").map(n => parseInt(n, 10));
   if (isNaN(h) || isNaN(m)) return;
   const now = new Date();
@@ -95,14 +102,23 @@ function scheduleReminder(self) {
     );
     if (unfinished.length) {
       const list = unfinished.map(t => `• ${t.name}`).join("\n");
-      sendPushover(self.config, settings, `Uncompleted tasks:\n${list}`);
+      sendPushover(self, settings, `Uncompleted tasks:\n${list}`);
     }
     scheduleReminder(self);
   }, delay);
 }
 
-function sendPushover(config, settings, message) {
-  if (!config.pushoverApiKey || !settings.pushoverEnabled || !config.pushoverUser) return;
+function sendPushover(self, settings, message) {
+  const config = self.config || {};
+  if (!settings.pushoverEnabled) return;
+  if (!config.pushoverApiKey || !config.pushoverUser) {
+    Log.error("MMM-Chores: pushoverApiKey and pushoverUser must be set in config.js when Pushover is enabled");
+    self.sendSocketNotification(
+      "PUSHOVER_CONFIG_ERROR",
+      "Please set pushoverApiKey and pushoverUser in config.js to use Pushover notifications."
+    );
+    return;
+  }
   const params = new URLSearchParams({
     token: config.pushoverApiKey,
     user: config.pushoverUser,
@@ -688,7 +704,7 @@ module.exports = NodeHelper.create({
       };
       Log.log("POST /api/tasks", newTask);
       tasks.push(newTask);
-      sendPushover(self.config, settings, `New task: ${newTask.name}`);
+      sendPushover(self, settings, `New task: ${newTask.name}`);
       const ok = broadcastTasks(self);
       res.status(ok ? 201 : 500).json(ok ? newTask : { error: "Failed to save data" });
     });
@@ -770,7 +786,7 @@ module.exports = NodeHelper.create({
 
       const ok = broadcastTasks(self);
       if (!prevDone && task.done) {
-        sendPushover(self.config, settings, `Task completed: ${task.name}`);
+        sendPushover(self, settings, `Task completed: ${task.name}`);
       }
       if (!ok) return res.status(500).json({ error: "Failed to save data" });
       res.json(task);
@@ -810,6 +826,11 @@ module.exports = NodeHelper.create({
       const wasAutoUpdate = settings.autoUpdate;
       if (typeof newSettings !== "object") {
         return res.status(400).json({ error: "Invalid settings data" });
+      }
+      if (newSettings.pushoverEnabled && (!self.config.pushoverApiKey || !self.config.pushoverUser)) {
+        return res.status(400).json({
+          error: "Please set pushoverApiKey and pushoverUser in config.js to use Pushover notifications."
+        });
       }
       if (newSettings.leveling) {
         settings.leveling = { ...settings.leveling, ...newSettings.leveling };
