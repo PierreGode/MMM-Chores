@@ -21,6 +21,7 @@ let userPermission = 'write';
 let loginEnabled = true;
 let editTaskId = null;
 let editTaskModal = null;
+let reminderTimeInput = null;
 
 const REMINDER_TIME_LOCALES = {
   en: "en-US",
@@ -35,13 +36,24 @@ const REMINDER_TIME_LOCALES = {
   ar: "ar-SA"
 };
 
+function attachReminderTimeListeners() {
+  if (!reminderTimeInput) return;
+  reminderTimeInput.addEventListener('input', () => { settingsChanged = true; });
+  reminderTimeInput.addEventListener('change', () => { settingsChanged = true; });
+}
+
 function updateReminderTimeLocale(lang) {
-  const el = document.getElementById("settingsReminderTime");
+  const el = reminderTimeInput || document.getElementById('settingsReminderTime');
   if (!el) return;
   const val = el.value;
-  el.value = "";
-  el.setAttribute("lang", REMINDER_TIME_LOCALES[lang] || REMINDER_TIME_LOCALES.en);
-  el.value = val;
+  const parent = el.parentNode;
+  const newEl = el.cloneNode(true);
+  newEl.value = '';
+  newEl.setAttribute('lang', REMINDER_TIME_LOCALES[lang] || REMINDER_TIME_LOCALES.en);
+  newEl.value = val;
+  parent.replaceChild(newEl, el);
+  reminderTimeInput = newEl;
+  attachReminderTimeListeners();
 }
 
 function authHeaders() {
@@ -167,13 +179,13 @@ function initSettingsForm(settings) {
   const useAI = document.getElementById('settingsUseAI');
   const showAnalytics = document.getElementById('settingsShowAnalytics');
   const levelEnable = document.getElementById('settingsLevelEnable');
-    const autoUpdate = document.getElementById('settingsAutoUpdate');
-    const pushoverEnable = document.getElementById('settingsPushoverEnable');
-    const reminderTime = document.getElementById('settingsReminderTime');
-    const yearsInput = document.getElementById('settingsYears');
-    const perWeekInput = document.getElementById('settingsPerWeek');
-    const maxLevelInput = document.getElementById('settingsMaxLevel');
-    const backgroundSelect = document.getElementById('settingsBackground');
+  const autoUpdate = document.getElementById('settingsAutoUpdate');
+  const pushoverEnable = document.getElementById('settingsPushoverEnable');
+  reminderTimeInput = document.getElementById('settingsReminderTime');
+  const yearsInput = document.getElementById('settingsYears');
+  const perWeekInput = document.getElementById('settingsPerWeek');
+  const maxLevelInput = document.getElementById('settingsMaxLevel');
+  const backgroundSelect = document.getElementById('settingsBackground');
 
   if (showPast) showPast.checked = !!settings.showPast;
   if (textSize) textSize.value = settings.textMirrorSize || 'small';
@@ -183,8 +195,8 @@ function initSettingsForm(settings) {
   if (levelEnable) levelEnable.checked = settings.levelingEnabled !== false;
   if (autoUpdate) autoUpdate.checked = !!settings.autoUpdate;
   if (pushoverEnable) pushoverEnable.checked = !!settings.pushoverEnabled;
-  if (reminderTime) {
-    reminderTime.value = settings.reminderTime || '';
+  if (reminderTimeInput) {
+    reminderTimeInput.value = settings.reminderTime || '';
     updateReminderTimeLocale(currentLang);
   }
     if (yearsInput) yearsInput.value = settings.leveling?.yearsToMaxLevel || 3;
@@ -205,7 +217,7 @@ function initSettingsForm(settings) {
   settingsChanged = false;
   settingsSaved = false;
 
-    const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, pushoverEnable, reminderTime, yearsInput, perWeekInput, maxLevelInput, backgroundSelect];
+  const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, pushoverEnable, yearsInput, perWeekInput, maxLevelInput, backgroundSelect];
   inputs.forEach(el => {
     if (el) {
       el.addEventListener('input', () => { settingsChanged = true; });
@@ -225,7 +237,7 @@ function initSettingsForm(settings) {
         levelingEnabled: levelEnable.checked,
         autoUpdate: autoUpdate.checked,
         pushoverEnabled: pushoverEnable.checked,
-        reminderTime: reminderTime.value,
+        reminderTime: reminderTimeInput.value,
         background: backgroundSelect.value,
         leveling: {
           yearsToMaxLevel: parseFloat(yearsInput.value) || 3,
