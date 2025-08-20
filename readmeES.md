@@ -58,8 +58,8 @@ Añade el módulo a `config.js` así:
     pushoverUser: "your-pushover-user-key",
     login: false,
     users: [
-      { username: "admin", password: "secret", permission: "write" },
-      { username: "viewer", password: "viewer", permission: "read" }
+      { username: "admin", passwordHash: "$2a$10$replaceWithHash", permission: "write" },
+      { username: "viewer", passwordHash: "$2a$10$replaceWithHash", permission: "read" }
     ],
     settings: "unlocked", // establece un PIN de 6 dígitos como "000000" para bloquear la ventana de configuración con un PIN personal, cambia 000000 a cualquier contraseña de 6 dígitos que quieras o comenta esta línea para bloquear totalmente la configuración
 // otras opciones se pueden definir en el portal de administración
@@ -80,7 +80,7 @@ Añade el módulo a `config.js` así:
 },
 ```
 
-Cuando `login` se establece en `true`, define uno o más `users` con `username`, `password` y `permission` (`"read"` o `"write"`). Los usuarios con permiso de lectura pueden ver todas las tareas pero no pueden crearlas, eliminarlas ni modificarlas.
+Cuando `login` se establece en `true`, define uno o más `users` con `username`, `permission` (`"read"` o `"write"`) y una `passwordHash` generada con `bcrypt` (o opcionalmente un `password` en texto claro, aunque se recomienda `passwordHash`). Los usuarios con permiso de lectura pueden ver todas las tareas pero no pueden crearlas, eliminarlas ni modificarlas.
 
 los niveles también pueden ser recompensas
 ```js
@@ -144,7 +144,7 @@ insignia `lvlX`.
 
 Ve a http://yourmirrorIP:5003/ #la página será accesible dentro de la misma red.
 > [!CAUTION]
-> NO expongas la aplicación mediante reenvío de puertos
+> No expongas la interfaz de administración a Internet aunque el inicio de sesión esté habilitado. Las contraseñas se almacenan con hash y las sesiones usan cookies seguras, pero el módulo está pensado solo para redes de confianza.
 
 ## Notificaciones Push
 

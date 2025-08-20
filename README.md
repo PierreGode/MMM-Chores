@@ -52,7 +52,7 @@ Pushover notifications can be toggled from the admin portal, while the `pushover
 
 You can also specify a daily reminder time in the admin settings to receive a Pushover message listing unfinished tasks due today or earlier.
 
-When `login` is set to `true`, define one or more `users` with `username`, `password` and `permission` (`"read"` or `"write"`). Users with read permission may view all tasks but cannot create, delete or modify them.
+When `login` is set to `true`, define one or more `users` with `username`, `permission` (`"read"` or `"write"`), and either a plain `password` or a `passwordHash` generated with a library such as `bcrypt`. Using `passwordHash` is recommended. Users with read permission may view all tasks but cannot create, delete or modify them.
 
 Add the module to `config.js` like so:
 ```js
@@ -68,8 +68,8 @@ Add the module to `config.js` like so:
     pushoverUser: "your-pushover-user-key",
     login: false,
     users: [
-      { username: "admin", password: "secret", permission: "write" },
-      { username: "viewer", password: "viewer", permission: "read" }
+      { username: "admin", passwordHash: "$2a$10$replaceWithHash", permission: "write" },
+      { username: "viewer", passwordHash: "$2a$10$replaceWithHash", permission: "read" }
     ],
     settings: "unlocked", //  set a 6 digit pin like "000000" to lock settings popup with a personal pin, change 000000 to any 6 digit password you want, or comment this out to lock settings completly
 // other options can be set in the admin portal
@@ -160,8 +160,7 @@ MagicMirror display the assigned person's name will include a small
 
 Go to http://yourmirrorIP:5003/ #page will be reachable within same network.
 > [!CAUTION]
-> DO NOT expose application with portforward
-> <p></p> No.. the login will not protect you, a trained goldfish can hack it.
+> Do not expose the admin interface to the public internet even with login enabled. Passwords are hashed and sessions use secure cookies, but the module is still intended for trusted networks only.
 
 ## Push Notifications
 

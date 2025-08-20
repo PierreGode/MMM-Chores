@@ -16,19 +16,24 @@ let settingsMode = 'unlocked';
 let settingsChanged = false;
 let settingsSaved = false;
 let dateFormatting = '';
-let authToken = localStorage.getItem('choresToken') || null;
 let userPermission = 'write';
 let loginEnabled = true;
 let editTaskId = null;
 let editTaskModal = null;
 
-function authHeaders() {
-  return authToken ? { 'x-auth-token': authToken } : {};
+function authFetch(url, options = {}) {
+  options.credentials = 'include';
+  return fetch(url, options);
 }
 
-function authFetch(url, options = {}) {
-  options.headers = Object.assign({}, authHeaders(), options.headers || {});
-  return fetch(url, options);
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, c => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[c]));
 }
 
 function setBackground(image) {
@@ -56,7 +61,7 @@ async function checkLogin() {
   setBackground(savedBg === null ? 'forest.png' : savedBg);
   const app = document.getElementById('app');
   const loginDiv = document.getElementById('loginContainer');
-  const res = await fetch('/api/login', { headers: authHeaders() });
+  const res = await authFetch('/api/login');
   const data = await res.json();
   loginEnabled = data.loginRequired;
   if (!loginEnabled) {
@@ -80,15 +85,13 @@ async function checkLogin() {
     btn.onclick = async () => {
       const username = document.getElementById('loginUser').value;
       const password = document.getElementById('loginPass').value;
-      const resp = await fetch('/api/login', {
+      const resp = await authFetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
       const out = await resp.json();
-      if (resp.ok && out.token) {
-        authToken = out.token;
-        localStorage.setItem('choresToken', authToken);
+      if (resp.ok) {
         userPermission = out.permission || 'write';
         loginDiv.style.display = 'none';
         if (app) app.style.display = '';
@@ -576,18 +579,28 @@ function renderTasks() {
 
   const span = document.createElement("span");
   const formatted = formatDate(task.date);
-  span.innerHTML = `<strong>${task.name}</strong>`;
+  const strong = document.createElement("strong");
+  strong.textContent = task.name;
+  span.appendChild(strong);
   if (formatted) {
-    span.innerHTML += ` <small class="task-date">(${formatted})</small>`;
+    const small = document.createElement("small");
+    small.className = "task-date";
+    small.textContent = `(${formatted})`;
+    span.appendChild(document.createTextNode(" "));
+    span.appendChild(small);
   }
   if (task.recurring && task.recurring !== "none") {
     const recurText = LANGUAGES[currentLang].taskRecurring[task.recurring] || task.recurring;
-    span.innerHTML += ` <span class="badge bg-info text-dark">${recurText}</span>`;
+    const badge = document.createElement("span");
+    badge.className = "badge bg-info text-dark";
+    badge.textContent = recurText;
+    span.appendChild(document.createTextNode(" "));
+    span.appendChild(badge);
   }
   if (task.done) span.classList.add("task-done");
   const person = peopleCache.find(p => p.id === task.assignedTo);
   const personName = person ? person.name : LANGUAGES[currentLang].unassigned;
-  span.innerHTML += ` - ${personName}`;
+  span.appendChild(document.createTextNode(` - ${personName}`));
 
     left.appendChild(chk);
     left.appendChild(span);
@@ -738,7 +751,7 @@ function renderCalendar() {
       const dateStr = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
       const arr = tasksByDate[dateStr] || [];
       html += `<td class="align-top"><div><strong>${d.getDate()}</strong></div>`;
-      arr.forEach(t => { html += `<div class="small">${t.name}</div>`; });
+      arr.forEach(t => { html += `<div class=\"small\">${escapeHtml(t.name)}</div>`; });
       html += '</td>';
     }
     html += '</tr>';
@@ -1295,7 +1308,6 @@ async function initApp() {
   } else if (logoutBtn) {
     logoutBtn.addEventListener('click', async () => {
       try { await authFetch('/api/logout', { method: 'POST' }); } catch (e) {}
-      localStorage.removeItem('choresToken');
       window.location.reload();
     });
   }
@@ -1391,7 +1403,7 @@ function showToast(msg, type = "danger", duration = 4000) {
   toast.role = "alert";
   toast.innerHTML = `
     <div class="d-flex">
-      <div class="toast-body">${msg}</div>
+      <div class="toast-body">${escapeHtml(msg)}</div>
       <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
     </div>`;
   container.appendChild(toast);

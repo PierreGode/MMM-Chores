@@ -451,14 +451,18 @@ Module.register("MMM-Chores", {
         const assignedEl = document.createElement("span");
         assignedEl.className = "xsmall dimmed";
         assignedEl.style.marginLeft = "6px";
-        let html = ` — ${p ? p.name : ""}`;
+        const personName = p ? p.name : "";
+        assignedEl.appendChild(document.createTextNode(` — ${personName}`));
         const lvlEnabled = !(
           this.config.leveling && this.config.leveling.enabled === false
         );
         if (lvlEnabled && p && p.level) {
-          html += ` <span class="lvl-badge">lvl${p.level}</span>`;
+          const badge = document.createElement("span");
+          badge.className = "lvl-badge";
+          badge.textContent = `lvl${p.level}`;
+          assignedEl.appendChild(document.createTextNode(" "));
+          assignedEl.appendChild(badge);
         }
-        assignedEl.innerHTML = html;
         li.appendChild(assignedEl);
       }
 

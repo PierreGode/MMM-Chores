@@ -2,10 +2,13 @@ const Log        = require("logger");
 const NodeHelper = require("node_helper");
 const express    = require("express");
 const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
 const path       = require("path");
 const fs         = require("fs");
 const https      = require("https");
 const { exec }   = require("child_process");
+const crypto     = require("crypto");
+const bcrypt     = require("bcryptjs");
 
 // Use built-in fetch if available (Node 18+) otherwise fall back to node-fetch
 let fetchFn = global.fetch;
@@ -29,6 +32,18 @@ let tasks = [];
 let people = [];
 let analyticsBoards = [];
 let sessions = {};
+
+function getSessionUser(token) {
+  if (!token) return null;
+  const tokenBuf = Buffer.from(token);
+  for (const [stored, user] of Object.entries(sessions)) {
+    const storedBuf = Buffer.from(stored);
+    if (tokenBuf.length === storedBuf.length && crypto.timingSafeEqual(tokenBuf, storedBuf)) {
+      return user;
+    }
+  }
+  return null;
+}
 
 const DEFAULT_TITLES = [
   "Junior",
@@ -565,6 +580,7 @@ module.exports = NodeHelper.create({
     const self = this;
     const app  = express();
 
+    app.use(cookieParser());
     app.use(bodyParser.json());
     app.use(express.static(path.join(__dirname, "public")));
     app.use("/img", express.static(path.join(__dirname, "img")));
@@ -572,7 +588,7 @@ module.exports = NodeHelper.create({
 
     const users = Array.isArray(self.config.users) ? self.config.users : [];
     if (self.config.login) {
-      const token = Math.random().toString(36).slice(2);
+      const token = crypto.randomBytes(32).toString("hex");
       sessions[token] = { username: "__internal__", permission: "write" };
       self.internalToken = token;
     }
@@ -580,17 +596,31 @@ module.exports = NodeHelper.create({
     app.post("/api/login", (req, res) => {
       if (!self.config.login) return res.json({ loginRequired: false });
       const { username, password } = req.body;
-      const user = users.find(u => u.username === username && u.password === password);
+      const user = users.find(u => u.username === username);
       if (!user) return res.status(401).json({ error: "Invalid credentials" });
-      const token = Math.random().toString(36).slice(2);
+      let ok = false;
+      if (user.passwordHash) {
+        try { ok = bcrypt.compareSync(password, user.passwordHash); } catch (e) { ok = false; }
+      } else if (user.password) {
+        const a = Buffer.from(password);
+        const b = Buffer.from(user.password);
+        ok = a.length === b.length && crypto.timingSafeEqual(a, b);
+      }
+      if (!ok) return res.status(401).json({ error: "Invalid credentials" });
+      const token = crypto.randomBytes(32).toString("hex");
       sessions[token] = user;
-      res.json({ token, permission: user.permission });
+      res.cookie("auth_token", token, {
+        httpOnly: true,
+        sameSite: "strict",
+        secure: req.secure
+      });
+      res.json({ permission: user.permission });
     });
 
       app.get("/api/login", (req, res) => {
         if (!self.config.login) return res.json({ loginRequired: false });
-        const token = req.headers["x-auth-token"];
-        const user = sessions[token];
+        const token = req.cookies["auth_token"] || req.headers["x-auth-token"];
+        const user = getSessionUser(token);
         if (user) {
           return res.json({ loginRequired: true, loggedIn: true, permission: user.permission });
         }
@@ -599,8 +629,9 @@ module.exports = NodeHelper.create({
 
       app.post("/api/logout", (req, res) => {
         if (!self.config.login) return res.json({ success: true });
-        const token = req.headers["x-auth-token"];
+        const token = req.cookies["auth_token"] || req.headers["x-auth-token"];
         if (token && sessions[token]) delete sessions[token];
+        res.clearCookie("auth_token", { sameSite: "strict", secure: req.secure, httpOnly: true });
         res.json({ success: true });
       });
 
@@ -609,8 +640,8 @@ module.exports = NodeHelper.create({
       // Allow the login API and root admin page without authentication so the
       // login overlay can be displayed in the browser.
       if (req.path === "/api/login" || req.path === "/") return next();
-      const token = req.headers["x-auth-token"];
-      const user = sessions[token];
+      const token = req.cookies["auth_token"] || req.headers["x-auth-token"];
+      const user = getSessionUser(token);
       if (!user) return res.status(401).json({ error: "Unauthorized" });
       req.user = user;
       next();
