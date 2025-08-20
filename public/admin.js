@@ -166,6 +166,16 @@ function initSettingsForm(settings) {
     if (maxLevelInput) maxLevelInput.value = settings.leveling?.maxLevel || 100;
     if (backgroundSelect) backgroundSelect.value = settings.background || 'forest.png';
 
+  const levelingFields = document.querySelectorAll('.leveling-settings');
+  const toggleLevelingFields = () => {
+    const show = levelEnable && levelEnable.checked;
+    levelingFields.forEach(el => el.classList.toggle('d-none', !show));
+  };
+  if (levelEnable) {
+    levelEnable.addEventListener('change', toggleLevelingFields);
+  }
+  toggleLevelingFields();
+
   settingsChanged = false;
   settingsSaved = false;
 
