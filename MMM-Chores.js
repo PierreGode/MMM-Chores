@@ -130,6 +130,13 @@ Module.register("MMM-Chores", {
       }
       this.updateDom();
     }
+    if (notification === "PUSHOVER_CONFIG_ERROR") {
+      this.sendNotification("SHOW_ALERT", {
+        type: "notification",
+        title: "MMM-Chores",
+        message: payload || "Please set pushoverApiKey and pushoverUser in config.js to use Pushover notifications."
+      });
+    }
   },
 
   shouldShowTask(task) {

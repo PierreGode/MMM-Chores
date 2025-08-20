@@ -156,6 +156,7 @@ function initSettingsForm(settings) {
     const autoUpdate = document.getElementById('settingsAutoUpdate');
     const pushoverEnable = document.getElementById('settingsPushoverEnable');
     const reminderTime = document.getElementById('settingsReminderTime');
+    const reminderContainer = reminderTime ? reminderTime.parentElement : null;
     const yearsInput = document.getElementById('settingsYears');
     const perWeekInput = document.getElementById('settingsPerWeek');
     const maxLevelInput = document.getElementById('settingsMaxLevel');
@@ -184,6 +185,15 @@ function initSettingsForm(settings) {
     levelEnable.addEventListener('change', toggleLevelingFields);
   }
   toggleLevelingFields();
+
+  const toggleReminderField = () => {
+    const show = pushoverEnable && pushoverEnable.checked;
+    if (reminderContainer) reminderContainer.classList.toggle('d-none', !show);
+  };
+  if (pushoverEnable) {
+    pushoverEnable.addEventListener('change', toggleReminderField);
+  }
+  toggleReminderField();
 
   settingsChanged = false;
   settingsSaved = false;
@@ -227,6 +237,9 @@ function initSettingsForm(settings) {
         await applySettings(data.settings || payload);
         const instance = bootstrap.Modal.getInstance(document.getElementById('settingsModal'));
         if (instance) instance.hide();
+      } else {
+        const out = await res.json().catch(() => ({}));
+        alert(out.error || 'Failed saving settings');
       }
     } catch (err) {
       console.error('Failed saving settings', err);
