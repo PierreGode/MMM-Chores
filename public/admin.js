@@ -242,6 +242,14 @@ function setLanguage(lang) {
   localStorage.setItem("mmm-chores-lang", lang);
   document.documentElement.setAttribute('lang', lang);
 
+  // Update reminder time input to reflect chosen language so the browser
+  // renders the appropriate 12h/24h clock. For English we default to the
+  // 12h "en-US" locale, otherwise we use the selected language directly.
+  const reminderInput = document.getElementById('settingsReminderTime');
+  if (reminderInput) {
+    reminderInput.setAttribute('lang', lang === 'en' ? 'en-US' : lang);
+  }
+
   const t = LANGUAGES[lang];
 
   localizedMonths = Array.from({ length: 12 }, (_, i) =>
