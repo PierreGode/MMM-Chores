@@ -4,7 +4,7 @@
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/J3J2EARPK)
 
-Proporciona una interfaz de administración donde puedes añadir, editar y eliminar tareas. También puedes establecer fechas límite y asignar tareas a diferentes personas. El módulo muestra las tareas en tu MagicMirror, permitiéndote llevar un seguimiento de las tareas domésticas de un vistazo.
+Proporciona una interfaz de administración donde puedes añadir, editar y eliminar tareas. También puedes establecer fechas límite y asignar tareas a diferentes personas. Las tareas pueden ser únicas o repetirse diariamente, semanalmente, mensualmente o anualmente. El módulo muestra las tareas en tu MagicMirror, permitiéndote llevar un seguimiento de las tareas domésticas de un vistazo.
 
 Los datos se almacenan en `data.json` para que persistan entre reinicios.
 Usa el asa de arrastre (icono de "hamburguesa") para reordenar las tareas en la interfaz de administración. El
