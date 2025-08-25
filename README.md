@@ -4,7 +4,7 @@
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/J3J2EARPK)
 
-It provides an admin interface where you can add, edit, and delete tasks. You can also set due dates and assign tasks to different persons. The module displays the tasks on your MagicMirror, allowing you to keep track of your household chores at a glance.
+It provides an admin interface where you can add, edit, and delete tasks. You can also set due dates and assign tasks to different persons. Tasks may be one-time or recur daily, weekly, monthly, or yearly. The module displays the tasks on your MagicMirror, allowing you to keep track of your household chores at a glance.
 
 The data is stored in `data.json` so it persists across restarts.
 Use the drag handle ("burger" icon) to reorder tasks in the admin UI. The

@@ -298,7 +298,9 @@ function broadcastTasks(helper) {
 
 function getNextDate(dateStr, recurring) {
   const d = new Date(dateStr);
-  if (recurring === "weekly") {
+  if (recurring === "daily") {
+    d.setDate(d.getDate() + 1);
+  } else if (recurring === "weekly") {
     d.setDate(d.getDate() + 7);
   } else if (recurring === "monthly") {
     d.setMonth(d.getMonth() + 1);

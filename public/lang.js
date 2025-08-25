@@ -12,6 +12,7 @@ const LANGUAGES = {
     taskNamePlaceholder: "Task name…",
     taskRecurring: {
       none: "One time",
+      daily: "Daily",
       weekly: "Weekly",
       monthly: "Monthly",
       yearly: "Yearly"
@@ -106,6 +107,7 @@ const LANGUAGES = {
     taskNamePlaceholder: "Uppgiftsnamn…",
     taskRecurring: {
       none: "Engång",
+      daily: "Dagligen",
       weekly: "Veckovis",
       monthly: "Månadsvis",
       yearly: "Årligen"
@@ -200,6 +202,7 @@ const LANGUAGES = {
     taskNamePlaceholder: "Nom de la tâche…",
     taskRecurring: {
       none: "Unique",
+      daily: "Quotidien",
       weekly: "Hebdomadaire",
       monthly: "Mensuel",
       yearly: "Annuel"
@@ -294,6 +297,7 @@ const LANGUAGES = {
     taskNamePlaceholder: "Nombre de tarea…",
     taskRecurring: {
       none: "Una vez",
+      daily: "Diario",
       weekly: "Semanal",
       monthly: "Mensual",
       yearly: "Anual"
@@ -388,6 +392,7 @@ const LANGUAGES = {
     taskNamePlaceholder: "Aufgabenname…",
     taskRecurring: {
       none: "Einmalig",
+      daily: "Täglich",
       weekly: "Wöchentlich",
       monthly: "Monatlich",
       yearly: "Jährlich"
@@ -482,6 +487,7 @@ const LANGUAGES = {
     taskNamePlaceholder: "Nome del compito…",
     taskRecurring: {
       none: "Una tantum",
+      daily: "Giornaliero",
       weekly: "Settimanale",
       monthly: "Mensile",
       yearly: "Annuale"
@@ -576,6 +582,7 @@ const LANGUAGES = {
     taskNamePlaceholder: "Taaknaam…",
     taskRecurring: {
       none: "Eenmalig",
+      daily: "Dagelijks",
       weekly: "Wekelijks",
       monthly: "Maandelijks",
       yearly: "Jaarlijks"
@@ -670,6 +677,7 @@ const LANGUAGES = {
     taskNamePlaceholder: "Nazwa zadania…",
     taskRecurring: {
       none: "Jednorazowe",
+      daily: "Codziennie",
       weekly: "Tygodniowo",
       monthly: "Miesięcznie",
       yearly: "Rocznie"
@@ -764,6 +772,7 @@ const LANGUAGES = {
     taskNamePlaceholder: "任务名称…",
     taskRecurring: {
       none: "一次性",
+      daily: "每日",
       weekly: "每周",
       monthly: "每月",
       yearly: "每年"
@@ -858,6 +867,7 @@ const LANGUAGES = {
     taskNamePlaceholder: "اسم المهمة…",
     taskRecurring: {
       none: "مرة واحدة",
+      daily: "يومي",
       weekly: "أسبوعي",
       monthly: "شهري",
       yearly: "سنوي"
