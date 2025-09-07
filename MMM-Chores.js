@@ -36,7 +36,8 @@ Module.register("MMM-Chores", {
       enabled: true,
       yearsToMaxLevel: 3,
       choresPerWeekEstimate: 4,
-      maxLevel: 100
+      maxLevel: 100,
+      choresToMaxLevel: null
     },
     levelTitles: [
       "Junior",

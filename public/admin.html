@@ -285,6 +285,9 @@
               <label class="form-label" for="settingsMaxLevel">Max level</label>
               <input type="number" id="settingsMaxLevel" class="form-control" />
             </div>
+            <div class="col-12 col-sm-6 leveling-settings">
+              <button type="button" class="btn btn-outline-primary" id="editRewardsBtn">Edit Rewards</button>
+            </div>
             <div class="col-12">
               <button class="btn btn-primary" type="submit" id="settingsSaveBtn">Save</button>
             </div>
@@ -297,6 +300,36 @@
     <footer class="text-center py-3 small text-muted" id="footerText">
       Built with Bootstrap & Chart.js • MMM-Chores by Pierre Gode
     </footer>
+  </div>
+
+  <div class="modal fade" id="rewardsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content card-shadow">
+        <div class="modal-header">
+          <h5 class="modal-title" id="rewardsModalLabel">Rewards</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="rewardsForm" class="row gy-3">
+            <div class="col-12">
+              <label class="form-label" for="settingsChoresToMax" id="choresToMaxLabel">Chores to reach level 100</label>
+              <input type="number" id="settingsChoresToMax" class="form-control" />
+            </div>
+            <div class="col-12">
+              <h6 id="globalRewardsLabel">Global Rewards</h6>
+              <div id="globalRewardsContainer"></div>
+            </div>
+            <div class="col-12 mt-3">
+              <h6 id="customRewardsLabel">Custom Rewards per Person</h6>
+              <div id="customRewardsContainer"></div>
+            </div>
+            <div class="col-12 mt-3">
+              <button type="submit" class="btn btn-primary" id="rewardsSaveBtn">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script src="lang.js"></script>

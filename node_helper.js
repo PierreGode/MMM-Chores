@@ -216,7 +216,7 @@ function computeLevel(config, personId = null) {
   const perW   = parseFloat(lvlConf.choresPerWeekEstimate) || 1;
   const max    = parseInt(lvlConf.maxLevel, 10) || 100;
   const done   = tasks.filter(t => t.done && (!personId || t.assignedTo === personId)).length;
-  const totalNeeded = years * 52 * perW;
+  const totalNeeded = parseFloat(lvlConf.choresToMaxLevel) || (years * 52 * perW);
   const tasksPerLvl = totalNeeded / max;
   let lvl = Math.floor(done / tasksPerLvl) + 1;
   if (lvl < 1) lvl = 1;
@@ -334,14 +334,17 @@ module.exports = NodeHelper.create({
         showAnalyticsOnMirror: settings.showAnalyticsOnMirror ?? payload.showAnalyticsOnMirror,
         useAI: settings.useAI ?? payload.useAI,
         autoUpdate: settings.autoUpdate ?? payload.autoUpdate,
-          pushoverEnabled: settings.pushoverEnabled ?? payload.pushoverEnabled,
-          reminderTime: settings.reminderTime ?? payload.reminderTime,
-          background: settings.background ?? payload.background ?? 'forest.png',
-          levelingEnabled: settings.levelingEnabled ?? (payload.leveling?.enabled !== false),
-          leveling: {
-            yearsToMaxLevel: settings.leveling?.yearsToMaxLevel ?? payload.leveling?.yearsToMaxLevel,
+        pushoverEnabled: settings.pushoverEnabled ?? payload.pushoverEnabled,
+        reminderTime: settings.reminderTime ?? payload.reminderTime,
+        background: settings.background ?? payload.background ?? 'forest.png',
+        levelingEnabled: settings.levelingEnabled ?? (payload.leveling?.enabled !== false),
+        levelTitles: settings.levelTitles ?? payload.levelTitles,
+        customLevelTitles: settings.customLevelTitles ?? payload.customLevelTitles,
+        leveling: {
+          yearsToMaxLevel: settings.leveling?.yearsToMaxLevel ?? payload.leveling?.yearsToMaxLevel,
           choresPerWeekEstimate: settings.leveling?.choresPerWeekEstimate ?? payload.leveling?.choresPerWeekEstimate,
-          maxLevel: settings.leveling?.maxLevel ?? payload.leveling?.maxLevel
+          maxLevel: settings.leveling?.maxLevel ?? payload.leveling?.maxLevel,
+          choresToMaxLevel: settings.leveling?.choresToMaxLevel ?? payload.leveling?.choresToMaxLevel
         }
       };
 

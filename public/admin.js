@@ -21,6 +21,8 @@ let userPermission = 'write';
 let loginEnabled = true;
 let editTaskId = null;
 let editTaskModal = null;
+let rewardsModal = null;
+let settingsCache = {};
 
 function authHeaders() {
   return authToken ? { 'x-auth-token': authToken } : {};
@@ -161,6 +163,8 @@ function initSettingsForm(settings) {
     const perWeekInput = document.getElementById('settingsPerWeek');
     const maxLevelInput = document.getElementById('settingsMaxLevel');
     const backgroundSelect = document.getElementById('settingsBackground');
+    const editRewardsBtn = document.getElementById('editRewardsBtn');
+    const rewardsForm = document.getElementById('rewardsForm');
 
   if (showPast) showPast.checked = !!settings.showPast;
   if (textSize) textSize.value = settings.textMirrorSize || 'small';
@@ -194,6 +198,56 @@ function initSettingsForm(settings) {
     pushoverEnable.addEventListener('change', toggleReminderField);
   }
   toggleReminderField();
+
+  if (editRewardsBtn) editRewardsBtn.addEventListener('click', openRewardsModal);
+  if (rewardsForm) {
+    rewardsForm.addEventListener('submit', async e => {
+      e.preventDefault();
+      const titles = [];
+      for (let i = 0; i < 10; i++) {
+        const input = document.getElementById(`globalReward${i}`);
+        titles.push(input ? input.value : '');
+      }
+      const custom = {};
+      peopleCache.forEach(p => {
+        const arr = [];
+        let hasVal = false;
+        const safeName = p.name.replace(/[^a-z0-9_-]/gi, '_');
+        for (let i = 0; i < 10; i++) {
+          const input = document.getElementById(`customReward-${safeName}-${i}`);
+          const val = input ? input.value : '';
+          arr.push(val);
+          if (val) hasVal = true;
+        }
+        if (hasVal) custom[p.name] = arr;
+      });
+      const choresInput = document.getElementById('settingsChoresToMax');
+      const choresVal = parseFloat(choresInput.value);
+      const payload = {
+        levelTitles: titles,
+        customLevelTitles: custom,
+        leveling: {}
+      };
+      if (!isNaN(choresVal)) payload.leveling.choresToMaxLevel = choresVal;
+      try {
+        const res = await authFetch('/api/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          const data = await res.json();
+          await applySettings(data.settings || payload);
+          if (rewardsModal) rewardsModal.hide();
+        } else {
+          const out = await res.json().catch(() => ({}));
+          alert(out.error || 'Failed saving rewards');
+        }
+      } catch (err) {
+        console.error('Failed saving rewards', err);
+      }
+    });
+  }
 
   settingsChanged = false;
   settingsSaved = false;
@@ -245,6 +299,63 @@ function initSettingsForm(settings) {
       console.error('Failed saving settings', err);
     }
   });
+}
+
+function openRewardsModal() {
+  const globalContainer = document.getElementById('globalRewardsContainer');
+  const customContainer = document.getElementById('customRewardsContainer');
+  const choresInput = document.getElementById('settingsChoresToMax');
+  if (globalContainer) {
+    globalContainer.innerHTML = '';
+    const titles = settingsCache.levelTitles || [];
+    for (let i = 0; i < 10; i++) {
+      const div = document.createElement('div');
+      div.className = 'mb-2';
+      const label = document.createElement('label');
+      label.className = 'form-label';
+      label.setAttribute('for', `globalReward${i}`);
+      label.textContent = `Level ${i * 10 + 1}-${i * 10 + 10}`;
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.className = 'form-control';
+      input.id = `globalReward${i}`;
+      input.value = titles[i] || '';
+      div.appendChild(label);
+      div.appendChild(input);
+      globalContainer.appendChild(div);
+    }
+  }
+  if (customContainer) {
+    customContainer.innerHTML = '';
+    peopleCache.forEach(p => {
+      const section = document.createElement('div');
+      section.className = 'mb-3';
+      const h = document.createElement('h6');
+      h.textContent = p.name;
+      section.appendChild(h);
+      const key = p.name;
+      const safeName = key.replace(/[^a-z0-9_-]/gi, '_');
+      const arr = (settingsCache.customLevelTitles && settingsCache.customLevelTitles[key]) || [];
+      for (let i = 0; i < 10; i++) {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'form-control mb-1';
+        input.id = `customReward-${safeName}-${i}`;
+        input.placeholder = `Level ${i * 10 + 1}-${i * 10 + 10}`;
+        input.value = arr[i] || '';
+        section.appendChild(input);
+      }
+      customContainer.appendChild(section);
+    });
+  }
+  if (choresInput) {
+    choresInput.value = settingsCache.leveling?.choresToMaxLevel || '';
+  }
+  if (!rewardsModal) {
+    const modalEl = document.getElementById('rewardsModal');
+    if (modalEl) rewardsModal = new bootstrap.Modal(modalEl);
+  }
+  if (rewardsModal) rewardsModal.show();
 }
 
 // ==========================
@@ -365,6 +476,18 @@ function setLanguage(lang) {
   if (perWeekLbl) perWeekLbl.textContent = t.choresPerWeekLabel;
   const maxLvlLbl = document.querySelector("label[for='settingsMaxLevel']");
   if (maxLvlLbl) maxLvlLbl.textContent = t.maxLevelLabel;
+  const editRewardsBtn = document.getElementById('editRewardsBtn');
+  if (editRewardsBtn) editRewardsBtn.textContent = t.editRewardsButton || 'Edit Rewards';
+  const rewardsModalTitle = document.getElementById('rewardsModalLabel');
+  if (rewardsModalTitle) rewardsModalTitle.textContent = t.rewardsTitle || 'Rewards';
+  const choresToMaxLbl = document.getElementById('choresToMaxLabel');
+  if (choresToMaxLbl) choresToMaxLbl.textContent = t.choresToLevel100Label || 'Chores to reach level 100';
+  const globalRewardsLbl = document.getElementById('globalRewardsLabel');
+  if (globalRewardsLbl) globalRewardsLbl.textContent = t.globalRewardsLabel || 'Global Rewards';
+  const customRewardsLbl = document.getElementById('customRewardsLabel');
+  if (customRewardsLbl) customRewardsLbl.textContent = t.customRewardsLabel || 'Custom Rewards per Person';
+  const rewardsSaveBtn = document.getElementById('rewardsSaveBtn');
+  if (rewardsSaveBtn) rewardsSaveBtn.textContent = t.saveButton || 'Save';
 
   const peopleHeader = document.getElementById("peopleHeader");
   if (peopleHeader) peopleHeader.textContent = t.peopleTitle;
@@ -449,6 +572,12 @@ async function fetchTasks() {
 }
 
 async function applySettings(newSettings) {
+  settingsCache = { ...settingsCache, ...newSettings };
+  if (newSettings.leveling) {
+    settingsCache.leveling = { ...settingsCache.leveling, ...newSettings.leveling };
+  }
+  if (newSettings.levelTitles) settingsCache.levelTitles = newSettings.levelTitles;
+  if (newSettings.customLevelTitles) settingsCache.customLevelTitles = newSettings.customLevelTitles;
   if (typeof newSettings.levelingEnabled === 'boolean') {
     levelingEnabled = newSettings.levelingEnabled;
   }
@@ -1275,6 +1404,7 @@ function setIcon(theme) {
 
 async function initApp() {
   const userSettings = await fetchUserSettings();
+  settingsCache = userSettings;
   if (userPermission !== 'write') {
     const personForm = document.getElementById('personForm');
     if (personForm) personForm.style.display = 'none';
