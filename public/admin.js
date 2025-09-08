@@ -23,6 +23,7 @@ let editTaskId = null;
 let editTaskModal = null;
 let customLevelTitles = {};
 let personRewardsTarget = null;
+let levelTitles = [];
 const personRewardsModalEl = document.getElementById('personRewardsModal');
 const personRewardTitlesContainer = document.getElementById('personRewardTitlesContainer');
 const personRewardTitleInputs = [];
@@ -208,6 +209,7 @@ function initSettingsForm(settings) {
   if (rewardTitlesContainer) {
     rewardTitlesContainer.innerHTML = '';
     const titles = Array.isArray(settings.levelTitles) ? settings.levelTitles : [];
+    levelTitles = titles;
     for (let i = 0; i < 10; i++) {
       const wrap = document.createElement('div');
       const lbl = document.createElement('label');
@@ -479,6 +481,8 @@ function setLanguage(lang) {
   });
   const personRewardsTitle = document.getElementById('personRewardsModalLabel');
   if (personRewardsTitle) personRewardsTitle.textContent = t.editRewardsButton || 'Edit Rewards';
+  const viewRewardsTitle = document.getElementById('viewRewardsModalLabel');
+  if (viewRewardsTitle) viewRewardsTitle.textContent = t.viewRewardsButton || 'Rewards';
   const personRewardsSave = document.getElementById('personRewardsSaveBtn');
   if (personRewardsSave) personRewardsSave.textContent = t.saveButton || 'Save';
   const personRewardsRemove = document.getElementById('personRewardsRemoveBtn');
@@ -577,6 +581,9 @@ async function applySettings(newSettings) {
   if (newSettings.dateFormatting !== undefined) {
     dateFormatting = newSettings.dateFormatting;
   }
+  if (Array.isArray(newSettings.levelTitles)) {
+    levelTitles = newSettings.levelTitles;
+  }
   if (newSettings.background !== undefined) {
     setBackground(newSettings.background);
     localStorage.setItem('choresBackground', newSettings.background || '');
@@ -597,6 +604,33 @@ function openPersonRewards(person) {
   const t = LANGUAGES[currentLang];
   if (modalTitle) modalTitle.textContent = `${t.editRewardsButton || 'Edit Rewards'} - ${person.name}`;
   const modal = personRewardsModalEl ? new bootstrap.Modal(personRewardsModalEl) : null;
+  if (modal) modal.show();
+}
+
+function showPersonRewards(person) {
+  const list = document.getElementById('viewRewardsList');
+  if (!list) return;
+  list.innerHTML = '';
+  const t = LANGUAGES[currentLang];
+  const titles = (customLevelTitles[person.name] && customLevelTitles[person.name].length)
+    ? customLevelTitles[person.name]
+    : levelTitles;
+  for (let i = 0; i < 10; i++) {
+    const li = document.createElement('li');
+    li.className = 'list-group-item d-flex justify-content-between';
+    const range = document.createElement('span');
+    range.className = 'text-muted';
+    range.textContent = `${t.levelRangeLabel || 'Levels'} ${i * 10 + 1}-${(i + 1) * 10}`;
+    const txt = document.createElement('span');
+    txt.textContent = titles[i] || '';
+    li.appendChild(range);
+    li.appendChild(txt);
+    list.appendChild(li);
+  }
+  const modalTitle = document.getElementById('viewRewardsModalLabel');
+  if (modalTitle) modalTitle.textContent = `${t.viewRewardsButton || 'Rewards'} - ${person.name}`;
+  const modalEl = document.getElementById('viewRewardsModal');
+  const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
   if (modal) modal.show();
 }
 
@@ -660,12 +694,12 @@ function renderPeople() {
       const actions = document.createElement('div');
       actions.className = 'btn-group btn-group-sm';
       if (levelingEnabled) {
-        const editBtn = document.createElement('button');
-        editBtn.className = 'btn btn-outline-secondary';
-        editBtn.title = LANGUAGES[currentLang].editRewardsButton || 'Edit Rewards';
-        editBtn.innerHTML = '<i class="bi bi-gift"></i>';
-        editBtn.onclick = () => openPersonRewards(person);
-        actions.appendChild(editBtn);
+        const viewBtn = document.createElement('button');
+        viewBtn.className = 'btn btn-outline-secondary';
+        viewBtn.title = LANGUAGES[currentLang].viewRewardsButton || 'Rewards';
+        viewBtn.innerHTML = '<i class="bi bi-gift"></i>';
+        viewBtn.onclick = () => showPersonRewards(person);
+        actions.appendChild(viewBtn);
       }
       const delBtn = document.createElement('button');
       delBtn.className = 'btn btn-outline-danger';

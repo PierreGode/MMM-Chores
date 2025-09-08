@@ -148,7 +148,9 @@ Cualquier persona no listada en `customLevelTitles` vuelve al arreglo global
 `levelTitles` o a los valores predeterminados.
 
 También puedes ajustar los títulos de recompensa personalizados desde el diálogo
-Editar recompensas en la configuración, que lista a cada persona.
+Editar recompensas en la configuración, que lista a cada persona. En la sección
+Personas, el icono de regalo muestra los títulos de recompensa disponibles para
+esa persona pero no permite editarlos.
 
 ### Niveles por persona
 
