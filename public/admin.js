@@ -157,6 +157,8 @@ function initSettingsForm(settings) {
     const pushoverEnable = document.getElementById('settingsPushoverEnable');
     const reminderTime = document.getElementById('settingsReminderTime');
     const reminderContainer = reminderTime ? reminderTime.parentElement : null;
+    const levelModeSelect = document.getElementById('settingsLevelMode');
+    const choresToMaxInput = document.getElementById('settingsChoresToMax');
     const yearsInput = document.getElementById('settingsYears');
     const perWeekInput = document.getElementById('settingsPerWeek');
     const maxLevelInput = document.getElementById('settingsMaxLevel');
@@ -171,6 +173,8 @@ function initSettingsForm(settings) {
   if (autoUpdate) autoUpdate.checked = !!settings.autoUpdate;
   if (pushoverEnable) pushoverEnable.checked = !!settings.pushoverEnabled;
     if (reminderTime) reminderTime.value = settings.reminderTime || '';
+    if (levelModeSelect) levelModeSelect.value = settings.leveling?.mode || 'years';
+    if (choresToMaxInput) choresToMaxInput.value = settings.leveling?.choresToMaxLevel || '';
     if (yearsInput) yearsInput.value = settings.leveling?.yearsToMaxLevel || 3;
     if (perWeekInput) perWeekInput.value = settings.leveling?.choresPerWeekEstimate || 4;
     if (maxLevelInput) maxLevelInput.value = settings.leveling?.maxLevel || 100;
@@ -186,6 +190,16 @@ function initSettingsForm(settings) {
   }
   toggleLevelingFields();
 
+  const toggleLevelModeFields = () => {
+    const mode = levelModeSelect ? levelModeSelect.value : 'years';
+    document.querySelectorAll('.level-mode-years').forEach(el => el.classList.toggle('d-none', mode !== 'years'));
+    document.querySelectorAll('.level-mode-chores').forEach(el => el.classList.toggle('d-none', mode !== 'chores'));
+  };
+  if (levelModeSelect) {
+    levelModeSelect.addEventListener('change', toggleLevelModeFields);
+  }
+  toggleLevelModeFields();
+
   const toggleReminderField = () => {
     const show = pushoverEnable && pushoverEnable.checked;
     if (reminderContainer) reminderContainer.classList.toggle('d-none', !show);
@@ -198,7 +212,7 @@ function initSettingsForm(settings) {
   settingsChanged = false;
   settingsSaved = false;
 
-    const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, pushoverEnable, reminderTime, yearsInput, perWeekInput, maxLevelInput, backgroundSelect];
+    const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, pushoverEnable, reminderTime, levelModeSelect, choresToMaxInput, yearsInput, perWeekInput, maxLevelInput, backgroundSelect];
   inputs.forEach(el => {
     if (el) {
       el.addEventListener('input', () => { settingsChanged = true; });
@@ -221,6 +235,8 @@ function initSettingsForm(settings) {
         reminderTime: reminderTime.value,
         background: backgroundSelect.value,
         leveling: {
+          mode: levelModeSelect ? levelModeSelect.value : 'years',
+          choresToMaxLevel: parseFloat(choresToMaxInput?.value) || 0,
           yearsToMaxLevel: parseFloat(yearsInput.value) || 3,
           choresPerWeekEstimate: parseFloat(perWeekInput.value) || 4,
           maxLevel: parseInt(maxLevelInput.value, 10) || 100
@@ -365,6 +381,16 @@ function setLanguage(lang) {
   if (perWeekLbl) perWeekLbl.textContent = t.choresPerWeekLabel;
   const maxLvlLbl = document.querySelector("label[for='settingsMaxLevel']");
   if (maxLvlLbl) maxLvlLbl.textContent = t.maxLevelLabel;
+  const modeLbl = document.querySelector("label[for='settingsLevelMode']");
+  if (modeLbl) modeLbl.textContent = t.levelingModeLabel;
+  const modeSelect = document.getElementById('settingsLevelMode');
+  if (modeSelect && t.levelingModeOptions) {
+    Array.from(modeSelect.options).forEach(opt => {
+      if (t.levelingModeOptions[opt.value]) opt.textContent = t.levelingModeOptions[opt.value];
+    });
+  }
+  const choresMaxLbl = document.querySelector("label[for='settingsChoresToMax']");
+  if (choresMaxLbl) choresMaxLbl.textContent = t.choresToMaxLabel;
 
   const peopleHeader = document.getElementById("peopleHeader");
   if (peopleHeader) peopleHeader.textContent = t.peopleTitle;

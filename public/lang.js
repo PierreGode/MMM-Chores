@@ -74,6 +74,12 @@ const LANGUAGES = {
     autoUpdateLabel: "Enable autoupdate",
     levelingTitle: "Leveling",
     levelingEnabledLabel: "Enable leveling",
+    levelingModeLabel: "Leveling based on",
+    levelingModeOptions: {
+      years: "Years",
+      chores: "Number of chores"
+    },
+    choresToMaxLabel: "Chores to max level",
     yearsToMaxLabel: "Years to max level",
     choresPerWeekLabel: "Chores per week estimate",
     maxLevelLabel: "Max level",
@@ -169,6 +175,12 @@ const LANGUAGES = {
     autoUpdateLabel: "Aktivera automatisk uppdatering",
     levelingTitle: "Nivåer",
     levelingEnabledLabel: "Aktivera nivåsystem",
+    levelingModeLabel: "Nivå baserad på",
+    levelingModeOptions: {
+      years: "År",
+      chores: "Antal sysslor"
+    },
+    choresToMaxLabel: "Sysslor till maxnivå",
     yearsToMaxLabel: "År till maxnivå",
     choresPerWeekLabel: "Sysslor per vecka",
     maxLevelLabel: "Maxnivå",
@@ -264,6 +276,12 @@ const LANGUAGES = {
     autoUpdateLabel: "Activer la mise à jour automatique",
     levelingTitle: "Niveaux",
     levelingEnabledLabel: "Activer le système de niveaux",
+    levelingModeLabel: "Basé sur",
+    levelingModeOptions: {
+      years: "Années",
+      chores: "Nombre de corvées"
+    },
+    choresToMaxLabel: "Corvées pour niveau max",
     yearsToMaxLabel: "Années jusqu'au niveau max",
       choresPerWeekLabel: "Corvées par semaine",
       maxLevelLabel: "Niveau maximum",
@@ -359,6 +377,12 @@ const LANGUAGES = {
     autoUpdateLabel: "Habilitar actualización automática",
     levelingTitle: "Niveles",
     levelingEnabledLabel: "Activar sistema de niveles",
+    levelingModeLabel: "Basado en",
+    levelingModeOptions: {
+      years: "Años",
+      chores: "Número de tareas"
+    },
+    choresToMaxLabel: "Tareas para nivel máximo",
     yearsToMaxLabel: "Años hasta nivel máximo",
       choresPerWeekLabel: "Tareas por semana",
       maxLevelLabel: "Nivel máximo",
@@ -454,6 +478,12 @@ const LANGUAGES = {
     autoUpdateLabel: "Automatische Aktualisierung aktivieren",
     levelingTitle: "Levelsystem",
     levelingEnabledLabel: "Levelsystem aktivieren",
+    levelingModeLabel: "Level basiert auf",
+    levelingModeOptions: {
+      years: "Jahren",
+      chores: "Anzahl der Aufgaben"
+    },
+    choresToMaxLabel: "Aufgaben bis Max-Level",
     yearsToMaxLabel: "Jahre bis Max-Level",
       choresPerWeekLabel: "Aufgaben pro Woche",
       maxLevelLabel: "Max-Level",
@@ -549,6 +579,12 @@ const LANGUAGES = {
     autoUpdateLabel: "Abilita aggiornamento automatico",
     levelingTitle: "Livelli",
     levelingEnabledLabel: "Abilita sistema di livelli",
+    levelingModeLabel: "Basato su",
+    levelingModeOptions: {
+      years: "Anni",
+      chores: "Numero di faccende"
+    },
+    choresToMaxLabel: "Faccende per livello massimo",
     yearsToMaxLabel: "Anni al livello massimo",
       choresPerWeekLabel: "Compiti per settimana",
       maxLevelLabel: "Livello massimo",
@@ -644,6 +680,12 @@ const LANGUAGES = {
     autoUpdateLabel: "Automatische update inschakelen",
     levelingTitle: "Niveaus",
     levelingEnabledLabel: "Levelsysteem inschakelen",
+    levelingModeLabel: "Niveau gebaseerd op",
+    levelingModeOptions: {
+      years: "Jaren",
+      chores: "Aantal klusjes"
+    },
+    choresToMaxLabel: "Klusjes tot max level",
     yearsToMaxLabel: "Jaren tot max level",
       choresPerWeekLabel: "Klussen per week",
       maxLevelLabel: "Max level",
@@ -739,6 +781,12 @@ const LANGUAGES = {
     autoUpdateLabel: "Włącz automatyczną aktualizację",
     levelingTitle: "Poziomy",
     levelingEnabledLabel: "Włącz system poziomów",
+    levelingModeLabel: "Poziomy oparte na",
+    levelingModeOptions: {
+      years: "Lata",
+      chores: "Liczba obowiązków"
+    },
+    choresToMaxLabel: "Obowiązki do maks. poziomu",
     yearsToMaxLabel: "Lata do maks. poziomu",
       choresPerWeekLabel: "Zadania na tydzień",
       maxLevelLabel: "Maks. poziom",
@@ -834,6 +882,12 @@ const LANGUAGES = {
     autoUpdateLabel: "启用自动更新",
     levelingTitle: "等级",
     levelingEnabledLabel: "启用等级系统",
+    levelingModeLabel: "等级基于",
+    levelingModeOptions: {
+      years: "年数",
+      chores: "任务数量"
+    },
+    choresToMaxLabel: "达到最高等级的任务数",
     yearsToMaxLabel: "达到最高等级的年数",
       choresPerWeekLabel: "每周任务数预估",
       maxLevelLabel: "最高等级",
@@ -929,6 +983,12 @@ const LANGUAGES = {
     autoUpdateLabel: "تفعيل التحديث التلقائي",
     levelingTitle: "المستويات",
     levelingEnabledLabel: "تفعيل نظام المستويات",
+    levelingModeLabel: "المستويات تعتمد على",
+    levelingModeOptions: {
+      years: "السنوات",
+      chores: "عدد المهام"
+    },
+    choresToMaxLabel: "المهام حتى أعلى مستوى",
     yearsToMaxLabel: "السنوات حتى أعلى مستوى",
       choresPerWeekLabel: "عدد المهام أسبوعيًا",
       maxLevelLabel: "أقصى مستوى",

@@ -34,9 +34,11 @@ Module.register("MMM-Chores", {
     analyticsCards: [],           // board types selected in the admin UI
     leveling: {
       enabled: true,
+      mode: "years",
       yearsToMaxLevel: 3,
       choresPerWeekEstimate: 4,
-      maxLevel: 100
+      maxLevel: 100,
+      choresToMaxLevel: 0
     },
     levelTitles: [
       "Junior",

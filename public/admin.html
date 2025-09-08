@@ -274,10 +274,21 @@
               </select>
             </div>
             <div class="col-12 col-sm-6 leveling-settings">
+              <label class="form-label" for="settingsLevelMode">Leveling based on</label>
+              <select id="settingsLevelMode" class="form-select">
+                <option value="years">Years</option>
+                <option value="chores">Number of chores</option>
+              </select>
+            </div>
+            <div class="col-12 col-sm-6 leveling-settings level-mode-chores d-none">
+              <label class="form-label" for="settingsChoresToMax">Chores to max level</label>
+              <input type="number" id="settingsChoresToMax" class="form-control" />
+            </div>
+            <div class="col-12 col-sm-6 leveling-settings level-mode-years">
               <label class="form-label" for="settingsYears">Years to max level</label>
               <input type="number" id="settingsYears" class="form-control" />
             </div>
-            <div class="col-12 col-sm-6 leveling-settings">
+            <div class="col-12 col-sm-6 leveling-settings level-mode-years">
               <label class="form-label" for="settingsPerWeek">Chores per week estimate</label>
               <input type="number" id="settingsPerWeek" class="form-control" />
             </div>
