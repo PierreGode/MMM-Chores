@@ -37,7 +37,6 @@ Module.register("MMM-Chores", {
       mode: "years",
       yearsToMaxLevel: 3,
       choresPerWeekEstimate: 4,
-      maxLevel: 100,
       choresToMaxLevel: 0
     },
     levelTitles: [

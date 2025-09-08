@@ -186,7 +186,6 @@ function initSettingsForm(settings) {
   const choresToMaxInput = document.getElementById('rewardsChoresToMax');
   const yearsInput = document.getElementById('rewardsYears');
   const perWeekInput = document.getElementById('rewardsPerWeek');
-  const maxLevelInput = document.getElementById('rewardsMaxLevel');
   const rewardTitlesContainer = document.getElementById('rewardTitlesContainer');
   const rewardTitleInputs = [];
   const backgroundSelect = document.getElementById('settingsBackground');
@@ -204,7 +203,6 @@ function initSettingsForm(settings) {
   if (choresToMaxInput) choresToMaxInput.value = settings.leveling?.choresToMaxLevel || '';
   if (yearsInput) yearsInput.value = settings.leveling?.yearsToMaxLevel || 3;
   if (perWeekInput) perWeekInput.value = settings.leveling?.choresPerWeekEstimate || 4;
-  if (maxLevelInput) maxLevelInput.value = settings.leveling?.maxLevel || 100;
   if (backgroundSelect) backgroundSelect.value = settings.background || 'forest.png';
   if (rewardTitlesContainer) {
     rewardTitlesContainer.innerHTML = '';
@@ -280,7 +278,7 @@ function initSettingsForm(settings) {
   settingsChanged = false;
   settingsSaved = false;
 
-  const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, pushoverEnable, reminderTime, levelModeSelect, choresToMaxInput, yearsInput, perWeekInput, maxLevelInput, backgroundSelect, ...rewardTitleInputs];
+  const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, pushoverEnable, reminderTime, levelModeSelect, choresToMaxInput, yearsInput, perWeekInput, backgroundSelect, ...rewardTitleInputs];
   inputs.forEach(el => {
     if (el) {
       el.addEventListener('input', () => { settingsChanged = true; });
@@ -307,7 +305,6 @@ function initSettingsForm(settings) {
           choresToMaxLevel: parseFloat(choresToMaxInput?.value) || 0,
           yearsToMaxLevel: parseFloat(yearsInput.value) || 3,
           choresPerWeekEstimate: parseFloat(perWeekInput.value) || 4,
-          maxLevel: parseInt(maxLevelInput.value, 10) || 100
         },
         levelTitles: rewardTitleInputs.map(inp => inp.value)
       };
@@ -454,8 +451,6 @@ function setLanguage(lang) {
   if (yearsLbl) yearsLbl.textContent = t.yearsToMaxLabel;
   const perWeekLbl = document.querySelector("label[for='rewardsPerWeek']");
   if (perWeekLbl) perWeekLbl.textContent = t.choresPerWeekLabel;
-  const maxLvlLbl = document.querySelector("label[for='rewardsMaxLevel']");
-  if (maxLvlLbl) maxLvlLbl.textContent = t.maxLevelLabel;
   const modeLbl = document.querySelector("label[for='rewardsLevelMode']");
   if (modeLbl) modeLbl.textContent = t.levelingModeLabel;
   const modeSelect = document.getElementById('rewardsLevelMode');
