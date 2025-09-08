@@ -619,7 +619,6 @@ function showPersonRewards(person) {
     const li = document.createElement('li');
     li.className = 'list-group-item d-flex justify-content-between';
     const range = document.createElement('span');
-    range.className = 'text-muted';
     range.textContent = `${t.levelRangeLabel || 'Levels'} ${i * 10 + 1}-${(i + 1) * 10}`;
     const txt = document.createElement('span');
     txt.textContent = titles[i] || '';
