@@ -261,6 +261,7 @@ function initSettingsForm(settings) {
 
   if (editRewardsBtn && rewardsModalEl) {
     editRewardsBtn.addEventListener('click', () => {
+      renderPersonRewardsList();
       const modal = new bootstrap.Modal(rewardsModalEl);
       modal.show();
     });
@@ -468,6 +469,9 @@ function setLanguage(lang) {
   document.querySelectorAll('.reward-title-label').forEach((lbl, idx) => {
     lbl.textContent = `${t.levelRangeLabel || 'Levels'} ${idx * 10 + 1}-${(idx + 1) * 10}`;
   });
+  const personRewardsListLbl = document.getElementById('personRewardsListLabel');
+  if (personRewardsListLbl) personRewardsListLbl.textContent = t.customRewardsLabel || 'Custom rewards per person';
+  renderPersonRewardsList();
   const personRewardTitlesLbl = document.getElementById('personRewardTitlesLabel');
   if (personRewardTitlesLbl) personRewardTitlesLbl.textContent = t.rewardTitlesLabel || 'Reward titles';
   document.querySelectorAll('.person-reward-title-label').forEach((lbl, idx) => {
@@ -594,6 +598,32 @@ function openPersonRewards(person) {
   if (modalTitle) modalTitle.textContent = `${t.editRewardsButton || 'Edit Rewards'} - ${person.name}`;
   const modal = personRewardsModalEl ? new bootstrap.Modal(personRewardsModalEl) : null;
   if (modal) modal.show();
+}
+
+function renderPersonRewardsList() {
+  const list = document.getElementById('personRewardsList');
+  if (!list) return;
+  list.innerHTML = '';
+  if (peopleCache.length === 0) {
+    const li = document.createElement('li');
+    li.className = 'list-group-item text-center text-muted';
+    li.textContent = LANGUAGES[currentLang].noPeople;
+    list.appendChild(li);
+    return;
+  }
+  for (const person of peopleCache) {
+    const li = document.createElement('li');
+    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+    const span = document.createElement('span');
+    span.textContent = person.name;
+    li.appendChild(span);
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-outline-secondary btn-sm';
+    btn.textContent = LANGUAGES[currentLang].editRewardsButton || 'Edit Rewards';
+    btn.onclick = () => openPersonRewards(person);
+    li.appendChild(btn);
+    list.appendChild(li);
+  }
 }
 
 // ==========================

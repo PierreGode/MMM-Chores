@@ -171,8 +171,8 @@ customLevelTitles: {
 Any person not listed in `customLevelTitles` falls back to the global
 `levelTitles` array or the defaults.
 
-Custom reward titles can also be adjusted from the admin interface by clicking
-the Edit Rewards button next to a person's name.
+Custom reward titles can also be adjusted from the admin interface's Edit Rewards
+dialog in the settings, which lists each person.
 
 ### Per-person levels
 
