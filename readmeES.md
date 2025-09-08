@@ -75,7 +75,21 @@ Añade el módulo a `config.js` así:
       "Gran maestro",
       "Leyenda",
       "Mítico"
-    ]
+    ],
+    customLevelTitles: {
+      NombreDelUsuario: [
+        "Tarjeta regalo de juego de 10 euros",
+        "Vale para noche de cine",
+        "Cena en restaurante favorito",
+        "Vale para brunch de fin de semana",
+        "Accesorio tecnológico (por ej. auriculares)",
+        "Paquete de spa o relajación",
+        "Vale para experiencia de aventura",
+        "Viaje de fin de semana",
+        "Parque de atracciones",
+        "Destino de viaje"
+      ]
+    }
   }
 },
 ```

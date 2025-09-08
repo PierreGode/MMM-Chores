@@ -93,7 +93,21 @@ Add the module to `config.js` like so:
       "Grandmaster",
       "Legend",
       "Mythic"
-    ]
+    ],
+    customLevelTitles: {
+      NameOfTheUser: [
+        "10 euro game giftcard",
+        "Movie Night Voucher",
+        "Dinner at Favorite Restaurant",
+        "Weekend Brunch Voucher",
+        "Gadget Accessory (e.g. Headphones)",
+        "Spa or Relaxation Package",
+        "Adventure Experience Voucher",
+        "Weekend trip",
+        "Adventureland",
+        "Travel destination"
+      ]
+    }
   }
 },
 ```
