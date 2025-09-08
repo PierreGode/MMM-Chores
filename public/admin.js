@@ -153,16 +153,18 @@ function initSettingsForm(settings) {
   const useAI = document.getElementById('settingsUseAI');
   const showAnalytics = document.getElementById('settingsShowAnalytics');
   const levelEnable = document.getElementById('settingsLevelEnable');
-    const autoUpdate = document.getElementById('settingsAutoUpdate');
-    const pushoverEnable = document.getElementById('settingsPushoverEnable');
-    const reminderTime = document.getElementById('settingsReminderTime');
-    const reminderContainer = reminderTime ? reminderTime.parentElement : null;
-    const levelModeSelect = document.getElementById('settingsLevelMode');
-    const choresToMaxInput = document.getElementById('settingsChoresToMax');
-    const yearsInput = document.getElementById('settingsYears');
-    const perWeekInput = document.getElementById('settingsPerWeek');
-    const maxLevelInput = document.getElementById('settingsMaxLevel');
-    const backgroundSelect = document.getElementById('settingsBackground');
+  const autoUpdate = document.getElementById('settingsAutoUpdate');
+  const pushoverEnable = document.getElementById('settingsPushoverEnable');
+  const reminderTime = document.getElementById('settingsReminderTime');
+  const reminderContainer = reminderTime ? reminderTime.parentElement : null;
+  const editRewardsBtn = document.getElementById('editRewardsBtn');
+  const rewardsModalEl = document.getElementById('rewardsModal');
+  const levelModeSelect = document.getElementById('rewardsLevelMode');
+  const choresToMaxInput = document.getElementById('rewardsChoresToMax');
+  const yearsInput = document.getElementById('rewardsYears');
+  const perWeekInput = document.getElementById('rewardsPerWeek');
+  const maxLevelInput = document.getElementById('rewardsMaxLevel');
+  const backgroundSelect = document.getElementById('settingsBackground');
 
   if (showPast) showPast.checked = !!settings.showPast;
   if (textSize) textSize.value = settings.textMirrorSize || 'small';
@@ -172,31 +174,35 @@ function initSettingsForm(settings) {
   if (levelEnable) levelEnable.checked = settings.levelingEnabled !== false;
   if (autoUpdate) autoUpdate.checked = !!settings.autoUpdate;
   if (pushoverEnable) pushoverEnable.checked = !!settings.pushoverEnabled;
-    if (reminderTime) reminderTime.value = settings.reminderTime || '';
-    if (levelModeSelect) levelModeSelect.value = settings.leveling?.mode || 'years';
-    if (choresToMaxInput) choresToMaxInput.value = settings.leveling?.choresToMaxLevel || '';
-    if (yearsInput) yearsInput.value = settings.leveling?.yearsToMaxLevel || 3;
-    if (perWeekInput) perWeekInput.value = settings.leveling?.choresPerWeekEstimate || 4;
-    if (maxLevelInput) maxLevelInput.value = settings.leveling?.maxLevel || 100;
-    if (backgroundSelect) backgroundSelect.value = settings.background || 'forest.png';
+  if (reminderTime) reminderTime.value = settings.reminderTime || '';
+  if (levelModeSelect) levelModeSelect.value = settings.leveling?.mode || 'years';
+  if (choresToMaxInput) choresToMaxInput.value = settings.leveling?.choresToMaxLevel || '';
+  if (yearsInput) yearsInput.value = settings.leveling?.yearsToMaxLevel || 3;
+  if (perWeekInput) perWeekInput.value = settings.leveling?.choresPerWeekEstimate || 4;
+  if (maxLevelInput) maxLevelInput.value = settings.leveling?.maxLevel || 100;
+  if (backgroundSelect) backgroundSelect.value = settings.background || 'forest.png';
 
-  const levelingFields = document.querySelectorAll('.leveling-settings');
-  const toggleLevelingFields = () => {
-    const show = levelEnable && levelEnable.checked;
-    levelingFields.forEach(el => el.classList.toggle('d-none', !show));
+  const toggleRewardsBtn = () => {
+    if (editRewardsBtn) editRewardsBtn.classList.toggle('d-none', !(levelEnable && levelEnable.checked));
   };
   if (levelEnable) {
-    levelEnable.addEventListener('change', toggleLevelingFields);
+    levelEnable.addEventListener('change', toggleRewardsBtn);
   }
-  toggleLevelingFields();
+  toggleRewardsBtn();
 
   const toggleLevelModeFields = () => {
     const mode = levelModeSelect ? levelModeSelect.value : 'years';
-    document.querySelectorAll('.level-mode-years').forEach(el => el.classList.toggle('d-none', mode !== 'years'));
-    document.querySelectorAll('.level-mode-chores').forEach(el => el.classList.toggle('d-none', mode !== 'chores'));
+    const rewardsModal = rewardsModalEl;
+    if (rewardsModal) {
+      rewardsModal.querySelectorAll('.level-mode-years').forEach(el => el.classList.toggle('d-none', mode !== 'years'));
+      rewardsModal.querySelectorAll('.level-mode-chores').forEach(el => el.classList.toggle('d-none', mode !== 'chores'));
+    }
   };
   if (levelModeSelect) {
-    levelModeSelect.addEventListener('change', toggleLevelModeFields);
+    levelModeSelect.addEventListener('change', () => {
+      toggleLevelModeFields();
+      settingsChanged = true;
+    });
   }
   toggleLevelModeFields();
 
@@ -209,10 +215,25 @@ function initSettingsForm(settings) {
   }
   toggleReminderField();
 
+  if (editRewardsBtn && rewardsModalEl) {
+    editRewardsBtn.addEventListener('click', () => {
+      const modal = new bootstrap.Modal(rewardsModalEl);
+      modal.show();
+    });
+  }
+  const rewardsForm = document.getElementById('rewardsForm');
+  if (rewardsForm && rewardsModalEl) {
+    rewardsForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const modal = bootstrap.Modal.getInstance(rewardsModalEl);
+      if (modal) modal.hide();
+    });
+  }
+
   settingsChanged = false;
   settingsSaved = false;
 
-    const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, pushoverEnable, reminderTime, levelModeSelect, choresToMaxInput, yearsInput, perWeekInput, maxLevelInput, backgroundSelect];
+  const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, pushoverEnable, reminderTime, levelModeSelect, choresToMaxInput, yearsInput, perWeekInput, maxLevelInput, backgroundSelect];
   inputs.forEach(el => {
     if (el) {
       el.addEventListener('input', () => { settingsChanged = true; });
@@ -318,6 +339,12 @@ function setLanguage(lang) {
   if (modalTitle) modalTitle.textContent = t.settingsTitle || 'Settings';
   const saveBtn = document.getElementById("settingsSaveBtn");
   if (saveBtn) saveBtn.textContent = t.saveButton || 'Save';
+  const editRewardsBtn = document.getElementById('editRewardsBtn');
+  if (editRewardsBtn) editRewardsBtn.textContent = t.editRewardsButton || 'Edit Rewards';
+  const rewardsTitle = document.getElementById('rewardsModalLabel');
+  if (rewardsTitle) rewardsTitle.textContent = t.editRewardsButton || 'Edit Rewards';
+  const rewardsSave = document.getElementById('rewardsSaveBtn');
+  if (rewardsSave) rewardsSave.textContent = t.saveButton || 'Save';
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) logoutBtn.title = t.logout || 'Logout';
   const showPastLbl = document.querySelector("label[for='settingsShowPast']");
@@ -375,21 +402,21 @@ function setLanguage(lang) {
       if (key && t.backgroundOptions[key]) opt.textContent = t.backgroundOptions[key];
     });
   }
-  const yearsLbl = document.querySelector("label[for='settingsYears']");
+  const yearsLbl = document.querySelector("label[for='rewardsYears']");
   if (yearsLbl) yearsLbl.textContent = t.yearsToMaxLabel;
-  const perWeekLbl = document.querySelector("label[for='settingsPerWeek']");
+  const perWeekLbl = document.querySelector("label[for='rewardsPerWeek']");
   if (perWeekLbl) perWeekLbl.textContent = t.choresPerWeekLabel;
-  const maxLvlLbl = document.querySelector("label[for='settingsMaxLevel']");
+  const maxLvlLbl = document.querySelector("label[for='rewardsMaxLevel']");
   if (maxLvlLbl) maxLvlLbl.textContent = t.maxLevelLabel;
-  const modeLbl = document.querySelector("label[for='settingsLevelMode']");
+  const modeLbl = document.querySelector("label[for='rewardsLevelMode']");
   if (modeLbl) modeLbl.textContent = t.levelingModeLabel;
-  const modeSelect = document.getElementById('settingsLevelMode');
+  const modeSelect = document.getElementById('rewardsLevelMode');
   if (modeSelect && t.levelingModeOptions) {
     Array.from(modeSelect.options).forEach(opt => {
       if (t.levelingModeOptions[opt.value]) opt.textContent = t.levelingModeOptions[opt.value];
     });
   }
-  const choresMaxLbl = document.querySelector("label[for='settingsChoresToMax']");
+  const choresMaxLbl = document.querySelector("label[for='rewardsChoresToMax']");
   if (choresMaxLbl) choresMaxLbl.textContent = t.choresToMaxLabel;
 
   const peopleHeader = document.getElementById("peopleHeader");
