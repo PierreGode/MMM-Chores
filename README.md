@@ -157,6 +157,9 @@ customLevelTitles: {
 Any person not listed in `customLevelTitles` falls back to the global
 `levelTitles` array or the defaults.
 
+Custom reward titles can also be adjusted from the admin interface by clicking
+the Edit Rewards button next to a person's name.
+
 ### Per-person levels
 
 Each person earns experience separately. Their current level and title are stored

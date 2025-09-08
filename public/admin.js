@@ -21,6 +21,28 @@ let userPermission = 'write';
 let loginEnabled = true;
 let editTaskId = null;
 let editTaskModal = null;
+let customLevelTitles = {};
+let personRewardsTarget = null;
+const personRewardsModalEl = document.getElementById('personRewardsModal');
+const personRewardTitlesContainer = document.getElementById('personRewardTitlesContainer');
+const personRewardTitleInputs = [];
+if (personRewardTitlesContainer) {
+  for (let i = 0; i < 10; i++) {
+    const wrap = document.createElement('div');
+    const lbl = document.createElement('label');
+    lbl.className = 'form-label person-reward-title-label';
+    lbl.setAttribute('for', `personRewardTitle${i}`);
+    lbl.textContent = `Levels ${i * 10 + 1}-${(i + 1) * 10}`;
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.className = 'form-control person-reward-title-input';
+    inp.id = `personRewardTitle${i}`;
+    wrap.appendChild(lbl);
+    wrap.appendChild(inp);
+    personRewardTitlesContainer.appendChild(wrap);
+    personRewardTitleInputs.push(inp);
+  }
+}
 
 function authHeaders() {
   return authToken ? { 'x-auth-token': authToken } : {};
@@ -446,6 +468,17 @@ function setLanguage(lang) {
   document.querySelectorAll('.reward-title-label').forEach((lbl, idx) => {
     lbl.textContent = `${t.levelRangeLabel || 'Levels'} ${idx * 10 + 1}-${(idx + 1) * 10}`;
   });
+  const personRewardTitlesLbl = document.getElementById('personRewardTitlesLabel');
+  if (personRewardTitlesLbl) personRewardTitlesLbl.textContent = t.rewardTitlesLabel || 'Reward titles';
+  document.querySelectorAll('.person-reward-title-label').forEach((lbl, idx) => {
+    lbl.textContent = `${t.levelRangeLabel || 'Levels'} ${idx * 10 + 1}-${(idx + 1) * 10}`;
+  });
+  const personRewardsTitle = document.getElementById('personRewardsModalLabel');
+  if (personRewardsTitle) personRewardsTitle.textContent = t.editRewardsButton || 'Edit Rewards';
+  const personRewardsSave = document.getElementById('personRewardsSaveBtn');
+  if (personRewardsSave) personRewardsSave.textContent = t.saveButton || 'Save';
+  const personRewardsRemove = document.getElementById('personRewardsRemoveBtn');
+  if (personRewardsRemove) personRewardsRemove.textContent = t.remove || 'Remove';
 
   const peopleHeader = document.getElementById("peopleHeader");
   if (peopleHeader) peopleHeader.textContent = t.peopleTitle;
@@ -548,6 +581,21 @@ async function applySettings(newSettings) {
   await fetchTasks();
 }
 
+function openPersonRewards(person) {
+  personRewardsTarget = person;
+  const titles = customLevelTitles[person.name] || [];
+  for (let i = 0; i < personRewardTitleInputs.length; i++) {
+    personRewardTitleInputs[i].value = titles[i] || '';
+  }
+  const removeBtn = document.getElementById('personRewardsRemoveBtn');
+  if (removeBtn) removeBtn.style.display = customLevelTitles[person.name] ? '' : 'none';
+  const modalTitle = document.getElementById('personRewardsModalLabel');
+  const t = LANGUAGES[currentLang];
+  if (modalTitle) modalTitle.textContent = `${t.editRewardsButton || 'Edit Rewards'} - ${person.name}`;
+  const modal = personRewardsModalEl ? new bootstrap.Modal(personRewardsModalEl) : null;
+  if (modal) modal.show();
+}
+
 // ==========================
 // Render People & Tasks
 // ==========================
@@ -579,12 +627,23 @@ function renderPeople() {
     li.appendChild(info);
 
     if (userPermission === 'write') {
-      const btn = document.createElement("button");
-      btn.className = "btn btn-sm btn-outline-danger";
-      btn.title = LANGUAGES[currentLang].remove;
-      btn.innerHTML = '<i class="bi bi-trash"></i>';
-      btn.onclick = () => deletePerson(person.id);
-      li.appendChild(btn);
+      const actions = document.createElement('div');
+      actions.className = 'btn-group btn-group-sm';
+      if (levelingEnabled) {
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn btn-outline-secondary';
+        editBtn.title = LANGUAGES[currentLang].editRewardsButton || 'Edit Rewards';
+        editBtn.innerHTML = '<i class="bi bi-gift"></i>';
+        editBtn.onclick = () => openPersonRewards(person);
+        actions.appendChild(editBtn);
+      }
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-outline-danger';
+      delBtn.title = LANGUAGES[currentLang].remove;
+      delBtn.innerHTML = '<i class="bi bi-trash"></i>';
+      delBtn.onclick = () => deletePerson(person.id);
+      actions.appendChild(delBtn);
+      li.appendChild(actions);
     }
     list.appendChild(li);
   }
@@ -893,6 +952,51 @@ function renderCalendar() {
 // ==========================
 // CRUD Handlers
 // ==========================
+const personRewardsForm = document.getElementById('personRewardsForm');
+if (personRewardsForm) {
+  personRewardsForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!personRewardsTarget) return;
+    const titles = personRewardTitleInputs.map(inp => inp.value);
+    if (titles.every(t => !t.trim())) {
+      delete customLevelTitles[personRewardsTarget.name];
+    } else {
+      customLevelTitles[personRewardsTarget.name] = titles;
+    }
+    try {
+      await authFetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customLevelTitles })
+      });
+      const modal = bootstrap.Modal.getInstance(personRewardsModalEl);
+      if (modal) modal.hide();
+      await fetchPeople();
+    } catch (err) {
+      console.error('Failed saving custom rewards', err);
+    }
+  });
+}
+const personRewardsRemoveBtn = document.getElementById('personRewardsRemoveBtn');
+if (personRewardsRemoveBtn) {
+  personRewardsRemoveBtn.addEventListener('click', async () => {
+    if (!personRewardsTarget) return;
+    delete customLevelTitles[personRewardsTarget.name];
+    try {
+      await authFetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customLevelTitles })
+      });
+      const modal = bootstrap.Modal.getInstance(personRewardsModalEl);
+      if (modal) modal.hide();
+      await fetchPeople();
+    } catch (err) {
+      console.error('Failed removing custom rewards', err);
+    }
+  });
+}
+
 document.getElementById("personForm").addEventListener("submit", async e => {
   e.preventDefault();
   const name = document.getElementById("personName").value.trim();
@@ -1356,6 +1460,7 @@ function setIcon(theme) {
 
 async function initApp() {
   const userSettings = await fetchUserSettings();
+  customLevelTitles = userSettings.customLevelTitles || {};
   if (userPermission !== 'write') {
     const personForm = document.getElementById('personForm');
     if (personForm) personForm.style.display = 'none';

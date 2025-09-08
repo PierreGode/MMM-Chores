@@ -330,6 +330,30 @@
       </div>
     </div>
 
+    <!-- Person Rewards Modal -->
+    <div class="modal fade" id="personRewardsModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content card-shadow">
+          <form id="personRewardsForm">
+            <div class="modal-header">
+              <h5 class="modal-title" id="personRewardsModalLabel">Edit Rewards</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label class="form-label" id="personRewardTitlesLabel">Reward titles</label>
+                <div id="personRewardTitlesContainer" class="vstack gap-2"></div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-danger" id="personRewardsRemoveBtn">Remove</button>
+              <button type="submit" class="btn btn-primary" id="personRewardsSaveBtn">Save</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
     <footer class="text-center py-3 small text-muted" id="footerText">
       Built with Bootstrap & Chart.js • MMM-Chores by Pierre Gode
     </footer>

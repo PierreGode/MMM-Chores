@@ -133,6 +133,10 @@ customLevelTitles: {
 Cualquier persona no listada en `customLevelTitles` vuelve al arreglo global
 `levelTitles` o a los valores predeterminados.
 
+También puedes ajustar los títulos de recompensa personalizados desde la
+interfaz de administración haciendo clic en el botón Editar recompensas junto
+al nombre de cada persona.
+
 ### Niveles por persona
 
 Cada persona gana experiencia por separado. Su nivel y título actuales se almacenan
