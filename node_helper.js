@@ -212,11 +212,17 @@ function runAutoUpdate() {
 function computeLevel(config, personId = null) {
   const lvlConf = config.leveling || {};
   if (lvlConf.enabled === false) return 1;
-  const years  = parseFloat(lvlConf.yearsToMaxLevel) || 1;
-  const perW   = parseFloat(lvlConf.choresPerWeekEstimate) || 1;
-  const max    = parseInt(lvlConf.maxLevel, 10) || 100;
-  const done   = tasks.filter(t => t.done && (!personId || t.assignedTo === personId)).length;
-  const totalNeeded = years * 52 * perW;
+  const mode = lvlConf.mode || 'years';
+  const max = 100;
+  const done = tasks.filter(t => t.done && (!personId || t.assignedTo === personId)).length;
+  let totalNeeded;
+  if (mode === 'chores') {
+    totalNeeded = parseFloat(lvlConf.choresToMaxLevel) || 1;
+  } else {
+    const years = parseFloat(lvlConf.yearsToMaxLevel) || 1;
+    const perW = parseFloat(lvlConf.choresPerWeekEstimate) || 1;
+    totalNeeded = years * 52 * perW;
+  }
   const tasksPerLvl = totalNeeded / max;
   let lvl = Math.floor(done / tasksPerLvl) + 1;
   if (lvl < 1) lvl = 1;
@@ -339,10 +345,13 @@ module.exports = NodeHelper.create({
           background: settings.background ?? payload.background ?? 'forest.png',
           levelingEnabled: settings.levelingEnabled ?? (payload.leveling?.enabled !== false),
           leveling: {
+            mode: settings.leveling?.mode ?? payload.leveling?.mode ?? 'years',
+            choresToMaxLevel: settings.leveling?.choresToMaxLevel ?? payload.leveling?.choresToMaxLevel,
             yearsToMaxLevel: settings.leveling?.yearsToMaxLevel ?? payload.leveling?.yearsToMaxLevel,
-          choresPerWeekEstimate: settings.leveling?.choresPerWeekEstimate ?? payload.leveling?.choresPerWeekEstimate,
-          maxLevel: settings.leveling?.maxLevel ?? payload.leveling?.maxLevel
-        }
+            choresPerWeekEstimate: settings.leveling?.choresPerWeekEstimate ?? payload.leveling?.choresPerWeekEstimate
+          },
+        levelTitles: settings.levelTitles ?? payload.levelTitles,
+        customLevelTitles: settings.customLevelTitles ?? payload.customLevelTitles
       };
 
       Object.assign(this.config, settings, {
