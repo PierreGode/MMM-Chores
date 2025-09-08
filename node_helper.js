@@ -350,7 +350,9 @@ module.exports = NodeHelper.create({
             yearsToMaxLevel: settings.leveling?.yearsToMaxLevel ?? payload.leveling?.yearsToMaxLevel,
             choresPerWeekEstimate: settings.leveling?.choresPerWeekEstimate ?? payload.leveling?.choresPerWeekEstimate,
             maxLevel: settings.leveling?.maxLevel ?? payload.leveling?.maxLevel
-          }
+          },
+        levelTitles: settings.levelTitles ?? payload.levelTitles,
+        customLevelTitles: settings.customLevelTitles ?? payload.customLevelTitles
       };
 
       Object.assign(this.config, settings, {

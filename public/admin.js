@@ -164,6 +164,8 @@ function initSettingsForm(settings) {
   const yearsInput = document.getElementById('rewardsYears');
   const perWeekInput = document.getElementById('rewardsPerWeek');
   const maxLevelInput = document.getElementById('rewardsMaxLevel');
+  const rewardTitlesContainer = document.getElementById('rewardTitlesContainer');
+  const rewardTitleInputs = [];
   const backgroundSelect = document.getElementById('settingsBackground');
 
   if (showPast) showPast.checked = !!settings.showPast;
@@ -181,6 +183,26 @@ function initSettingsForm(settings) {
   if (perWeekInput) perWeekInput.value = settings.leveling?.choresPerWeekEstimate || 4;
   if (maxLevelInput) maxLevelInput.value = settings.leveling?.maxLevel || 100;
   if (backgroundSelect) backgroundSelect.value = settings.background || 'forest.png';
+  if (rewardTitlesContainer) {
+    rewardTitlesContainer.innerHTML = '';
+    const titles = Array.isArray(settings.levelTitles) ? settings.levelTitles : [];
+    for (let i = 0; i < 10; i++) {
+      const wrap = document.createElement('div');
+      const lbl = document.createElement('label');
+      lbl.className = 'form-label reward-title-label';
+      lbl.setAttribute('for', `rewardTitle${i}`);
+      lbl.textContent = `${LANGUAGES[currentLang].levelRangeLabel || 'Levels'} ${i*10+1}-${(i+1)*10}`;
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.className = 'form-control reward-title-input';
+      inp.id = `rewardTitle${i}`;
+      inp.value = titles[i] || '';
+      wrap.appendChild(lbl);
+      wrap.appendChild(inp);
+      rewardTitlesContainer.appendChild(wrap);
+      rewardTitleInputs.push(inp);
+    }
+  }
 
   const toggleRewardsBtn = () => {
     if (editRewardsBtn) editRewardsBtn.classList.toggle('d-none', !(levelEnable && levelEnable.checked));
@@ -233,7 +255,7 @@ function initSettingsForm(settings) {
   settingsChanged = false;
   settingsSaved = false;
 
-  const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, pushoverEnable, reminderTime, levelModeSelect, choresToMaxInput, yearsInput, perWeekInput, maxLevelInput, backgroundSelect];
+  const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, pushoverEnable, reminderTime, levelModeSelect, choresToMaxInput, yearsInput, perWeekInput, maxLevelInput, backgroundSelect, ...rewardTitleInputs];
   inputs.forEach(el => {
     if (el) {
       el.addEventListener('input', () => { settingsChanged = true; });
@@ -261,7 +283,8 @@ function initSettingsForm(settings) {
           yearsToMaxLevel: parseFloat(yearsInput.value) || 3,
           choresPerWeekEstimate: parseFloat(perWeekInput.value) || 4,
           maxLevel: parseInt(maxLevelInput.value, 10) || 100
-        }
+        },
+        levelTitles: rewardTitleInputs.map(inp => inp.value)
       };
     try {
       const res = await authFetch('/api/settings', {
@@ -418,6 +441,11 @@ function setLanguage(lang) {
   }
   const choresMaxLbl = document.querySelector("label[for='rewardsChoresToMax']");
   if (choresMaxLbl) choresMaxLbl.textContent = t.choresToMaxLabel;
+  const rewardTitlesLbl = document.getElementById('rewardTitlesLabel');
+  if (rewardTitlesLbl) rewardTitlesLbl.textContent = t.rewardTitlesLabel || 'Reward titles';
+  document.querySelectorAll('.reward-title-label').forEach((lbl, idx) => {
+    lbl.textContent = `${t.levelRangeLabel || 'Levels'} ${idx * 10 + 1}-${(idx + 1) * 10}`;
+  });
 
   const peopleHeader = document.getElementById("peopleHeader");
   if (peopleHeader) peopleHeader.textContent = t.peopleTitle;
