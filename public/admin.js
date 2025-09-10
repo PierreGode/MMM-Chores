@@ -21,6 +21,29 @@ let userPermission = 'write';
 let loginEnabled = true;
 let editTaskId = null;
 let editTaskModal = null;
+let customLevelTitles = {};
+let personRewardsTarget = null;
+let levelTitles = [];
+const personRewardsModalEl = document.getElementById('personRewardsModal');
+const personRewardTitlesContainer = document.getElementById('personRewardTitlesContainer');
+const personRewardTitleInputs = [];
+if (personRewardTitlesContainer) {
+  for (let i = 0; i < 10; i++) {
+    const wrap = document.createElement('div');
+    const lbl = document.createElement('label');
+    lbl.className = 'form-label person-reward-title-label';
+    lbl.setAttribute('for', `personRewardTitle${i}`);
+    lbl.textContent = `Levels ${i * 10 + 1}-${(i + 1) * 10}`;
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.className = 'form-control person-reward-title-input';
+    inp.id = `personRewardTitle${i}`;
+    wrap.appendChild(lbl);
+    wrap.appendChild(inp);
+    personRewardTitlesContainer.appendChild(wrap);
+    personRewardTitleInputs.push(inp);
+  }
+}
 
 function authHeaders() {
   return authToken ? { 'x-auth-token': authToken } : {};
@@ -153,14 +176,19 @@ function initSettingsForm(settings) {
   const useAI = document.getElementById('settingsUseAI');
   const showAnalytics = document.getElementById('settingsShowAnalytics');
   const levelEnable = document.getElementById('settingsLevelEnable');
-    const autoUpdate = document.getElementById('settingsAutoUpdate');
-    const pushoverEnable = document.getElementById('settingsPushoverEnable');
-    const reminderTime = document.getElementById('settingsReminderTime');
-    const reminderContainer = reminderTime ? reminderTime.parentElement : null;
-    const yearsInput = document.getElementById('settingsYears');
-    const perWeekInput = document.getElementById('settingsPerWeek');
-    const maxLevelInput = document.getElementById('settingsMaxLevel');
-    const backgroundSelect = document.getElementById('settingsBackground');
+  const autoUpdate = document.getElementById('settingsAutoUpdate');
+  const pushoverEnable = document.getElementById('settingsPushoverEnable');
+  const reminderTime = document.getElementById('settingsReminderTime');
+  const reminderContainer = reminderTime ? reminderTime.parentElement : null;
+  const editRewardsBtn = document.getElementById('editRewardsBtn');
+  const rewardsModalEl = document.getElementById('rewardsModal');
+  const levelModeSelect = document.getElementById('rewardsLevelMode');
+  const choresToMaxInput = document.getElementById('rewardsChoresToMax');
+  const yearsInput = document.getElementById('rewardsYears');
+  const perWeekInput = document.getElementById('rewardsPerWeek');
+  const rewardTitlesContainer = document.getElementById('rewardTitlesContainer');
+  const rewardTitleInputs = [];
+  const backgroundSelect = document.getElementById('settingsBackground');
 
   if (showPast) showPast.checked = !!settings.showPast;
   if (textSize) textSize.value = settings.textMirrorSize || 'small';
@@ -170,21 +198,57 @@ function initSettingsForm(settings) {
   if (levelEnable) levelEnable.checked = settings.levelingEnabled !== false;
   if (autoUpdate) autoUpdate.checked = !!settings.autoUpdate;
   if (pushoverEnable) pushoverEnable.checked = !!settings.pushoverEnabled;
-    if (reminderTime) reminderTime.value = settings.reminderTime || '';
-    if (yearsInput) yearsInput.value = settings.leveling?.yearsToMaxLevel || 3;
-    if (perWeekInput) perWeekInput.value = settings.leveling?.choresPerWeekEstimate || 4;
-    if (maxLevelInput) maxLevelInput.value = settings.leveling?.maxLevel || 100;
-    if (backgroundSelect) backgroundSelect.value = settings.background || 'forest.png';
+  if (reminderTime) reminderTime.value = settings.reminderTime || '';
+  if (levelModeSelect) levelModeSelect.value = settings.leveling?.mode || 'years';
+  if (choresToMaxInput) choresToMaxInput.value = settings.leveling?.choresToMaxLevel || '';
+  if (yearsInput) yearsInput.value = settings.leveling?.yearsToMaxLevel || 3;
+  if (perWeekInput) perWeekInput.value = settings.leveling?.choresPerWeekEstimate || 4;
+  if (backgroundSelect) backgroundSelect.value = settings.background || 'forest.png';
+  if (rewardTitlesContainer) {
+    rewardTitlesContainer.innerHTML = '';
+    const titles = Array.isArray(settings.levelTitles) ? settings.levelTitles : [];
+    levelTitles = titles;
+    for (let i = 0; i < 10; i++) {
+      const wrap = document.createElement('div');
+      const lbl = document.createElement('label');
+      lbl.className = 'form-label reward-title-label';
+      lbl.setAttribute('for', `rewardTitle${i}`);
+      lbl.textContent = `${LANGUAGES[currentLang].levelRangeLabel || 'Levels'} ${i*10+1}-${(i+1)*10}`;
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.className = 'form-control reward-title-input';
+      inp.id = `rewardTitle${i}`;
+      inp.value = titles[i] || '';
+      wrap.appendChild(lbl);
+      wrap.appendChild(inp);
+      rewardTitlesContainer.appendChild(wrap);
+      rewardTitleInputs.push(inp);
+    }
+  }
 
-  const levelingFields = document.querySelectorAll('.leveling-settings');
-  const toggleLevelingFields = () => {
-    const show = levelEnable && levelEnable.checked;
-    levelingFields.forEach(el => el.classList.toggle('d-none', !show));
+  const toggleRewardsBtn = () => {
+    if (editRewardsBtn) editRewardsBtn.classList.toggle('d-none', !(levelEnable && levelEnable.checked));
   };
   if (levelEnable) {
-    levelEnable.addEventListener('change', toggleLevelingFields);
+    levelEnable.addEventListener('change', toggleRewardsBtn);
   }
-  toggleLevelingFields();
+  toggleRewardsBtn();
+
+  const toggleLevelModeFields = () => {
+    const mode = levelModeSelect ? levelModeSelect.value : 'years';
+    const rewardsModal = rewardsModalEl;
+    if (rewardsModal) {
+      rewardsModal.querySelectorAll('.level-mode-years').forEach(el => el.classList.toggle('d-none', mode !== 'years'));
+      rewardsModal.querySelectorAll('.level-mode-chores').forEach(el => el.classList.toggle('d-none', mode !== 'chores'));
+    }
+  };
+  if (levelModeSelect) {
+    levelModeSelect.addEventListener('change', () => {
+      toggleLevelModeFields();
+      settingsChanged = true;
+    });
+  }
+  toggleLevelModeFields();
 
   const toggleReminderField = () => {
     const show = pushoverEnable && pushoverEnable.checked;
@@ -195,10 +259,26 @@ function initSettingsForm(settings) {
   }
   toggleReminderField();
 
+  if (editRewardsBtn && rewardsModalEl) {
+    editRewardsBtn.addEventListener('click', () => {
+      renderPersonRewardsList();
+      const modal = new bootstrap.Modal(rewardsModalEl);
+      modal.show();
+    });
+  }
+  const rewardsForm = document.getElementById('rewardsForm');
+  if (rewardsForm && rewardsModalEl) {
+    rewardsForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const modal = bootstrap.Modal.getInstance(rewardsModalEl);
+      if (modal) modal.hide();
+    });
+  }
+
   settingsChanged = false;
   settingsSaved = false;
 
-    const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, pushoverEnable, reminderTime, yearsInput, perWeekInput, maxLevelInput, backgroundSelect];
+  const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, pushoverEnable, reminderTime, levelModeSelect, choresToMaxInput, yearsInput, perWeekInput, backgroundSelect, ...rewardTitleInputs];
   inputs.forEach(el => {
     if (el) {
       el.addEventListener('input', () => { settingsChanged = true; });
@@ -221,10 +301,12 @@ function initSettingsForm(settings) {
         reminderTime: reminderTime.value,
         background: backgroundSelect.value,
         leveling: {
+          mode: levelModeSelect ? levelModeSelect.value : 'years',
+          choresToMaxLevel: parseFloat(choresToMaxInput?.value) || 0,
           yearsToMaxLevel: parseFloat(yearsInput.value) || 3,
           choresPerWeekEstimate: parseFloat(perWeekInput.value) || 4,
-          maxLevel: parseInt(maxLevelInput.value, 10) || 100
-        }
+        },
+        levelTitles: rewardTitleInputs.map(inp => inp.value)
       };
     try {
       const res = await authFetch('/api/settings', {
@@ -302,6 +384,12 @@ function setLanguage(lang) {
   if (modalTitle) modalTitle.textContent = t.settingsTitle || 'Settings';
   const saveBtn = document.getElementById("settingsSaveBtn");
   if (saveBtn) saveBtn.textContent = t.saveButton || 'Save';
+  const editRewardsBtn = document.getElementById('editRewardsBtn');
+  if (editRewardsBtn) editRewardsBtn.textContent = t.editRewardsButton || 'Edit Rewards';
+  const rewardsTitle = document.getElementById('rewardsModalLabel');
+  if (rewardsTitle) rewardsTitle.textContent = t.editRewardsButton || 'Edit Rewards';
+  const rewardsSave = document.getElementById('rewardsSaveBtn');
+  if (rewardsSave) rewardsSave.textContent = t.saveButton || 'Save';
   const logoutBtn = document.getElementById('logoutBtn');
   if (logoutBtn) logoutBtn.title = t.logout || 'Logout';
   const showPastLbl = document.querySelector("label[for='settingsShowPast']");
@@ -359,12 +447,41 @@ function setLanguage(lang) {
       if (key && t.backgroundOptions[key]) opt.textContent = t.backgroundOptions[key];
     });
   }
-  const yearsLbl = document.querySelector("label[for='settingsYears']");
+  const yearsLbl = document.querySelector("label[for='rewardsYears']");
   if (yearsLbl) yearsLbl.textContent = t.yearsToMaxLabel;
-  const perWeekLbl = document.querySelector("label[for='settingsPerWeek']");
+  const perWeekLbl = document.querySelector("label[for='rewardsPerWeek']");
   if (perWeekLbl) perWeekLbl.textContent = t.choresPerWeekLabel;
-  const maxLvlLbl = document.querySelector("label[for='settingsMaxLevel']");
-  if (maxLvlLbl) maxLvlLbl.textContent = t.maxLevelLabel;
+  const modeLbl = document.querySelector("label[for='rewardsLevelMode']");
+  if (modeLbl) modeLbl.textContent = t.levelingModeLabel;
+  const modeSelect = document.getElementById('rewardsLevelMode');
+  if (modeSelect && t.levelingModeOptions) {
+    Array.from(modeSelect.options).forEach(opt => {
+      if (t.levelingModeOptions[opt.value]) opt.textContent = t.levelingModeOptions[opt.value];
+    });
+  }
+  const choresMaxLbl = document.querySelector("label[for='rewardsChoresToMax']");
+  if (choresMaxLbl) choresMaxLbl.textContent = t.choresToMaxLabel;
+  const rewardTitlesLbl = document.getElementById('rewardTitlesLabel');
+  if (rewardTitlesLbl) rewardTitlesLbl.textContent = t.rewardTitlesLabel || 'Reward titles';
+  document.querySelectorAll('.reward-title-label').forEach((lbl, idx) => {
+    lbl.textContent = `${t.levelRangeLabel || 'Levels'} ${idx * 10 + 1}-${(idx + 1) * 10}`;
+  });
+  const personRewardsListLbl = document.getElementById('personRewardsListLabel');
+  if (personRewardsListLbl) personRewardsListLbl.textContent = t.customRewardsLabel || 'Custom rewards per person';
+  renderPersonRewardsList();
+  const personRewardTitlesLbl = document.getElementById('personRewardTitlesLabel');
+  if (personRewardTitlesLbl) personRewardTitlesLbl.textContent = t.rewardTitlesLabel || 'Reward titles';
+  document.querySelectorAll('.person-reward-title-label').forEach((lbl, idx) => {
+    lbl.textContent = `${t.levelRangeLabel || 'Levels'} ${idx * 10 + 1}-${(idx + 1) * 10}`;
+  });
+  const personRewardsTitle = document.getElementById('personRewardsModalLabel');
+  if (personRewardsTitle) personRewardsTitle.textContent = t.editRewardsButton || 'Edit Rewards';
+  const viewRewardsTitle = document.getElementById('viewRewardsModalLabel');
+  if (viewRewardsTitle) viewRewardsTitle.textContent = t.viewRewardsButton || 'Rewards';
+  const personRewardsSave = document.getElementById('personRewardsSaveBtn');
+  if (personRewardsSave) personRewardsSave.textContent = t.saveButton || 'Save';
+  const personRewardsRemove = document.getElementById('personRewardsRemoveBtn');
+  if (personRewardsRemove) personRewardsRemove.textContent = t.remove || 'Remove';
 
   const peopleHeader = document.getElementById("peopleHeader");
   if (peopleHeader) peopleHeader.textContent = t.peopleTitle;
@@ -459,12 +576,82 @@ async function applySettings(newSettings) {
   if (newSettings.dateFormatting !== undefined) {
     dateFormatting = newSettings.dateFormatting;
   }
+  if (Array.isArray(newSettings.levelTitles)) {
+    levelTitles = newSettings.levelTitles;
+  }
   if (newSettings.background !== undefined) {
     setBackground(newSettings.background);
     localStorage.setItem('choresBackground', newSettings.background || '');
   }
   await fetchPeople();
   await fetchTasks();
+}
+
+function openPersonRewards(person) {
+  personRewardsTarget = person;
+  const titles = customLevelTitles[person.name] || [];
+  for (let i = 0; i < personRewardTitleInputs.length; i++) {
+    personRewardTitleInputs[i].value = titles[i] || '';
+  }
+  const removeBtn = document.getElementById('personRewardsRemoveBtn');
+  if (removeBtn) removeBtn.style.display = customLevelTitles[person.name] ? '' : 'none';
+  const modalTitle = document.getElementById('personRewardsModalLabel');
+  const t = LANGUAGES[currentLang];
+  if (modalTitle) modalTitle.textContent = `${t.editRewardsButton || 'Edit Rewards'} - ${person.name}`;
+  const modal = personRewardsModalEl ? new bootstrap.Modal(personRewardsModalEl) : null;
+  if (modal) modal.show();
+}
+
+function showPersonRewards(person) {
+  const list = document.getElementById('viewRewardsList');
+  if (!list) return;
+  list.innerHTML = '';
+  const t = LANGUAGES[currentLang];
+  const titles = (customLevelTitles[person.name] && customLevelTitles[person.name].length)
+    ? customLevelTitles[person.name]
+    : levelTitles;
+  for (let i = 0; i < 10; i++) {
+    const li = document.createElement('li');
+    li.className = 'list-group-item d-flex justify-content-between';
+    const range = document.createElement('span');
+    range.textContent = `${t.levelRangeLabel || 'Levels'} ${i * 10 + 1}-${(i + 1) * 10}`;
+    const txt = document.createElement('span');
+    txt.textContent = titles[i] || '';
+    li.appendChild(range);
+    li.appendChild(txt);
+    list.appendChild(li);
+  }
+  const modalTitle = document.getElementById('viewRewardsModalLabel');
+  if (modalTitle) modalTitle.textContent = `${t.viewRewardsButton || 'Rewards'} - ${person.name}`;
+  const modalEl = document.getElementById('viewRewardsModal');
+  const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
+  if (modal) modal.show();
+}
+
+function renderPersonRewardsList() {
+  const list = document.getElementById('personRewardsList');
+  if (!list) return;
+  list.innerHTML = '';
+  if (peopleCache.length === 0) {
+    const li = document.createElement('li');
+    li.className = 'list-group-item text-center text-muted';
+    li.textContent = LANGUAGES[currentLang].noPeople;
+    list.appendChild(li);
+    return;
+  }
+  for (const person of peopleCache) {
+    const li = document.createElement('li');
+    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+    const span = document.createElement('span');
+    span.textContent = person.name;
+    li.appendChild(span);
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-outline-secondary btn-sm';
+    btn.textContent = LANGUAGES[currentLang].editRewardsButton || 'Edit Rewards';
+    btn.onclick = () => openPersonRewards(person);
+    li.appendChild(btn);
+    list.appendChild(li);
+  }
 }
 
 // ==========================
@@ -498,12 +685,23 @@ function renderPeople() {
     li.appendChild(info);
 
     if (userPermission === 'write') {
-      const btn = document.createElement("button");
-      btn.className = "btn btn-sm btn-outline-danger";
-      btn.title = LANGUAGES[currentLang].remove;
-      btn.innerHTML = '<i class="bi bi-trash"></i>';
-      btn.onclick = () => deletePerson(person.id);
-      li.appendChild(btn);
+      const actions = document.createElement('div');
+      actions.className = 'btn-group btn-group-sm';
+      if (levelingEnabled) {
+        const viewBtn = document.createElement('button');
+        viewBtn.className = 'btn btn-outline-secondary';
+        viewBtn.title = LANGUAGES[currentLang].viewRewardsButton || 'Rewards';
+        viewBtn.innerHTML = '<i class="bi bi-gift"></i>';
+        viewBtn.onclick = () => showPersonRewards(person);
+        actions.appendChild(viewBtn);
+      }
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-outline-danger';
+      delBtn.title = LANGUAGES[currentLang].remove;
+      delBtn.innerHTML = '<i class="bi bi-trash"></i>';
+      delBtn.onclick = () => deletePerson(person.id);
+      actions.appendChild(delBtn);
+      li.appendChild(actions);
     }
     list.appendChild(li);
   }
@@ -812,6 +1010,51 @@ function renderCalendar() {
 // ==========================
 // CRUD Handlers
 // ==========================
+const personRewardsForm = document.getElementById('personRewardsForm');
+if (personRewardsForm) {
+  personRewardsForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!personRewardsTarget) return;
+    const titles = personRewardTitleInputs.map(inp => inp.value);
+    if (titles.every(t => !t.trim())) {
+      delete customLevelTitles[personRewardsTarget.name];
+    } else {
+      customLevelTitles[personRewardsTarget.name] = titles;
+    }
+    try {
+      await authFetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customLevelTitles })
+      });
+      const modal = bootstrap.Modal.getInstance(personRewardsModalEl);
+      if (modal) modal.hide();
+      await fetchPeople();
+    } catch (err) {
+      console.error('Failed saving custom rewards', err);
+    }
+  });
+}
+const personRewardsRemoveBtn = document.getElementById('personRewardsRemoveBtn');
+if (personRewardsRemoveBtn) {
+  personRewardsRemoveBtn.addEventListener('click', async () => {
+    if (!personRewardsTarget) return;
+    delete customLevelTitles[personRewardsTarget.name];
+    try {
+      await authFetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customLevelTitles })
+      });
+      const modal = bootstrap.Modal.getInstance(personRewardsModalEl);
+      if (modal) modal.hide();
+      await fetchPeople();
+    } catch (err) {
+      console.error('Failed removing custom rewards', err);
+    }
+  });
+}
+
 document.getElementById("personForm").addEventListener("submit", async e => {
   e.preventDefault();
   const name = document.getElementById("personName").value.trim();
@@ -1275,6 +1518,7 @@ function setIcon(theme) {
 
 async function initApp() {
   const userSettings = await fetchUserSettings();
+  customLevelTitles = userSettings.customLevelTitles || {};
   if (userPermission !== 'write') {
     const personForm = document.getElementById('personForm');
     if (personForm) personForm.style.display = 'none';

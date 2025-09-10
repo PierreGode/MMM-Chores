@@ -75,7 +75,21 @@ Añade el módulo a `config.js` así:
       "Gran maestro",
       "Leyenda",
       "Mítico"
-    ]
+    ],
+    customLevelTitles: {
+      NombreDelUsuario: [
+        "Tarjeta regalo de juego de 10 euros",
+        "Vale para noche de cine",
+        "Cena en restaurante favorito",
+        "Vale para brunch de fin de semana",
+        "Accesorio tecnológico (por ej. auriculares)",
+        "Paquete de spa o relajación",
+        "Vale para experiencia de aventura",
+        "Viaje de fin de semana",
+        "Parque de atracciones",
+        "Destino de viaje"
+      ]
+    }
   }
 },
 ```
@@ -132,6 +146,11 @@ customLevelTitles: {
 
 Cualquier persona no listada en `customLevelTitles` vuelve al arreglo global
 `levelTitles` o a los valores predeterminados.
+
+También puedes ajustar los títulos de recompensa personalizados desde el diálogo
+Editar recompensas en la configuración, que lista a cada persona. En la sección
+Personas, el icono de regalo muestra los títulos de recompensa disponibles para
+esa persona pero no permite editarlos.
 
 ### Niveles por persona
 
