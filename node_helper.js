@@ -22,8 +22,9 @@ try {
   openaiLoaded = false;
 }
 
-const DATA_FILE = path.join(__dirname, "data.json");
-const CERT_DIR  = path.join(__dirname, "certs");
+const DATA_FILE     = path.join(__dirname, "data.json");
+const DATA_FILE_BAK = `${DATA_FILE}.bak`;
+const CERT_DIR      = path.join(__dirname, "certs");
 
 let tasks = [];
 let people = [];
@@ -47,6 +48,62 @@ const DEFAULT_TITLES = [
 let settings = {};
 let autoUpdateTimer = null;
 let reminderTimer = null;
+
+function applyLoadedData(json, sourceLabel = "data.json") {
+  tasks = json.tasks || [];
+  if (tasks.some(t => t.order !== undefined)) {
+    tasks.sort((a, b) => {
+      if (a.deleted && !b.deleted) return 1;
+      if (!a.deleted && b.deleted) return -1;
+      return (a.order || 0) - (b.order || 0);
+    });
+  }
+  let order = 0;
+  tasks.forEach(t => {
+    if (t.deleted) {
+      delete t.order;
+    } else {
+      t.order = order++;
+    }
+  });
+
+  people          = json.people          || [];
+  analyticsBoards = json.analyticsBoards || [];
+  settings        = json.settings        || {};
+  if (settings.openaiApiKey !== undefined) delete settings.openaiApiKey;
+  if (settings.pushoverApiKey !== undefined) delete settings.pushoverApiKey;
+  if (settings.pushoverUser !== undefined) delete settings.pushoverUser;
+
+  updatePeopleLevels({});
+
+  Log.log(
+    `MMM-Chores: Loaded ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards from ${sourceLabel}`
+  );
+}
+
+function writeDataFileAtomic(filePath, contents) {
+  const dir = path.dirname(filePath);
+  const tmpName = `.tmp-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const tmpPath = path.join(dir, tmpName);
+  const fd = fs.openSync(tmpPath, "w");
+  try {
+    fs.writeFileSync(fd, contents, { encoding: "utf8" });
+    fs.fsyncSync(fd);
+  } finally {
+    fs.closeSync(fd);
+  }
+
+  try {
+    fs.renameSync(tmpPath, filePath);
+  } catch (err) {
+    try {
+      fs.unlinkSync(tmpPath);
+    } catch (cleanupErr) {
+      Log.error("MMM-Chores: Failed to remove temporary data file", cleanupErr);
+    }
+    throw err;
+  }
+}
 
 function getLocalISO(date = new Date()) {
   const offsetMs = date.getTimezoneOffset() * 60000;
@@ -135,37 +192,19 @@ function loadData() {
     Log.log("loadData: reading", DATA_FILE);
     try {
       const j = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
-      tasks = j.tasks || [];
-      // Ensure active tasks are sorted and have sequential order
-      if (tasks.some(t => t.order !== undefined)) {
-        tasks.sort((a, b) => {
-          if (a.deleted && !b.deleted) return 1;
-          if (!a.deleted && b.deleted) return -1;
-          return (a.order || 0) - (b.order || 0);
-        });
-      }
-      let order = 0;
-      tasks.forEach(t => {
-        if (t.deleted) {
-          delete t.order;
-        } else {
-          t.order = order++;
-        }
-      });
-      people          = j.people          || [];
-      analyticsBoards = j.analyticsBoards || [];
-      settings        = j.settings        || {};
-      if (settings.openaiApiKey !== undefined) delete settings.openaiApiKey;
-      if (settings.pushoverApiKey !== undefined) delete settings.pushoverApiKey;
-      if (settings.pushoverUser !== undefined) delete settings.pushoverUser;
-
-      updatePeopleLevels({});
-
-      Log.log(
-        `MMM-Chores: Loaded ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards`
-      );
+      applyLoadedData(j);
+      return;
     } catch (e) {
       Log.error("MMM-Chores: Error reading data.json:", e);
+    }
+  }
+
+  if (fs.existsSync(DATA_FILE_BAK)) {
+    try {
+      const backup = JSON.parse(fs.readFileSync(DATA_FILE_BAK, "utf8"));
+      applyLoadedData(backup, "data.json.bak");
+    } catch (backupErr) {
+      Log.error("MMM-Chores: Failed to load backup data file:", backupErr);
     }
   }
 }
@@ -173,11 +212,15 @@ function loadData() {
 function saveData() {
   try {
     Log.log("saveData: writing", DATA_FILE);
-    fs.writeFileSync(
-      DATA_FILE,
-      JSON.stringify({ tasks, people, analyticsBoards, settings }, null, 2),
-      "utf8"
-    );
+    const payload = JSON.stringify({ tasks, people, analyticsBoards, settings }, null, 2);
+    if (fs.existsSync(DATA_FILE)) {
+      try {
+        fs.copyFileSync(DATA_FILE, DATA_FILE_BAK);
+      } catch (backupErr) {
+        Log.error("MMM-Chores: Failed to create backup data file:", backupErr);
+      }
+    }
+    writeDataFileAtomic(DATA_FILE, payload);
     Log.log(
       `MMM-Chores: Saved ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, language: ${settings.language}`
     );
