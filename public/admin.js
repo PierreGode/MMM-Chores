@@ -603,29 +603,68 @@ function openPersonRewards(person) {
 }
 
 function showPersonRewards(person) {
-  const list = document.getElementById('viewRewardsList');
-  if (!list) return;
-  list.innerHTML = '';
-  const t = LANGUAGES[currentLang];
-  const titles = (customLevelTitles[person.name] && customLevelTitles[person.name].length)
-    ? customLevelTitles[person.name]
-    : levelTitles;
-  for (let i = 0; i < 10; i++) {
-    const li = document.createElement('li');
-    li.className = 'list-group-item d-flex justify-content-between';
-    const range = document.createElement('span');
-    range.textContent = `${t.levelRangeLabel || 'Levels'} ${i * 10 + 1}-${(i + 1) * 10}`;
-    const txt = document.createElement('span');
-    txt.textContent = titles[i] || '';
-    li.appendChild(range);
-    li.appendChild(txt);
-    list.appendChild(li);
+  openRewardShop(person);
+}
+
+async function openRewardShop(person) {
+  await fetchRewards();
+  
+  const titleEl = document.getElementById('shopModalTitle');
+  const infoEl = document.getElementById('shopPersonInfo');
+  const listEl = document.getElementById('shopRewardsList');
+  
+  if (titleEl) titleEl.textContent = `Reward Shop - ${person.name}`;
+  if (infoEl) infoEl.innerHTML = `<strong>${person.name}</strong> has <strong>${person.points || 0} points</strong> available to spend.`;
+  if (listEl) {
+    listEl.innerHTML = '';
+    
+    if (rewardsCache.length === 0) {
+      listEl.innerHTML = '<div class="col-12"><p class="text-center text-muted">No rewards available. Add some rewards in the admin settings!</p></div>';
+    } else {
+      rewardsCache.forEach(reward => {
+        const canAfford = (person.points || 0) >= reward.pointCost;
+        const col = document.createElement('div');
+        col.className = 'col-md-6 mb-3';
+        col.innerHTML = `
+          <div class="card ${canAfford ? '' : 'text-muted'}">
+            <div class="card-body">
+              <h6 class="card-title">${reward.name}</h6>
+              <p class="card-text">${reward.description || 'No description'}</p>
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="badge bg-warning text-dark">${reward.pointCost} points</span>
+                <button class="btn btn-sm ${canAfford ? 'btn-primary' : 'btn-secondary'}" 
+                        onclick="redeemRewardForPerson(${reward.id}, ${person.id})"
+                        ${canAfford ? '' : 'disabled'}>
+                  ${canAfford ? 'Redeem' : 'Not enough points'}
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        listEl.appendChild(col);
+      });
+    }
   }
-  const modalTitle = document.getElementById('viewRewardsModalLabel');
-  if (modalTitle) modalTitle.textContent = `${t.viewRewardsButton || 'Rewards'} - ${person.name}`;
-  const modalEl = document.getElementById('viewRewardsModal');
-  const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
-  if (modal) modal.show();
+  
+  const modal = new bootstrap.Modal(document.getElementById('rewardShopModal'));
+  modal.show();
+}
+
+async function redeemRewardForPerson(rewardId, personId) {
+  try {
+    await redeemReward(rewardId, personId);
+    showToast('Reward redeemed successfully!', 'success');
+    
+    // Refresh person data and reopen shop
+    await fetchPeople();
+    const person = peopleCache.find(p => p.id === personId);
+    if (person) {
+      await openRewardShop(person);
+    }
+  } catch (e) {
+    const error = await e.response?.json?.() || { error: 'Failed to redeem reward' };
+    showToast(error.error || 'Failed to redeem reward', 'danger');
+  }
 }
 
 function renderPersonRewardsList() {
@@ -681,6 +720,12 @@ function renderPeople() {
       small.textContent = `lvl${person.level}${titlePart}`;
       info.appendChild(small);
     }
+    
+    // Add points display
+    const pointsBadge = document.createElement("span");
+    pointsBadge.className = "badge bg-primary ms-2";
+    pointsBadge.textContent = `${person.points || 0} pts`;
+    info.appendChild(pointsBadge);
 
     li.appendChild(info);
 
@@ -814,6 +859,10 @@ function renderTasks() {
     const recurText = LANGUAGES[currentLang].taskRecurring[task.recurring] || task.recurring;
     span.innerHTML += ` <span class="badge bg-info text-dark">${recurText}</span>`;
   }
+  // Add points display
+  const points = task.points || 1;
+  span.innerHTML += ` <span class="badge bg-warning text-dark">${points} pt${points !== 1 ? 's' : ''}</span>`;
+  
   if (task.done) span.classList.add("task-done");
   const person = peopleCache.find(p => p.id === task.assignedTo);
   const personName = person ? person.name : LANGUAGES[currentLang].unassigned;
@@ -885,9 +934,11 @@ function openEditModal(task) {
   const nameInput = document.getElementById('editTaskName');
   const dateInput = document.getElementById('editTaskDate');
   const personSelect = document.getElementById('editTaskPerson');
+  const pointsInput = document.getElementById('editTaskPoints');
   if (nameInput) nameInput.value = task.name;
   if (dateInput) dateInput.value = task.date || '';
   if (personSelect) personSelect.value = task.assignedTo || '';
+  if (pointsInput) pointsInput.value = task.points || 1;
   if (!editTaskModal) {
     const modalEl = document.getElementById('editTaskModal');
     if (modalEl) editTaskModal = new bootstrap.Modal(modalEl);
@@ -1075,6 +1126,7 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
   let date = document.getElementById("taskDate").value;
   const recurring = document.getElementById("taskRecurring").value;
   const assigned = document.getElementById("taskPerson").value;
+  const points = document.getElementById("taskPoints").value || 1;
   if (!name) return;
   if (!date) date = new Date().toISOString().split("T")[0];
 
@@ -1097,11 +1149,13 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
       date,
       recurring,
       assignedTo: assigned ? parseInt(assigned) : null,
+      points: parseInt(points),
       created: iso,
       createdShort: stamp("C")
     })
   });
   e.target.reset();
+  document.getElementById("taskPoints").value = 1; // Reset points to default
   await fetchTasks();
 });
 
@@ -1110,10 +1164,12 @@ document.getElementById('editTaskForm').addEventListener('submit', async e => {
   const name = document.getElementById('editTaskName').value.trim();
   const date = document.getElementById('editTaskDate').value;
   const assigned = document.getElementById('editTaskPerson').value;
+  const points = document.getElementById('editTaskPoints').value || 1;
   await updateTask(editTaskId, {
     name,
     date,
-    assignedTo: assigned ? parseInt(assigned) : null
+    assignedTo: assigned ? parseInt(assigned) : null,
+    points: parseInt(points)
   });
   if (editTaskModal) editTaskModal.hide();
   editTaskId = null;
@@ -1699,4 +1755,282 @@ if (aiBtn) {
       aiBtn.innerHTML = `<i class="bi bi-stars me-1"></i> ${LANGUAGES[currentLang].aiGenerateButton}`;
     }
   };
+}
+
+// ==========================
+// ====== REWARDS SYSTEM ====
+// ==========================
+
+let rewardsCache = [];
+let redemptionsCache = [];
+
+async function fetchRewards() {
+  try {
+    const res = await authFetch('/api/rewards');
+    rewardsCache = await res.json();
+    return rewardsCache;
+  } catch (e) {
+    console.error('Failed to fetch rewards:', e);
+    return [];
+  }
+}
+
+async function fetchRedemptions() {
+  try {
+    const res = await authFetch('/api/redemptions');
+    redemptionsCache = await res.json();
+    return redemptionsCache;
+  } catch (e) {
+    console.error('Failed to fetch redemptions:', e);
+    return [];
+  }
+}
+
+async function addReward(name, pointCost, description) {
+  try {
+    const res = await authFetch('/api/rewards', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, pointCost, description })
+    });
+    return await res.json();
+  } catch (e) {
+    console.error('Failed to add reward:', e);
+    throw e;
+  }
+}
+
+async function deleteReward(id) {
+  try {
+    await authFetch(`/api/rewards/${id}`, { method: 'DELETE' });
+  } catch (e) {
+    console.error('Failed to delete reward:', e);
+    throw e;
+  }
+}
+
+async function redeemReward(rewardId, personId) {
+  try {
+    const res = await authFetch('/api/redemptions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rewardId, personId })
+    });
+    return await res.json();
+  } catch (e) {
+    console.error('Failed to redeem reward:', e);
+    throw e;
+  }
+}
+
+async function markRedemptionUsed(redemptionId, used = true) {
+  try {
+    const res = await authFetch(`/api/redemptions/${redemptionId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ used })
+    });
+    return await res.json();
+  } catch (e) {
+    console.error('Failed to mark redemption as used:', e);
+    throw e;
+  }
+}
+
+function renderPeoplePoints() {
+  const list = document.getElementById('peoplePointsList');
+  if (!list) return;
+  
+  list.innerHTML = '';
+  peopleCache.forEach(person => {
+    const li = document.createElement('li');
+    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+    li.innerHTML = `
+      <span>${person.name}</span>
+      <span class="badge bg-primary rounded-pill">${person.points || 0} points</span>
+    `;
+    list.appendChild(li);
+  });
+}
+
+function renderRewardsList() {
+  const list = document.getElementById('rewardsList');
+  if (!list) return;
+  
+  list.innerHTML = '';
+  rewardsCache.forEach(reward => {
+    const li = document.createElement('li');
+    li.className = 'list-group-item d-flex justify-content-between align-items-center';
+    li.innerHTML = `
+      <div>
+        <strong>${reward.name}</strong><br>
+        <small class="text-muted">${reward.description || ''}</small>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-warning text-dark">${reward.pointCost} pts</span>
+        <button class="btn btn-sm btn-danger" onclick="deleteRewardFromList(${reward.id})">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+    `;
+    list.appendChild(li);
+  });
+}
+
+function renderRedemptionsList() {
+  const list = document.getElementById('redemptionsList');
+  if (!list) return;
+  
+  list.innerHTML = '';
+  const recent = redemptionsCache.slice(-10).reverse(); // Show 10 most recent
+  recent.forEach(redemption => {
+    const li = document.createElement('li');
+    li.className = `list-group-item d-flex justify-content-between align-items-center ${redemption.used ? 'text-muted' : ''}`;
+    li.innerHTML = `
+      <div>
+        <strong>${redemption.personName}</strong><br>
+        <small>${redemption.rewardName} (${redemption.pointCost} pts)</small><br>
+        <small class="text-muted">${new Date(redemption.date).toLocaleDateString()}</small>
+      </div>
+      <div>
+        <button class="btn btn-sm ${redemption.used ? 'btn-secondary' : 'btn-success'}" 
+                onclick="toggleRedemptionUsed(${redemption.id}, ${!redemption.used})">
+          ${redemption.used ? 'Used' : 'Mark Used'}
+        </button>
+      </div>
+    `;
+    list.appendChild(li);
+  });
+}
+
+async function deleteRewardFromList(id) {
+  if (confirm('Are you sure you want to delete this reward?')) {
+    try {
+      await deleteReward(id);
+      await fetchRewards();
+      renderRewardsList();
+      showToast('Reward deleted successfully', 'success');
+    } catch (e) {
+      showToast('Failed to delete reward', 'danger');
+    }
+  }
+}
+
+async function toggleRedemptionUsed(id, used) {
+  try {
+    await markRedemptionUsed(id, used);
+    await fetchRedemptions();
+    renderRedemptionsList();
+    showToast(`Redemption marked as ${used ? 'used' : 'unused'}`, 'success');
+  } catch (e) {
+    showToast('Failed to update redemption status', 'danger');
+  }
+}
+
+// Manage Rewards Modal Handler
+const manageRewardsBtn = document.getElementById('manageRewardsBtn');
+if (manageRewardsBtn) {
+  manageRewardsBtn.addEventListener('click', async () => {
+    await fetchRewards();
+    await fetchRedemptions();
+    renderPeoplePoints();
+    renderRewardsList();
+    renderRedemptionsList();
+    
+    const modal = new bootstrap.Modal(document.getElementById('manageRewardsModal'));
+    modal.show();
+  });
+}
+
+// Add Reward Form Handler
+const addRewardForm = document.getElementById('addRewardForm');
+if (addRewardForm) {
+  addRewardForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('rewardName').value.trim();
+    const cost = document.getElementById('rewardCost').value;
+    const description = document.getElementById('rewardDescription').value.trim();
+    
+    if (!name || !cost) {
+      showToast('Name and point cost are required', 'danger');
+      return;
+    }
+    
+    try {
+      await addReward(name, parseInt(cost), description);
+      await fetchRewards();
+      renderRewardsList();
+      addRewardForm.reset();
+      showToast('Reward added successfully', 'success');
+    } catch (e) {
+      showToast('Failed to add reward', 'danger');
+    }
+  });
+}
+
+// Email Settings Modal Handler
+const emailSettingsBtn = document.getElementById('emailSettingsBtn');
+if (emailSettingsBtn) {
+  emailSettingsBtn.addEventListener('click', async () => {
+    // Load current email settings
+    try {
+      const res = await authFetch('/api/settings');
+      const settings = await res.json();
+      const email = settings.email || {};
+      
+      document.getElementById('emailEnabled').checked = email.enabled || false;
+      document.getElementById('emailHost').value = email.host || '';
+      document.getElementById('emailPort').value = email.port || 587;
+      document.getElementById('emailSecure').checked = email.secure || false;
+      document.getElementById('emailUser').value = email.user || '';
+      document.getElementById('emailPass').value = email.pass || '';
+      document.getElementById('emailFrom').value = email.from || '';
+      document.getElementById('emailTo').value = email.to || '';
+      
+      const modal = new bootstrap.Modal(document.getElementById('emailSettingsModal'));
+      modal.show();
+    } catch (e) {
+      showToast('Failed to load email settings', 'danger');
+    }
+  });
+}
+
+// Email Settings Form Handler
+const emailSettingsForm = document.getElementById('emailSettingsForm');
+if (emailSettingsForm) {
+  emailSettingsForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const emailSettings = {
+      email: {
+        enabled: document.getElementById('emailEnabled').checked,
+        host: document.getElementById('emailHost').value.trim(),
+        port: parseInt(document.getElementById('emailPort').value) || 587,
+        secure: document.getElementById('emailSecure').checked,
+        user: document.getElementById('emailUser').value.trim(),
+        pass: document.getElementById('emailPass').value,
+        from: document.getElementById('emailFrom').value.trim(),
+        to: document.getElementById('emailTo').value.trim()
+      }
+    };
+    
+    try {
+      const res = await authFetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(emailSettings)
+      });
+      
+      if (res.ok) {
+        showToast('Email settings saved successfully', 'success');
+        const modal = bootstrap.Modal.getInstance(document.getElementById('emailSettingsModal'));
+        modal.hide();
+      } else {
+        const error = await res.json();
+        showToast(error.error || 'Failed to save email settings', 'danger');
+      }
+    } catch (e) {
+      showToast('Failed to save email settings', 'danger');
+    }
+  });
 }
