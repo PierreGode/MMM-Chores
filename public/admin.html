@@ -192,34 +192,6 @@
             <div class="col-lg-6">
               <div class="card card-shadow h-100">
                 <div class="card-header">
-                  <span id="rewardsHeader">
-                    <i class="bi bi-gift me-2"></i>Rewards Management
-                  </span>
-                </div>
-                <div class="card-body">
-                  <form id="rewardForm" class="row gy-2 gx-2 align-items-center mb-3">
-                    <div class="col-sm">
-                      <input type="text" id="rewardName" class="form-control" placeholder="Reward name…" required />
-                    </div>
-                    <div class="col-sm-auto">
-                      <input type="number" id="rewardPoints" class="form-control" placeholder="Points" min="1" required />
-                    </div>
-                    <div class="col-sm">
-                      <input type="text" id="rewardDescription" class="form-control" placeholder="Description (optional)" />
-                    </div>
-                    <div class="col-sm-auto">
-                      <button class="btn btn-primary" type="submit">
-                        <i class="bi bi-plus-lg me-1"></i>Add Reward
-                      </button>
-                    </div>
-                  </form>
-                  <ul id="rewardsList" class="list-group"></ul>
-                </div>
-              </div>
-            </div>
-            <div class="col-lg-6">
-              <div class="card card-shadow h-100">
-                <div class="card-header">
                   <span id="peoplePointsHeader">
                     <i class="bi bi-people me-2"></i>People & Points
                   </span>
@@ -229,11 +201,8 @@
                 </div>
               </div>
             </div>
-          </div>
-          
-          <div class="row g-4 mt-2">
-            <div class="col-12">
-              <div class="card card-shadow">
+            <div class="col-lg-6">
+              <div class="card card-shadow h-100">
                 <div class="card-header">
                   <span id="redemptionsHeader">
                     <i class="bi bi-clock-history me-2"></i>Recent Redemptions
@@ -242,6 +211,15 @@
                 <div class="card-body">
                   <ul id="redemptionsList" class="list-group"></ul>
                 </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row g-4 mt-2">
+            <div class="col-12">
+              <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Tip:</strong> To add or edit rewards, go to <strong>Settings</strong> → <strong>Point System Settings</strong> → <strong>Rewards Management</strong>
               </div>
             </div>
           </div>
@@ -452,14 +430,43 @@
               <div class="card-body">
                 <div class="alert alert-success">
                   <i class="bi bi-check-circle me-2"></i>
-                  Point system is active. Visit the <strong>Rewards</strong> tab to manage custom rewards and view point balances.
+                  Point system is active. Manage rewards below and view point balances on the Rewards tab.
                 </div>
-                <div class="row gy-3">
+                <div class="row gy-3 mb-4">
                   <div class="col-12">
                     <label class="form-label">Current Point Totals:</label>
                     <div id="pointTotalsPreview" class="small text-muted">
                       Loading...
                     </div>
+                  </div>
+                </div>
+                
+                <!-- Rewards Management -->
+                <div class="border-top pt-3">
+                  <h6 class="mb-3">
+                    <i class="bi bi-gift me-2"></i>Rewards Management
+                  </h6>
+                  <form id="rewardForm" class="row gy-2 gx-2 align-items-end mb-3">
+                    <div class="col-sm-4">
+                      <label class="form-label small" for="rewardName">Reward Name</label>
+                      <input type="text" id="rewardName" class="form-control form-control-sm" placeholder="Reward name…" required />
+                    </div>
+                    <div class="col-sm-2">
+                      <label class="form-label small" for="rewardPoints">Points</label>
+                      <input type="number" id="rewardPoints" class="form-control form-control-sm" placeholder="Points" min="1" required />
+                    </div>
+                    <div class="col-sm-4">
+                      <label class="form-label small" for="rewardDescription">Description</label>
+                      <input type="text" id="rewardDescription" class="form-control form-control-sm" placeholder="Optional" />
+                    </div>
+                    <div class="col-sm-2">
+                      <button class="btn btn-primary btn-sm w-100" type="submit">
+                        <i class="bi bi-plus-lg me-1"></i>Add
+                      </button>
+                    </div>
+                  </form>
+                  <div style="max-height: 300px; overflow-y: auto;">
+                    <ul id="rewardsList" class="list-group"></ul>
                   </div>
                 </div>
               </div>
