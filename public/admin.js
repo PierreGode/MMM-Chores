@@ -1693,11 +1693,17 @@ async function initApp() {
     bootstrapAvailable: typeof bootstrap !== 'undefined'
   });
   
-  const modal = settingsModalEl ? new bootstrap.Modal(settingsModalEl) : null;
+  let modal = null;
   
-  console.log("Modal created:", !!modal);
+  try {
+    modal = settingsModalEl ? new bootstrap.Modal(settingsModalEl) : null;
+    console.log("Modal created successfully:", !!modal);
+  } catch (error) {
+    console.error("Error creating modal:", error);
+  }
   
   if (settingsBtn && modal) {
+    console.log("Adding click event listener to settings button");
     settingsBtn.addEventListener('click', () => {
       console.log("Settings button clicked!");
       settingsChanged = false;
@@ -1732,6 +1738,12 @@ async function initApp() {
       }
       if (settingsForm) settingsForm.classList.add('d-none');
       modal.show();
+    });
+  } else {
+    console.error("Cannot setup settings button listener:", {
+      hasButton: !!settingsBtn,
+      hasModal: !!modal,
+      settingsMode: settingsMode
     });
   }
 
