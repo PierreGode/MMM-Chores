@@ -259,7 +259,6 @@ function initSettingsForm(settings) {
   const dateFmt = document.getElementById('settingsDateFmt');
   const useAI = document.getElementById('settingsUseAI');
   const showAnalytics = document.getElementById('settingsShowAnalytics');
-  const showRewardsTab = document.getElementById('settingsShowRewardsTab');
   const levelEnable = document.getElementById('settingsLevelEnable');
   const autoUpdate = document.getElementById('settingsAutoUpdate');
   const pushoverEnable = document.getElementById('settingsPushoverEnable');
@@ -272,22 +271,11 @@ function initSettingsForm(settings) {
   if (dateFmt) dateFmt.value = settings.dateFormatting || '';
   if (useAI) useAI.checked = settings.useAI !== false;
   if (showAnalytics) showAnalytics.checked = !!settings.showAnalyticsOnMirror;
-  if (showRewardsTab) showRewardsTab.checked = !!settings.showRewardsTab;
   if (levelEnable) levelEnable.checked = settings.levelingEnabled !== false;
   if (autoUpdate) autoUpdate.checked = !!settings.autoUpdate;
   if (pushoverEnable) pushoverEnable.checked = !!settings.pushoverEnabled;
   if (reminderTime) reminderTime.value = settings.reminderTime || '';
   if (backgroundSelect) backgroundSelect.value = settings.background || '';
-
-  // Update rewards tab visibility based on settings
-  updateRewardsTabNavVisibility(!!settings.showRewardsTab);
-
-  // Listen to showRewardsTab checkbox changes for instant feedback
-  if (showRewardsTab) {
-    showRewardsTab.addEventListener('change', (e) => {
-      updateRewardsTabNavVisibility(e.target.checked);
-    });
-  }
 
   // Update point totals preview
   updatePointTotalsPreview();
@@ -314,7 +302,6 @@ function initSettingsForm(settings) {
       dateFormatting: dateFmt ? dateFmt.value : '',
       useAI: useAI ? useAI.checked : false,
       showAnalyticsOnMirror: showAnalytics ? showAnalytics.checked : false,
-      showRewardsTab: showRewardsTab ? showRewardsTab.checked : false,
       levelingEnabled: levelEnable ? levelEnable.checked : false,
       autoUpdate: autoUpdate ? autoUpdate.checked : false,
       pushoverEnabled: pushoverEnable ? pushoverEnable.checked : false,
@@ -341,9 +328,6 @@ function initSettingsForm(settings) {
       // Update rewards tab based on new system
       updateRewardsTabVisibility(newSettings.usePointSystem);
       
-      // Update rewards tab navigation visibility
-      updateRewardsTabNavVisibility(newSettings.showRewardsTab);
-      
       // Refresh data if switching systems
       if (settings.usePointSystem !== newSettings.usePointSystem) {
         if (newSettings.usePointSystem) {
@@ -363,32 +347,15 @@ function initSettingsForm(settings) {
 }
 
 function updateRewardsTabVisibility(usePointSystem) {
-  const rewardsSystemEnabled = document.getElementById('rewardsSystemEnabled');
-  const rewardsSystemDisabled = document.getElementById('rewardsSystemDisabled');
-  
-  if (rewardsSystemEnabled && rewardsSystemDisabled) {
+  // Show/hide rewards management section in settings
+  const rewardsSection = document.getElementById('rewardsManagementSection');
+  if (rewardsSection) {
     if (usePointSystem) {
-      rewardsSystemEnabled.classList.remove('d-none');
-      rewardsSystemDisabled.classList.add('d-none');
+      rewardsSection.classList.remove('d-none');
+      loadSettingsRewards();
+      loadSettingsPeoplePoints();
     } else {
-      rewardsSystemEnabled.classList.add('d-none');
-      rewardsSystemDisabled.classList.remove('d-none');
-    }
-  }
-}
-
-function updateRewardsTabNavVisibility(show) {
-  const rewardsNavItem = document.querySelector('.nav-link[href="#rewardsTab"]')?.parentElement;
-  if (rewardsNavItem) {
-    if (show) {
-      rewardsNavItem.classList.remove('d-none');
-    } else {
-      rewardsNavItem.classList.add('d-none');
-      // If rewards tab is active, switch to tasks tab
-      const rewardsTab = document.getElementById('rewardsTab');
-      if (rewardsTab && rewardsTab.classList.contains('active')) {
-        document.querySelector('.nav-link[href="#tasksTab"]').click();
-      }
+      rewardsSection.classList.add('d-none');
     }
   }
 }
@@ -648,6 +615,27 @@ function setLanguage(lang) {
 async function fetchPeople() {
   const res = await authFetch("/api/people");
   peopleCache = await res.json();
+  
+  // If using point system, fetch and add points for each person
+  if (userSettings?.usePointSystem) {
+    try {
+      const pointsRes = await authFetch("/api/people-points");
+      const peoplePoints = await pointsRes.json();
+      
+      // Add points to each person
+      peopleCache.forEach(person => {
+        const pointData = peoplePoints.find(p => p.id === person.id);
+        person.points = pointData ? pointData.points : 0;
+      });
+    } catch (error) {
+      console.error('Error fetching people points:', error);
+      // Set default points if error
+      peopleCache.forEach(person => {
+        person.points = 0;
+      });
+    }
+  }
+  
   renderPeople();
   renderPeoplePoints(); // Update points display when people data changes
 }
@@ -727,6 +715,20 @@ function showPersonRewards(person) {
   if (modal) modal.show();
 }
 
+function showRedeemRewards(person) {
+  // Set the person for redemption
+  const redeemPersonSelect = document.getElementById('redeemPerson');
+  if (redeemPersonSelect) {
+    redeemPersonSelect.value = person.id;
+    redeemPersonSelect.dispatchEvent(new Event('change'));
+  }
+  
+  // Show the redeem modal
+  const modalEl = document.getElementById('redeemRewardModal');
+  const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
+  if (modal) modal.show();
+}
+
 function renderPersonRewardsList() {
   const list = document.getElementById('personRewardsList');
   if (!list) return;
@@ -773,11 +775,21 @@ function renderPeople() {
     li.className = "list-group-item d-flex justify-content-between align-items-center";
     const info = document.createElement("span");
     info.textContent = person.name;
-    if (levelingEnabled && person.level) {
+    
+    // Show level info for level system
+    if (levelingEnabled && person.level && !userSettings?.usePointSystem) {
       const small = document.createElement("small");
       small.className = "ms-2 text-muted";
       const titlePart = person.title ? ` - ${person.title}` : "";
       small.textContent = `lvl${person.level}${titlePart}`;
+      info.appendChild(small);
+    }
+    
+    // Show points for point system
+    if (levelingEnabled && userSettings?.usePointSystem && person.points !== undefined) {
+      const small = document.createElement("small");
+      small.className = "ms-2 text-muted";
+      small.textContent = `${person.points} points`;
       info.appendChild(small);
     }
 
@@ -787,12 +799,23 @@ function renderPeople() {
       const actions = document.createElement('div');
       actions.className = 'btn-group btn-group-sm';
       if (levelingEnabled) {
-        const viewBtn = document.createElement('button');
-        viewBtn.className = 'btn btn-outline-secondary';
-        viewBtn.title = LANGUAGES[currentLang].viewRewardsButton || 'Rewards';
-        viewBtn.innerHTML = '<i class="bi bi-gift"></i>';
-        viewBtn.onclick = () => showPersonRewards(person);
-        actions.appendChild(viewBtn);
+        if (userSettings?.usePointSystem) {
+          // Redeem rewards button for point system
+          const redeemBtn = document.createElement('button');
+          redeemBtn.className = 'btn btn-outline-success';
+          redeemBtn.title = 'Redeem Rewards';
+          redeemBtn.innerHTML = '<i class="bi bi-gift"></i>';
+          redeemBtn.onclick = () => showRedeemRewards(person);
+          actions.appendChild(redeemBtn);
+        } else {
+          // View rewards button for level system
+          const viewBtn = document.createElement('button');
+          viewBtn.className = 'btn btn-outline-secondary';
+          viewBtn.title = LANGUAGES[currentLang].viewRewardsButton || 'Rewards';
+          viewBtn.innerHTML = '<i class="bi bi-gift"></i>';
+          viewBtn.onclick = () => showPersonRewards(person);
+          actions.appendChild(viewBtn);
+        }
       }
       const delBtn = document.createElement('button');
       delBtn.className = 'btn btn-outline-danger';
@@ -2132,4 +2155,117 @@ document.addEventListener('DOMContentLoaded', () => {
     taskPointsField.setAttribute('data-initialized', 'true');
     // Field is already handled by the existing task form handler above
   }
+
+  // Settings rewards form handler
+  const settingsRewardForm = document.getElementById('settingsRewardForm');
+  if (settingsRewardForm) {
+    settingsRewardForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const name = document.getElementById('settingsRewardName').value;
+      const pointCost = document.getElementById('settingsRewardPoints').value;
+      const description = document.getElementById('settingsRewardDescription').value;
+      
+      try {
+        await authFetch('/api/rewards', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, pointCost, description })
+        });
+        
+        // Clear form
+        document.getElementById('settingsRewardName').value = '';
+        document.getElementById('settingsRewardPoints').value = '';
+        document.getElementById('settingsRewardDescription').value = '';
+        
+        // Reload rewards list
+        loadSettingsRewards();
+        loadSettingsPeoplePoints();
+      } catch (error) {
+        console.error('Error adding reward:', error);
+        alert('Failed to add reward');
+      }
+    });
+  }
 });
+
+// Settings Rewards Functions
+async function loadSettingsRewards() {
+  try {
+    const response = await authFetch('/api/rewards');
+    const rewards = await response.json();
+    
+    const list = document.getElementById('settingsRewardsList');
+    if (!list) return;
+    
+    if (rewards.length === 0) {
+      list.innerHTML = '<li class="list-group-item text-muted">No rewards created yet</li>';
+      return;
+    }
+    
+    list.innerHTML = rewards.map(reward => `
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+          <strong>${escapeHtml(reward.name)}</strong>
+          <span class="badge bg-primary rounded-pill ms-2">${reward.pointCost} pts</span>
+          ${reward.description ? `<br><small class="text-muted">${escapeHtml(reward.description)}</small>` : ''}
+        </div>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteSettingsReward(${reward.id})" title="Delete">
+          <i class="bi bi-trash"></i>
+        </button>
+      </li>
+    `).join('');
+  } catch (error) {
+    console.error('Error loading rewards:', error);
+    const list = document.getElementById('settingsRewardsList');
+    if (list) {
+      list.innerHTML = '<li class="list-group-item text-danger">Error loading rewards</li>';
+    }
+  }
+}
+
+async function loadSettingsPeoplePoints() {
+  try {
+    const response = await authFetch('/api/people-points');
+    const peoplePoints = await response.json();
+    
+    const list = document.getElementById('settingsPeoplePointsList');
+    if (!list) return;
+    
+    if (peoplePoints.length === 0) {
+      list.innerHTML = '<li class="list-group-item text-muted">No people found</li>';
+      return;
+    }
+    
+    list.innerHTML = peoplePoints.map(person => `
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <span>${escapeHtml(person.name)}</span>
+        <span class="badge bg-success rounded-pill">${person.points} points</span>
+      </li>
+    `).join('');
+  } catch (error) {
+    console.error('Error loading people points:', error);
+    const list = document.getElementById('settingsPeoplePointsList');
+    if (list) {
+      list.innerHTML = '<li class="list-group-item text-danger">Error loading points</li>';
+    }
+  }
+}
+
+async function deleteSettingsReward(rewardId) {
+  if (!confirm('Are you sure you want to delete this reward?')) {
+    return;
+  }
+  
+  try {
+    await authFetch(`/api/rewards/${rewardId}`, {
+      method: 'DELETE'
+    });
+    
+    loadSettingsRewards();
+    loadSettingsPeoplePoints();
+  } catch (error) {
+    console.error('Error deleting reward:', error);
+    alert('Failed to delete reward');
+  }
+}
