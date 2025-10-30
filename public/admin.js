@@ -1686,9 +1686,20 @@ async function initApp() {
   const settingsModalEl = document.getElementById("settingsModal");
   const settingsForm = document.getElementById("settingsForm");
   const lockedMsg = document.getElementById("settingsLockedMsg");
+  
+  console.log("Settings setup:", {
+    settingsBtn: !!settingsBtn,
+    settingsModalEl: !!settingsModalEl,
+    bootstrapAvailable: typeof bootstrap !== 'undefined'
+  });
+  
   const modal = settingsModalEl ? new bootstrap.Modal(settingsModalEl) : null;
+  
+  console.log("Modal created:", !!modal);
+  
   if (settingsBtn && modal) {
     settingsBtn.addEventListener('click', () => {
+      console.log("Settings button clicked!");
       settingsChanged = false;
       settingsSaved = false;
       if (settingsMode === 'unlocked') {
