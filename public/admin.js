@@ -324,6 +324,7 @@ function initSettingsForm(settings) {
       dateFormatting: dateFmt ? dateFmt.value : '',
       useAI: useAI ? useAI.checked : false,
       showAnalyticsOnMirror: showAnalytics ? showAnalytics.checked : false,
+      showRewardsTab: showRewardsTab ? showRewardsTab.checked : true,
       levelingEnabled: levelEnable ? levelEnable.checked : false,
       autoUpdate: autoUpdate ? autoUpdate.checked : false,
       pushoverEnabled: pushoverEnable ? pushoverEnable.checked : false,
@@ -348,7 +349,7 @@ function initSettingsForm(settings) {
       localStorage.setItem('choresBackground', newSettings.background || '');
       
       // Update rewards tab based on new system
-      updateRewardsTabVisibility(newSettings.usePointSystem);
+      updateRewardsTabVisibility(newSettings.usePointSystem, newSettings.showRewardsTab);
       
       // Refresh data if switching systems
       if (settings.usePointSystem !== newSettings.usePointSystem) {
@@ -368,10 +369,22 @@ function initSettingsForm(settings) {
   });
 }
 
-function updateRewardsTabVisibility(usePointSystem) {
+function updateRewardsTabVisibility(usePointSystem, showRewardsTab = true) {
   const rewardsSystemEnabled = document.getElementById('rewardsSystemEnabled');
   const rewardsSystemDisabled = document.getElementById('rewardsSystemDisabled');
+  const rewardsTabButton = document.querySelector('[data-bs-target="#rewards"]');
+  const rewardsTabLi = rewardsTabButton ? rewardsTabButton.closest('li') : null;
   
+  // Show/hide the rewards tab button itself
+  if (rewardsTabLi) {
+    if (usePointSystem && showRewardsTab) {
+      rewardsTabLi.style.display = '';
+    } else {
+      rewardsTabLi.style.display = 'none';
+    }
+  }
+  
+  // Show appropriate content in rewards tab
   if (rewardsSystemEnabled && rewardsSystemDisabled) {
     if (usePointSystem) {
       rewardsSystemEnabled.classList.remove('d-none');
@@ -1677,7 +1690,7 @@ async function initApp() {
   await applySettings(userSettings);
 
   // Initialize rewards system visibility
-  updateRewardsTabVisibility(!!userSettings.usePointSystem);
+  updateRewardsTabVisibility(!!userSettings.usePointSystem, userSettings.showRewardsTab !== false);
   
   if (userSettings.usePointSystem) {
     await fetchRewards();

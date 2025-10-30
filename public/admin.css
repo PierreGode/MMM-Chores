@@ -427,6 +427,149 @@ select#taskRecurring option[value="first_monday_month"] {
   max-width: 900px;
 }
 
+/* Settings modal dark mode support */
+[data-theme="dark"] .modal-content {
+  background-color: var(--card-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(var(--blur));
+}
+
+[data-theme="dark"] .modal-header {
+  background-color: rgba(30, 30, 30, 0.8);
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+[data-theme="dark"] .modal-body {
+  background-color: var(--card-bg);
+  color: var(--text);
+}
+
+[data-theme="dark"] .modal-footer {
+  background-color: rgba(30, 30, 30, 0.8);
+  color: var(--text);
+  border-top: 1px solid var(--border);
+}
+
+[data-theme="dark"] .btn-close {
+  filter: invert(1);
+}
+
+/* Settings cards in dark mode */
+[data-theme="dark"] .card {
+  background-color: var(--card-bg);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .card-header {
+  background-color: rgba(30, 30, 30, 0.8);
+  color: var(--text);
+  border-bottom-color: var(--border);
+}
+
+[data-theme="dark"] .card-body {
+  background-color: var(--card-bg);
+  color: var(--text);
+}
+
+/* Form labels and text in dark mode */
+[data-theme="dark"] .form-label {
+  color: var(--text);
+}
+
+[data-theme="dark"] .form-check-label {
+  color: var(--text);
+}
+
+[data-theme="dark"] .alert {
+  background-color: rgba(30, 30, 30, 0.8);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .alert-info {
+  background-color: rgba(13, 110, 253, 0.2);
+  border-color: rgba(13, 110, 253, 0.4);
+  color: #9ec5fe;
+}
+
+[data-theme="dark"] .alert-warning {
+  background-color: rgba(255, 193, 7, 0.2);
+  border-color: rgba(255, 193, 7, 0.4);
+  color: #ffe69c;
+}
+
+[data-theme="dark"] .alert-success {
+  background-color: rgba(25, 135, 84, 0.2);
+  border-color: rgba(25, 135, 84, 0.4);
+  color: #a3cfbb;
+}
+
+[data-theme="dark"] .alert-danger {
+  background-color: rgba(220, 53, 69, 0.2);
+  border-color: rgba(220, 53, 69, 0.4);
+  color: #f1aeb5;
+}
+
+/* Badge colors in dark mode */
+[data-theme="dark"] .badge.bg-success {
+  background-color: var(--reward-color) !important;
+}
+
+[data-theme="dark"] .badge.bg-info {
+  background-color: #0dcaf0 !important;
+  color: #000 !important;
+}
+
+[data-theme="dark"] .badge.bg-light {
+  background-color: rgba(248, 249, 250, 0.2) !important;
+  color: var(--text) !important;
+}
+
+/* Reward system cards in dark mode */
+[data-theme="dark"] .reward-system-card {
+  background-color: var(--card-bg);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .reward-system-card.selected {
+  background: linear-gradient(135deg, rgba(52, 58, 64, 0.8), rgba(73, 80, 87, 0.8));
+  color: white;
+  border-color: var(--hero-start);
+}
+
+[data-theme="dark"] .reward-system-card:hover {
+  border-color: var(--hero-start);
+}
+
+/* Text colors in dark mode */
+[data-theme="dark"] .text-muted {
+  color: rgba(233, 236, 239, 0.6) !important;
+}
+
+[data-theme="dark"] small.text-muted {
+  color: rgba(233, 236, 239, 0.6) !important;
+}
+
+/* Settings form inputs in dark mode - keep readable */
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+  background-color: var(--field-bg);
+  color: #000;
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+  background-color: var(--field-bg);
+  color: #000;
+  border-color: var(--hero-start);
+  box-shadow: 0 0 0 0.25rem rgba(78, 116, 255, 0.25);
+}
+
 /* Point totals preview */
 #pointTotalsPreview {
   max-height: 120px;
