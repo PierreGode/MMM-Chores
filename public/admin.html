@@ -59,6 +59,9 @@
       <li class="nav-item" role="presentation">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#analytics" type="button" id="tabAnalytics">Analytics</button>
       </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#rewards" type="button" id="tabRewards">Rewards</button>
+      </li>
     </ul>
 
     <div class="tab-content">
@@ -110,19 +113,21 @@
                     </select>
                   </div>
                   <div class="col-sm-auto">
-                    <input type="number" id="taskPoints" class="form-control" placeholder="Points" min="1" value="1" style="width: 80px;" />
-                  </div>
-                  <div class="col-sm-auto">
                     <select id="taskRecurring" class="form-select">
                       <option value="">One time</option>
                       <option value="daily">Daily</option>
-                      <option value="every-2-days">Every 2 Days</option>
                       <option value="weekly">Weekly</option>
-                      <option value="every-2-weeks">Every 2 Weeks</option>
-                      <option value="first-monday">First Monday of Month</option>
                       <option value="monthly">Monthly</option>
                       <option value="yearly">Yearly</option>
+                      <option value="every_X_days_2">Every 2 Days</option>
+                      <option value="every_X_days_3">Every 3 Days</option>
+                      <option value="every_X_weeks_2">Every 2 Weeks</option>
+                      <option value="every_X_weeks_3">Every 3 Weeks</option>
+                      <option value="first_monday_month">First Monday of Month</option>
                     </select>
+                  </div>
+                  <div class="col-sm-auto">
+                    <input type="number" id="taskPoints" class="form-control" placeholder="Points" min="1" value="1" title="Points awarded for completing this task" />
                   </div>
                   <div class="col-sm-auto d-flex gap-2">
                     <button class="btn btn-primary" type="submit" id="btnAddTask">
@@ -163,6 +168,86 @@
         <div id="analyticsContainer" class="row g-3"></div>
       </div>
 
+      <!-- Rewards Tab -->
+      <div class="tab-pane fade" id="rewards" role="tabpanel">
+        <div id="rewardsSystemDisabled" class="text-center py-5">
+          <i class="bi bi-coin text-muted display-1"></i>
+          <h4 class="text-muted mt-3">Point System Not Enabled</h4>
+          <p class="text-muted">
+            The point-based reward system is currently disabled. You're using the traditional level system.
+          </p>
+          <button class="btn btn-primary" onclick="openSettingsToRewardSystem()">
+            <i class="bi bi-gear me-2"></i>Enable Point System in Settings
+          </button>
+          <div class="mt-3">
+            <small class="text-muted">
+              <i class="bi bi-info-circle me-1"></i>
+              You can switch between level and point systems anytime without losing data.
+            </small>
+          </div>
+        </div>
+
+        <div id="rewardsSystemEnabled" class="d-none">
+          <div class="row g-4">
+            <div class="col-lg-6">
+              <div class="card card-shadow h-100">
+                <div class="card-header">
+                  <span id="rewardsHeader">
+                    <i class="bi bi-gift me-2"></i>Rewards Management
+                  </span>
+                </div>
+                <div class="card-body">
+                  <form id="rewardForm" class="row gy-2 gx-2 align-items-center mb-3">
+                    <div class="col-sm">
+                      <input type="text" id="rewardName" class="form-control" placeholder="Reward name…" required />
+                    </div>
+                    <div class="col-sm-auto">
+                      <input type="number" id="rewardPoints" class="form-control" placeholder="Points" min="1" required />
+                    </div>
+                    <div class="col-sm">
+                      <input type="text" id="rewardDescription" class="form-control" placeholder="Description (optional)" />
+                    </div>
+                    <div class="col-sm-auto">
+                      <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-plus-lg me-1"></i>Add Reward
+                      </button>
+                    </div>
+                  </form>
+                  <ul id="rewardsList" class="list-group"></ul>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="card card-shadow h-100">
+                <div class="card-header">
+                  <span id="peoplePointsHeader">
+                    <i class="bi bi-people me-2"></i>People & Points
+                  </span>
+                </div>
+                <div class="card-body">
+                  <ul id="peoplePointsList" class="list-group"></ul>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="row g-4 mt-2">
+            <div class="col-12">
+              <div class="card card-shadow">
+                <div class="card-header">
+                  <span id="redemptionsHeader">
+                    <i class="bi bi-clock-history me-2"></i>Recent Redemptions
+                  </span>
+                </div>
+                <div class="card-body">
+                  <ul id="redemptionsList" class="list-group"></ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- Edit Task Modal -->
@@ -189,10 +274,6 @@
                 <label for="editTaskDate" class="form-label">Date</label>
                 <input type="date" id="editTaskDate" class="form-control" />
               </div>
-              <div class="mb-3">
-                <label for="editTaskPoints" class="form-label">Points</label>
-                <input type="number" id="editTaskPoints" class="form-control" min="1" />
-              </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -205,7 +286,7 @@
 
     <!-- Settings Modal -->
     <div class="modal fade" id="settingsModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
       <div class="modal-content card-shadow">
         <div class="modal-header">
           <h5 class="modal-title" id="settingsModalLabel">Settings</h5>
@@ -213,87 +294,224 @@
         </div>
         <div class="modal-body">
           <div id="settingsLockedMsg" class="text-center my-3 d-none"></div>
-          <form id="settingsForm" class="row gy-3 d-none" autocomplete="off">
-            <div class="col-12 col-sm-6">
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="settingsShowPast" />
-                <label class="form-check-label" for="settingsShowPast">Show past tasks</label>
+          <form id="settingsForm" class="d-none" autocomplete="off">
+            
+            <!-- Reward System Selection -->
+            <div class="card mb-4">
+              <div class="card-header">
+                <h6 class="card-title mb-0">
+                  <i class="bi bi-trophy me-2"></i>Reward System
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="alert alert-info">
+                  <i class="bi bi-info-circle me-2"></i>
+                  Choose how rewards and progress are calculated. You can switch between systems at any time.
+                </div>
+                
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="card reward-system-card" id="levelSystemCard">
+                      <div class="card-body text-center">
+                        <div class="form-check">
+                          <input class="form-check-input" type="radio" name="rewardSystem" id="useLevelSystem" value="level" checked />
+                          <label class="form-check-label fw-bold" for="useLevelSystem">
+                            Level System (Default)
+                          </label>
+                        </div>
+                        <div class="mt-2">
+                          <i class="bi bi-star text-warning display-6"></i>
+                          <p class="small text-muted mt-2">
+                            Traditional level-based progression with titles like "Junior", "Expert", "Master" based on completed tasks.
+                          </p>
+                          <span class="badge bg-success">Recommended</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="col-md-6">
+                    <div class="card reward-system-card" id="pointSystemCard">
+                      <div class="card-body text-center">
+                        <div class="form-check">
+                          <input class="form-check-input" type="radio" name="rewardSystem" id="usePointSystem" value="points" />
+                          <label class="form-check-label fw-bold" for="usePointSystem">
+                            Point System (Advanced)
+                          </label>
+                        </div>
+                        <div class="mt-2">
+                          <i class="bi bi-coin text-warning display-6"></i>
+                          <p class="small text-muted mt-2">
+                            Earn points for tasks and spend them on custom rewards. More flexible and customizable.
+                          </p>
+                          <span class="badge bg-info">New Feature</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div id="migrationWarning" class="alert alert-warning d-none mt-3">
+                  <i class="bi bi-exclamation-triangle me-2"></i>
+                  <strong>Migration Notice:</strong> Switching to the point system will calculate points based on your completed tasks. 
+                  You can switch back to the level system anytime without losing data.
+                </div>
               </div>
             </div>
-            <div class="col-12 col-sm-6">
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="settingsShowAnalytics" />
-                <label class="form-check-label" for="settingsShowAnalytics">Analytics on mirror</label>
+
+            <!-- Display Settings -->
+            <div class="card mb-4">
+              <div class="card-header">
+                <h6 class="card-title mb-0">
+                  <i class="bi bi-display me-2"></i>Display Settings
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="row gy-3">
+                  <div class="col-12 col-sm-6">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="settingsShowPast" />
+                      <label class="form-check-label" for="settingsShowPast">Show past tasks</label>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="settingsShowAnalytics" />
+                      <label class="form-check-label" for="settingsShowAnalytics">Analytics on mirror</label>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="form-label" for="settingsTextSize">Mirror text size</label>
+                    <select id="settingsTextSize" class="form-select">
+                      <option value="small">Small</option>
+                      <option value="medium">Medium</option>
+                      <option value="large">Large</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="form-label" for="settingsDateFmt">Date format</label>
+                    <select id="settingsDateFmt" class="form-select">
+                      <option value="">Do not show date</option>
+                      <option value="yyyy-mm-dd">yyyy-mm-dd</option>
+                      <option value="mm-dd">mm-dd</option>
+                      <option value="mm-dd-yyyy">mm-dd-yyyy</option>
+                      <option value="dd">dd</option>
+                    </select>
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="form-label" for="settingsBackground">Background</label>
+                    <select id="settingsBackground" class="form-select">
+                      <option value="">No background</option>
+                      <option value="forest.png">Autumn</option>
+                      <option value="winter.png">Winter</option>
+                      <option value="summer.png">Summer</option>
+                      <option value="spring.png">Spring</option>
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="col-12 col-sm-6">
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="settingsUseAI" />
-                <label class="form-check-label" for="settingsUseAI">Use AI features</label>
+
+            <!-- Level System Settings (visible when level system is selected) -->
+            <div class="card mb-4" id="levelSettings">
+              <div class="card-header">
+                <h6 class="card-title mb-0">
+                  <i class="bi bi-star me-2"></i>Level System Settings
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="row gy-3">
+                  <div class="col-12">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="settingsLevelEnable" />
+                      <label class="form-check-label" for="settingsLevelEnable">Enable leveling</label>
+                    </div>
+                  </div>
+                  <div class="col-12">
+                    <button class="btn btn-outline-secondary" type="button" id="editRewardsBtn">
+                      <i class="bi bi-gear me-2"></i>Configure Level Titles & Rewards
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="col-12 col-sm-6">
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="settingsLevelEnable" />
-                <label class="form-check-label" for="settingsLevelEnable">Enable leveling</label>
+
+            <!-- Point System Settings (visible when point system is selected) -->
+            <div class="card mb-4 d-none" id="pointSettings">
+              <div class="card-header">
+                <h6 class="card-title mb-0">
+                  <i class="bi bi-coin me-2"></i>Point System Settings
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="alert alert-success">
+                  <i class="bi bi-check-circle me-2"></i>
+                  Point system is active. Visit the <strong>Rewards</strong> tab to manage custom rewards and view point balances.
+                </div>
+                <div class="row gy-3">
+                  <div class="col-12">
+                    <label class="form-label">Current Point Totals:</label>
+                    <div id="pointTotalsPreview" class="small text-muted">
+                      Loading...
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="col-12 col-sm-6">
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="settingsAutoUpdate" />
-                <label class="form-check-label" for="settingsAutoUpdate">Enable autoupdate</label>
+
+            <!-- Advanced Features -->
+            <div class="card mb-4">
+              <div class="card-header">
+                <h6 class="card-title mb-0">
+                  <i class="bi bi-gear-wide-connected me-2"></i>Advanced Features
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="row gy-3">
+                  <div class="col-12 col-sm-6">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="settingsUseAI" />
+                      <label class="form-check-label" for="settingsUseAI">Use AI features</label>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="settingsAutoUpdate" />
+                      <label class="form-check-label" for="settingsAutoUpdate">Enable autoupdate</label>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="col-12 col-sm-6">
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="settingsPushoverEnable" />
-                <label class="form-check-label" for="settingsPushoverEnable">Enable Pushover</label>
+
+            <!-- Notifications -->
+            <div class="card mb-4">
+              <div class="card-header">
+                <h6 class="card-title mb-0">
+                  <i class="bi bi-bell me-2"></i>Notifications
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="row gy-3">
+                  <div class="col-12 col-sm-6">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="settingsPushoverEnable" />
+                      <label class="form-check-label" for="settingsPushoverEnable">Enable Pushover</label>
+                    </div>
+                  </div>
+                  <div class="col-12 col-sm-6">
+                    <label class="form-label" for="settingsReminderTime">Reminder time</label>
+                    <input type="time" id="settingsReminderTime" class="form-control" />
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="col-12 col-sm-6">
-              <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="settingsEmailEnable" />
-                <label class="form-check-label" for="settingsEmailEnable">Enable Email</label>
-              </div>
-            </div>
-            <div class="col-12 col-sm-6">
-              <label class="form-label" for="settingsReminderTime">Reminder time</label>
-              <input type="time" id="settingsReminderTime" class="form-control" />
-            </div>
-            <div class="col-12 col-sm-6">
-              <label class="form-label" for="settingsTextSize">Mirror text size</label>
-              <select id="settingsTextSize" class="form-select">
-                <option value="small">Small</option>
-                <option value="medium">Medium</option>
-                <option value="large">Large</option>
-              </select>
-            </div>
-            <div class="col-12 col-sm-6">
-              <label class="form-label" for="settingsDateFmt">Date format</label>
-              <select id="settingsDateFmt" class="form-select">
-                <option value="">Do not show date</option>
-                <option value="yyyy-mm-dd">yyyy-mm-dd</option>
-                <option value="mm-dd">mm-dd</option>
-                <option value="mm-dd-yyyy">mm-dd-yyyy</option>
-                <option value="mm-dd">mm-dd</option>
-                <option value="dd">dd</option>
-              </select>
-            </div>
-            <div class="col-12 col-sm-6">
-              <label class="form-label" for="settingsBackground">Background</label>
-              <select id="settingsBackground" class="form-select">
-                <option value="">No background</option>
-                <option value="forest.png">Autumn</option>
-                <option value="winter.png">Winter</option>
-                <option value="summer.png">Summer</option>
-                <option value="spring.png">Spring</option>
-              </select>
-            </div>
-            <div class="col-12">
-              <button class="btn btn-secondary me-2" type="button" id="editRewardsBtn">Edit Rewards</button>
-              <button class="btn btn-info me-2" type="button" id="manageRewardsBtn">Manage Rewards</button>
-              <button class="btn btn-warning me-2" type="button" id="emailSettingsBtn">Email Settings</button>
-              <button class="btn btn-primary" type="submit" id="settingsSaveBtn">Save</button>
+
+            <div class="d-flex justify-content-end gap-2">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button class="btn btn-primary" type="submit" id="settingsSaveBtn">
+                <i class="bi bi-check-lg me-2"></i>Save Settings
+              </button>
             </div>
           </form>
         </div>
@@ -387,118 +605,73 @@
       </div>
     </div>
 
-    <!-- Manage Rewards Modal -->
-    <div class="modal fade" id="manageRewardsModal" tabindex="-1">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content card-shadow">
-          <div class="modal-header">
-            <h5 class="modal-title">Manage Rewards System</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <div class="row">
-              <div class="col-md-6">
-                <h6>Add New Reward</h6>
-                <form id="addRewardForm" class="mb-4">
-                  <div class="mb-3">
-                    <label for="rewardName" class="form-label">Reward Name</label>
-                    <input type="text" id="rewardName" class="form-control" required />
-                  </div>
-                  <div class="mb-3">
-                    <label for="rewardCost" class="form-label">Point Cost</label>
-                    <input type="number" id="rewardCost" class="form-control" min="1" required />
-                  </div>
-                  <div class="mb-3">
-                    <label for="rewardDescription" class="form-label">Description (optional)</label>
-                    <textarea id="rewardDescription" class="form-control" rows="2"></textarea>
-                  </div>
-                  <button type="submit" class="btn btn-primary">Add Reward</button>
-                </form>
-                
-                <h6>People & Points</h6>
-                <ul id="peoplePointsList" class="list-group"></ul>
-              </div>
-              <div class="col-md-6">
-                <h6>Available Rewards</h6>
-                <ul id="rewardsList" class="list-group mb-4"></ul>
-                
-                <h6>Recent Redemptions</h6>
-                <ul id="redemptionsList" class="list-group"></ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Reward Shop Modal -->
-    <div class="modal fade" id="rewardShopModal" tabindex="-1">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content card-shadow">
-          <div class="modal-header">
-            <h5 class="modal-title" id="shopModalTitle">Reward Shop</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <div class="mb-3">
-              <div class="alert alert-info" id="shopPersonInfo"></div>
-            </div>
-            <div class="row" id="shopRewardsList"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Email Settings Modal -->
-    <div class="modal fade" id="emailSettingsModal" tabindex="-1">
+    <!-- Edit Reward Modal -->
+    <div class="modal fade" id="editRewardModal" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content card-shadow">
-          <form id="emailSettingsForm">
+          <form id="editRewardForm">
             <div class="modal-header">
-              <h5 class="modal-title">Email Settings</h5>
+              <h5 class="modal-title">Edit Reward</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
               <div class="mb-3">
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" id="emailEnabled" />
-                  <label class="form-check-label" for="emailEnabled">Enable Email Notifications</label>
-                </div>
+                <label for="editRewardName" class="form-label">Reward Name</label>
+                <input type="text" id="editRewardName" class="form-control" required />
               </div>
               <div class="mb-3">
-                <label for="emailHost" class="form-label">SMTP Host</label>
-                <input type="text" id="emailHost" class="form-control" placeholder="smtp.gmail.com" />
+                <label for="editRewardPoints" class="form-label">Point Cost</label>
+                <input type="number" id="editRewardPoints" class="form-control" min="1" required />
               </div>
               <div class="mb-3">
-                <label for="emailPort" class="form-label">SMTP Port</label>
-                <input type="number" id="emailPort" class="form-control" value="587" />
+                <label for="editRewardDescription" class="form-label">Description</label>
+                <textarea id="editRewardDescription" class="form-control" rows="2"></textarea>
               </div>
               <div class="mb-3">
-                <div class="form-check form-switch">
-                  <input class="form-check-input" type="checkbox" id="emailSecure" />
-                  <label class="form-check-label" for="emailSecure">Use SSL/TLS</label>
-                </div>
+                <label for="editRewardEmail" class="form-label">Email Template</label>
+                <textarea id="editRewardEmail" class="form-control" rows="3" placeholder="Optional email template for when reward is redeemed"></textarea>
               </div>
-              <div class="mb-3">
-                <label for="emailUser" class="form-label">Email Username</label>
-                <input type="email" id="emailUser" class="form-control" placeholder="your-email@gmail.com" />
-              </div>
-              <div class="mb-3">
-                <label for="emailPass" class="form-label">Email Password</label>
-                <input type="password" id="emailPass" class="form-control" placeholder="App password or email password" />
-              </div>
-              <div class="mb-3">
-                <label for="emailFrom" class="form-label">From Address (optional)</label>
-                <input type="email" id="emailFrom" class="form-control" placeholder="Leave blank to use username" />
-              </div>
-              <div class="mb-3">
-                <label for="emailTo" class="form-label">To Address (optional)</label>
-                <input type="email" id="emailTo" class="form-control" placeholder="Leave blank to use username" />
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="editRewardActive" />
+                <label class="form-check-label" for="editRewardActive">Active</label>
               </div>
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="submit" class="btn btn-primary">Save Email Settings</button>
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Redeem Reward Modal -->
+    <div class="modal fade" id="redeemRewardModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content card-shadow">
+          <form id="redeemRewardForm">
+            <div class="modal-header">
+              <h5 class="modal-title">Redeem Reward</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="redeemPerson" class="form-label">Person</label>
+                <select id="redeemPerson" class="form-select" required>
+                  <option value="">Select person...</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="redeemReward" class="form-label">Reward</label>
+                <select id="redeemReward" class="form-select" required>
+                  <option value="">Select reward...</option>
+                </select>
+              </div>
+              <div id="redeemInfo" class="alert alert-info" style="display: none;"></div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-success">Redeem</button>
             </div>
           </form>
         </div>

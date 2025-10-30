@@ -2,7 +2,7 @@ const LANGUAGES = {
   en: {
     title: "MMM-Chores Admin  ",
     subtitle: "Manage tasks, people & analytics",
-    tabs: ["Dashboard", "Analytics", "Settings"],
+    tabs: ["Dashboard", "Analytics", "Rewards"],
     peopleTitle: "People",
     newPersonPlaceholder: "New person…",
     addPersonBtnTitle: "Add",
@@ -15,7 +15,12 @@ const LANGUAGES = {
       daily: "Daily",
       weekly: "Weekly",
       monthly: "Monthly",
-      yearly: "Yearly"
+      yearly: "Yearly",
+      "every_X_days_2": "Every 2 Days",
+      "every_X_days_3": "Every 3 Days",
+      "every_X_weeks_2": "Every 2 Weeks",
+      "every_X_weeks_3": "Every 3 Weeks",
+      "first_monday_month": "First Monday of Month"
     },
     taskAddButton: "Add",
     aiGenerateButton: "AI Generate",
@@ -102,12 +107,39 @@ const LANGUAGES = {
     loginUsername: "Username",
     loginPassword: "Password",
     loginButton: "Login",
-    loginError: "Login failed"
+    loginError: "Login failed",
+    
+    // New Rewards System
+    rewardsTitle: "Rewards Management", 
+    usePointSystemLabel: "Use Point System",
+    rewardName: "Reward name…",
+    rewardPoints: "Points",
+    rewardDescription: "Description (optional)",
+    addRewardButton: "Add Reward",
+    editReward: "Edit Reward",
+    redeemReward: "Redeem Reward",
+    deleteReward: "Delete",
+    pointsLabel: "points",
+    peoplePointsTitle: "People & Points",
+    redemptionsTitle: "Recent Redemptions",
+    redeemButton: "Redeem",
+    markUsedButton: "Mark as used",
+    rewardUsed: "Used",
+    rewardPending: "Pending",
+    selectPersonLabel: "Select person...",
+    selectRewardLabel: "Select reward...",
+    insufficientPoints: "Insufficient points",
+    rewardRedeemed: "Reward redeemed successfully",
+    rewardDeleted: "Reward deleted",
+    pointSystemEnabled: "Switched to point system",
+    levelSystemEnabled: "Switched to level system",
+    noRedemptions: "No redemptions yet",
+    taskPointsPlaceholder: "Points"
   },
   sv: {
     title: "MMM-Chores Admin  ",
     subtitle: "Hantera uppgifter, personer & analys",
-    tabs: ["Dashboard", "Analys", "Inställningar"],
+    tabs: ["Dashboard", "Analys", "Belöningar"],
     peopleTitle: "Personer",
     newPersonPlaceholder: "Ny person…",
     addPersonBtnTitle: "Lägg till",
@@ -120,7 +152,12 @@ const LANGUAGES = {
       daily: "Dagligen",
       weekly: "Veckovis",
       monthly: "Månadsvis",
-      yearly: "Årligen"
+      yearly: "Årligen",
+      "every_X_days_2": "Varannan dag",
+      "every_X_days_3": "Var tredje dag",
+      "every_X_weeks_2": "Varannan vecka",
+      "every_X_weeks_3": "Var tredje vecka",
+      "first_monday_month": "Första måndagen i månaden"
     },
     taskAddButton: "Lägg till",
     aiGenerateButton: "AI-generera",
@@ -212,7 +249,7 @@ const LANGUAGES = {
   fr: {
     title: "MMM-Chores Admin  ",
     subtitle: "Gérer les tâches, les personnes et les analyses",
-    tabs: ["Tableau de bord", "Analytique", "Paramètres"],
+    tabs: ["Tableau de bord", "Analytique", "Récompenses"],
     peopleTitle: "Personnes",
     newPersonPlaceholder: "Nouvelle personne…",
     addPersonBtnTitle: "Ajouter",
@@ -317,7 +354,7 @@ const LANGUAGES = {
   es: {
     title: "MMM-Chores Admin  ",
     subtitle: "Gestionar tareas, personas y análisis",
-    tabs: ["Panel", "Analítica", "Configuración"],
+    tabs: ["Panel", "Analítica", "Recompensas"],
     peopleTitle: "Personas",
     newPersonPlaceholder: "Nueva persona…",
     addPersonBtnTitle: "Agregar",
@@ -422,7 +459,7 @@ const LANGUAGES = {
   de: {
     title: "MMM-Chores Admin  ",
     subtitle: "Aufgaben, Personen & Analysen verwalten",
-    tabs: ["Übersicht", "Analytik", "Einstellungen"],
+    tabs: ["Übersicht", "Analytik", "Belohnungen"],
     peopleTitle: "Personen",
     newPersonPlaceholder: "Neue Person…",
     addPersonBtnTitle: "Hinzufügen",
@@ -527,7 +564,7 @@ const LANGUAGES = {
   it: {
     title: "MMM-Chores Admin  ",
     subtitle: "Gestisci compiti, persone e analisi",
-    tabs: ["Dashboard", "Analisi", "Impostazioni"],
+    tabs: ["Dashboard", "Analisi", "Ricompense"],
     peopleTitle: "Persone",
     newPersonPlaceholder: "Nuova persona…",
     addPersonBtnTitle: "Aggiungi",
@@ -632,7 +669,7 @@ const LANGUAGES = {
   nl: {
     title: "MMM-Chores Admin  ",
     subtitle: "Beheer taken, mensen & analyses",
-    tabs: ["Dashboard", "Analyse", "Instellingen"],
+    tabs: ["Dashboard", "Analyse", "Beloningen"],
     peopleTitle: "Mensen",
     newPersonPlaceholder: "Nieuwe persoon…",
     addPersonBtnTitle: "Toevoegen",
@@ -737,7 +774,7 @@ const LANGUAGES = {
   pl: {
     title: "MMM-Chores Admin  ",
     subtitle: "Zarządzaj zadaniami, ludźmi i analizami",
-    tabs: ["Panel", "Analityka", "Ustawienia"],
+    tabs: ["Panel", "Analityka", "Nagrody"],
     peopleTitle: "Osoby",
     newPersonPlaceholder: "Nowa osoba…",
     addPersonBtnTitle: "Dodaj",
@@ -842,7 +879,7 @@ const LANGUAGES = {
   zh: {
     title: "MMM-Chores 管理  ",
     subtitle: "管理任务、人员和分析",
-    tabs: ["仪表板", "分析", "设置"],
+    tabs: ["仪表板", "分析", "奖励"],
     peopleTitle: "人员",
     newPersonPlaceholder: "新人员…",
     addPersonBtnTitle: "添加",
@@ -947,7 +984,7 @@ const LANGUAGES = {
   ar: {
     title: "إدارة MMM-Chores  ",
     subtitle: "إدارة المهام، الأشخاص والتحليلات",
-    tabs: ["لوحة التحكم", "تحليلات", "الإعدادات"],
+    tabs: ["لوحة التحكم", "تحليلات", "المكافآت"],
     peopleTitle: "الأشخاص",
     newPersonPlaceholder: "شخص جديد…",
     addPersonBtnTitle: "إضافة",

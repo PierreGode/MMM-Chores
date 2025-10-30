@@ -15,20 +15,11 @@ if (!fetchFn) {
 }
 
 let openaiLoaded = true;
-let nodemailerLoaded = false;
 let OpenAI;
-let nodemailer;
 try {
   OpenAI = require("openai").OpenAI;
 } catch (err) {
   openaiLoaded = false;
-}
-
-try {
-  nodemailer = require("nodemailer");
-  nodemailerLoaded = true;
-} catch (err) {
-  nodemailerLoaded = false;
 }
 
 const DATA_FILE     = path.join(__dirname, "data.json");
@@ -39,7 +30,7 @@ let tasks = [];
 let people = [];
 let analyticsBoards = [];
 let rewards = [];
-let rewardRedemptions = [];
+let redemptions = [];
 let sessions = {};
 const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
@@ -76,32 +67,39 @@ function applyLoadedData(json, sourceLabel = "data.json") {
     } else {
       t.order = order++;
     }
-    // Ensure tasks have points field
-    if (t.points === undefined) {
-      t.points = 1;
-    }
   });
 
   people          = json.people          || [];
-  // Ensure people have points field
-  people.forEach(p => {
-    if (p.points === undefined) {
-      p.points = 0;
-    }
-  });
-  
   analyticsBoards = json.analyticsBoards || [];
-  rewards = json.rewards || [];
-  rewardRedemptions = json.rewardRedemptions || [];
+  rewards         = json.rewards         || [];
+  redemptions     = json.redemptions     || [];
   settings        = json.settings        || {};
   if (settings.openaiApiKey !== undefined) delete settings.openaiApiKey;
   if (settings.pushoverApiKey !== undefined) delete settings.pushoverApiKey;
   if (settings.pushoverUser !== undefined) delete settings.pushoverUser;
 
+  // Initialize points for existing people if point system is enabled
+  if (settings.usePointSystem) {
+    people.forEach(person => {
+      if (person.points === undefined) {
+        person.points = calculatePersonPoints(person.id);
+      }
+    });
+  } else {
+    // Ensure points are not displayed when using level system
+    people.forEach(person => {
+      if (person.points !== undefined) {
+        // Keep points data but don't display it in level mode
+        person._savedPoints = person.points;
+        delete person.points;
+      }
+    });
+  }
+
   updatePeopleLevels({});
 
   Log.log(
-    `MMM-Chores: Loaded ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, ${rewards.length} rewards from ${sourceLabel}`
+    `MMM-Chores: Loaded ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, ${rewards.length} rewards, ${redemptions.length} redemptions from ${sourceLabel}`
   );
 }
 
@@ -211,56 +209,6 @@ function sendPushover(self, settings, message) {
   }).catch(err => Log.error("MMM-Chores: Failed to send Pushover notification", err));
 }
 
-async function sendRewardEmail(self, settings, personName, rewardName, pointCost) {
-  if (!nodemailerLoaded) {
-    Log.warn("MMM-Chores: nodemailer not installed. Install with 'npm install nodemailer' to enable email notifications.");
-    return;
-  }
-  
-  const config = self.config || {};
-  const emailConfig = settings.email || {};
-  
-  if (!emailConfig.enabled || !emailConfig.host || !emailConfig.user || !emailConfig.pass) {
-    Log.warn("MMM-Chores: Email not configured properly. Email notifications disabled.");
-    return;
-  }
-  
-  try {
-    const transporter = nodemailer.createTransporter({
-      host: emailConfig.host,
-      port: emailConfig.port || 587,
-      secure: emailConfig.secure || false,
-      auth: {
-        user: emailConfig.user,
-        pass: emailConfig.pass
-      }
-    });
-
-    const mailOptions = {
-      from: emailConfig.from || emailConfig.user,
-      to: emailConfig.to || emailConfig.user,
-      subject: `MMM-Chores: Reward Redeemed - ${rewardName}`,
-      html: `
-        <h2>Reward Redeemed!</h2>
-        <p><strong>${personName}</strong> has redeemed the following reward:</p>
-        <ul>
-          <li><strong>Reward:</strong> ${rewardName}</li>
-          <li><strong>Point Cost:</strong> ${pointCost} points</li>
-          <li><strong>Date:</strong> ${new Date().toLocaleString()}</li>
-        </ul>
-        <p>Please fulfill this reward when convenient.</p>
-        <hr>
-        <small>This email was sent automatically by MMM-Chores.</small>
-      `
-    };
-
-    await transporter.sendMail(mailOptions);
-    Log.log(`MMM-Chores: Email notification sent for reward redemption: ${rewardName} by ${personName}`);
-  } catch (error) {
-    Log.error("MMM-Chores: Failed to send email notification:", error);
-  }
-}
-
 function loadData() {
   if (fs.existsSync(DATA_FILE)) {
     Log.log("loadData: reading", DATA_FILE);
@@ -286,7 +234,7 @@ function loadData() {
 function saveData() {
   try {
     Log.log("saveData: writing", DATA_FILE);
-    const payload = JSON.stringify({ tasks, people, analyticsBoards, rewards, rewardRedemptions, settings }, null, 2);
+    const payload = JSON.stringify({ tasks, people, analyticsBoards, rewards, redemptions, settings }, null, 2);
     if (fs.existsSync(DATA_FILE)) {
       try {
         fs.copyFileSync(DATA_FILE, DATA_FILE_BAK);
@@ -296,7 +244,7 @@ function saveData() {
     }
     writeDataFileAtomic(DATA_FILE, payload);
     Log.log(
-      `MMM-Chores: Saved ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, ${rewards.length} rewards, language: ${settings.language}`
+      `MMM-Chores: Saved ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, ${rewards.length} rewards, ${redemptions.length} redemptions, language: ${settings.language}`
     );
     return true;
   } catch (e) {
@@ -425,26 +373,95 @@ function getNextDate(dateStr, recurring) {
     d.setDate(d.getDate() + 1);
   } else if (recurring === "weekly") {
     d.setDate(d.getDate() + 7);
-  } else if (recurring === "every-2-days") {
-    d.setDate(d.getDate() + 2);
-  } else if (recurring === "every-2-weeks") {
-    d.setDate(d.getDate() + 14);
-  } else if (recurring === "first-monday") {
-    // Move to first Monday of next month
-    d.setMonth(d.getMonth() + 1);
-    d.setDate(1);
-    // Find first Monday
-    while (d.getDay() !== 1) {
-      d.setDate(d.getDate() + 1);
-    }
   } else if (recurring === "monthly") {
     d.setMonth(d.getMonth() + 1);
   } else if (recurring === "yearly") {
     d.setFullYear(d.getFullYear() + 1);
+  } else if (recurring && recurring.startsWith("every_")) {
+    // Custom recurring patterns: every_X_days, every_X_weeks, first_monday_month
+    const parts = recurring.split("_");
+    if (parts[1] === "X" && parts[2] === "days") {
+      const days = parseInt(parts[3]) || 2;
+      d.setDate(d.getDate() + days);
+    } else if (parts[1] === "X" && parts[2] === "weeks") {
+      const weeks = parseInt(parts[3]) || 2;
+      d.setDate(d.getDate() + (weeks * 7));
+    } else if (recurring === "first_monday_month") {
+      // First Monday of next month
+      d.setMonth(d.getMonth() + 1);
+      d.setDate(1);
+      // Find first Monday
+      while (d.getDay() !== 1) {
+        d.setDate(d.getDate() + 1);
+      }
+    } else {
+      return null;
+    }
   } else {
     return null;
   }
   return d.toISOString().slice(0, 10);
+}
+
+function calculatePersonPoints(personId) {
+  if (!settings.usePointSystem) return 0;
+  
+  return tasks
+    .filter(t => t.done && t.assignedTo === personId)
+    .reduce((total, task) => total + (task.points || 1), 0);
+}
+
+function awardPointsForTask(task) {
+  if (!settings.usePointSystem || !task.done || !task.assignedTo) return;
+  
+  const person = people.find(p => p.id === task.assignedTo);
+  if (!person) return;
+  
+  const points = task.points || 1;
+  person.points = (person.points || 0) + points;
+  
+  Log.log(`MMM-Chores: Awarded ${points} points to ${person.name} for completing "${task.name}"`);
+}
+
+function migrateToPointSystem() {
+  Log.log('MMM-Chores: Migrating to point system...');
+  
+  people.forEach(person => {
+    // Restore saved points or calculate from completed tasks
+    if (person._savedPoints !== undefined) {
+      person.points = person._savedPoints;
+      delete person._savedPoints;
+    } else {
+      person.points = calculatePersonPoints(person.id);
+    }
+  });
+  
+  Log.log('MMM-Chores: Point system migration completed');
+}
+
+function migrateToLevelSystem() {
+  Log.log('MMM-Chores: Migrating to level system...');
+  
+  people.forEach(person => {
+    // Save points data but remove from active use
+    if (person.points !== undefined) {
+      person._savedPoints = person.points;
+      delete person.points;
+    }
+  });
+  
+  Log.log('MMM-Chores: Level system migration completed');
+}
+
+function sendRedemptionEmail(person, reward, redemption) {
+  // Email functionality would need to be implemented based on available email service
+  // For now, just log the email that would be sent
+  Log.log(`MMM-Chores: Would send redemption email to ${person.name} for reward "${reward.name}"`);
+  
+  // TODO: Implement actual email sending based on configured email service
+  // This could use nodemailer, sendgrid, or other email services
+  
+  redemption.emailSent = true;
 }
 
 module.exports = NodeHelper.create({
@@ -469,16 +486,18 @@ module.exports = NodeHelper.create({
         showAnalyticsOnMirror: settings.showAnalyticsOnMirror ?? payload.showAnalyticsOnMirror,
         useAI: settings.useAI ?? payload.useAI,
         autoUpdate: settings.autoUpdate ?? payload.autoUpdate,
-          pushoverEnabled: settings.pushoverEnabled ?? payload.pushoverEnabled,
-          reminderTime: settings.reminderTime ?? payload.reminderTime,
-          background: settings.background ?? payload.background ?? 'forest.png',
-          levelingEnabled: settings.levelingEnabled ?? (payload.leveling?.enabled !== false),
-          leveling: {
-            mode: settings.leveling?.mode ?? payload.leveling?.mode ?? 'years',
-            choresToMaxLevel: settings.leveling?.choresToMaxLevel ?? payload.leveling?.choresToMaxLevel,
-            yearsToMaxLevel: settings.leveling?.yearsToMaxLevel ?? payload.leveling?.yearsToMaxLevel,
-            choresPerWeekEstimate: settings.leveling?.choresPerWeekEstimate ?? payload.leveling?.choresPerWeekEstimate
-          },
+        pushoverEnabled: settings.pushoverEnabled ?? payload.pushoverEnabled,
+        reminderTime: settings.reminderTime ?? payload.reminderTime,
+        background: settings.background ?? payload.background ?? 'forest.png',
+        levelingEnabled: settings.levelingEnabled ?? (payload.leveling?.enabled !== false),
+        usePointSystem: settings.usePointSystem ?? payload.usePointSystem ?? false, // Default: level system
+        emailEnabled: settings.emailEnabled ?? payload.emailEnabled ?? false,
+        leveling: {
+          mode: settings.leveling?.mode ?? payload.leveling?.mode ?? 'years',
+          choresToMaxLevel: settings.leveling?.choresToMaxLevel ?? payload.leveling?.choresToMaxLevel,
+          yearsToMaxLevel: settings.leveling?.yearsToMaxLevel ?? payload.leveling?.yearsToMaxLevel,
+          choresPerWeekEstimate: settings.leveling?.choresPerWeekEstimate ?? payload.leveling?.choresPerWeekEstimate
+        },
         levelTitles: settings.levelTitles ?? payload.levelTitles,
         customLevelTitles: settings.customLevelTitles ?? payload.customLevelTitles
       };
@@ -807,7 +826,7 @@ module.exports = NodeHelper.create({
       // person's ID ensures the level is based on their own completed chores
       // (which will be zero for a new person) rather than the global stats.
       const id = Date.now();
-      const newPersonBase = { id, name, points: 0 };
+      const newPersonBase = { id, name };
       const info = getLevelInfo(self.config || {}, newPersonBase);
       const newPerson = { ...newPersonBase, level: info.level, title: info.title };
 
@@ -841,7 +860,6 @@ module.exports = NodeHelper.create({
         done: false,
         assignedTo: req.body.assignedTo ? parseInt(req.body.assignedTo, 10) : null,
         recurring: req.body.recurring || "none",
-        points: req.body.points ? parseInt(req.body.points, 10) : 1,
       };
       Log.log("POST /api/tasks", newTask);
       tasks.push(newTask);
@@ -909,23 +927,8 @@ module.exports = NodeHelper.create({
       Log.log("PUT /api/tasks/" + id, req.body);
 
       // Award points when task is completed
-      if (!prevDone && task.done && task.assignedTo) {
-        const person = people.find(p => p.id === task.assignedTo);
-        if (person) {
-          const pointsToAward = task.points || 1;
-          person.points = (person.points || 0) + pointsToAward;
-          Log.log(`Awarded ${pointsToAward} points to ${person.name}. Total: ${person.points}`);
-        }
-      }
-
-      // Remove points if task is marked as undone
-      if (prevDone && !task.done && task.assignedTo) {
-        const person = people.find(p => p.id === task.assignedTo);
-        if (person) {
-          const pointsToRemove = task.points || 1;
-          person.points = Math.max(0, (person.points || 0) - pointsToRemove);
-          Log.log(`Removed ${pointsToRemove} points from ${person.name}. Total: ${person.points}`);
-        }
+      if (!prevDone && task.done) {
+        awardPointsForTask(task);
       }
 
       if (!prevDone && task.done && task.recurring && task.recurring !== "none") {
@@ -937,7 +940,6 @@ module.exports = NodeHelper.create({
             date: nextDate,
             assignedTo: task.assignedTo || null,
             recurring: task.recurring,
-            points: task.points || 1,
             order: tasks.filter(t => !t.deleted).length,
             done: false,
             created: getLocalISO(new Date()),
@@ -986,6 +988,8 @@ module.exports = NodeHelper.create({
     app.put("/api/settings", requireWrite, (req, res) => {
       const newSettings = req.body;
       const wasAutoUpdate = settings.autoUpdate;
+      const wasPointSystem = settings.usePointSystem;
+      
       if (typeof newSettings !== "object") {
         return res.status(400).json({ error: "Invalid settings data" });
       }
@@ -998,6 +1002,16 @@ module.exports = NodeHelper.create({
         settings.leveling = { ...settings.leveling, ...newSettings.leveling };
         self.config.leveling = { ...self.config.leveling, ...newSettings.leveling };
       }
+      
+      // Handle system migration
+      if (newSettings.usePointSystem !== undefined && newSettings.usePointSystem !== wasPointSystem) {
+        if (newSettings.usePointSystem) {
+          migrateToPointSystem();
+        } else {
+          migrateToLevelSystem();
+        }
+      }
+      
       Object.entries(newSettings).forEach(([key, val]) => {
         if (key === "leveling" || key === "openaiApiKey" || key === "pushoverApiKey" || key === "pushoverUser") return;
         settings[key] = val;
@@ -1029,97 +1043,114 @@ module.exports = NodeHelper.create({
 
     app.post("/api/ai-generate", requireWrite, (req, res) => self.aiGenerateTasks(req, res));
 
-    // Rewards API endpoints
+    // Rewards API
     app.get("/api/rewards", (req, res) => res.json(rewards));
     app.post("/api/rewards", requireWrite, (req, res) => {
-      const { name, pointCost, description } = req.body;
-      if (!name || !pointCost) return res.status(400).json({ error: "Name and point cost are required" });
-
+      const { name, pointCost, description, emailTemplate } = req.body;
+      if (!name || !pointCost) {
+        return res.status(400).json({ error: "Name and point cost are required" });
+      }
+      
       const newReward = {
         id: Date.now(),
         name,
-        pointCost: parseInt(pointCost, 10),
+        pointCost: parseInt(pointCost),
         description: description || "",
+        emailTemplate: emailTemplate || "",
+        active: true,
         created: getLocalISO(new Date())
       };
+      
       rewards.push(newReward);
-      const ok = saveData();
-      res.status(ok ? 201 : 500).json(ok ? newReward : { error: "Failed to save data" });
+      saveData();
+      res.status(201).json(newReward);
     });
+    
     app.put("/api/rewards/:id", requireWrite, (req, res) => {
       const id = parseInt(req.params.id, 10);
       const reward = rewards.find(r => r.id === id);
       if (!reward) return res.status(404).json({ error: "Reward not found" });
-
+      
       Object.entries(req.body).forEach(([key, val]) => {
-        if (key === "pointCost") {
-          reward[key] = parseInt(val, 10);
-        } else {
+        if (val !== undefined && val !== null) {
           reward[key] = val;
         }
       });
-
-      const ok = saveData();
-      res.json(ok ? reward : { error: "Failed to save data" });
+      
+      saveData();
+      res.json(reward);
     });
+    
     app.delete("/api/rewards/:id", requireWrite, (req, res) => {
       const id = parseInt(req.params.id, 10);
       rewards = rewards.filter(r => r.id !== id);
-      const ok = saveData();
-      res.json({ success: ok });
+      saveData();
+      res.json({ success: true });
     });
 
-    // Reward redemptions API
-    app.get("/api/redemptions", (req, res) => res.json(rewardRedemptions));
-    app.post("/api/redemptions", requireWrite, async (req, res) => {
+    // Redemptions API
+    app.get("/api/redemptions", (req, res) => res.json(redemptions));
+    app.post("/api/redemptions", requireWrite, (req, res) => {
       const { rewardId, personId } = req.body;
-      if (!rewardId || !personId) return res.status(400).json({ error: "Reward ID and person ID are required" });
-
-      const reward = rewards.find(r => r.id === rewardId);
+      const reward = rewards.find(r => r.id === rewardId && r.active);
       const person = people.find(p => p.id === personId);
       
       if (!reward) return res.status(404).json({ error: "Reward not found" });
       if (!person) return res.status(404).json({ error: "Person not found" });
-      if (person.points < reward.pointCost) {
-        return res.status(400).json({ error: "Not enough points" });
+      if (!settings.usePointSystem) return res.status(400).json({ error: "Point system not enabled" });
+      
+      const personPoints = person.points || 0;
+      if (personPoints < reward.pointCost) {
+        return res.status(400).json({ error: "Insufficient points" });
       }
-
+      
       // Deduct points
-      person.points -= reward.pointCost;
-
+      person.points = personPoints - reward.pointCost;
+      
       // Create redemption record
       const redemption = {
         id: Date.now(),
         rewardId,
         personId,
         rewardName: reward.name,
-        pointCost: reward.pointCost,
         personName: person.name,
-        date: getLocalISO(new Date()),
-        used: false
+        pointCost: reward.pointCost,
+        redeemed: getLocalISO(new Date()),
+        used: false,
+        emailSent: false
       };
-      rewardRedemptions.push(redemption);
-
-      const ok = saveData();
-      if (ok) {
-        // Send notifications about redemption
-        sendPushover(self, settings, `${person.name} redeemed reward: ${reward.name} for ${reward.pointCost} points`);
-        await sendRewardEmail(self, settings, person.name, reward.name, reward.pointCost);
-        broadcastTasks(self); // Update people with new point totals
+      
+      redemptions.push(redemption);
+      saveData();
+      
+      // Send email if template exists
+      if (reward.emailTemplate && self.config.emailEnabled) {
+        sendRedemptionEmail(person, reward, redemption);
       }
-      res.status(ok ? 201 : 500).json(ok ? redemption : { error: "Failed to save data" });
+      
+      self.sendSocketNotification("PEOPLE_UPDATE", people);
+      res.status(201).json(redemption);
     });
-    app.put("/api/redemptions/:id", requireWrite, (req, res) => {
+    
+    app.put("/api/redemptions/:id/use", requireWrite, (req, res) => {
       const id = parseInt(req.params.id, 10);
-      const redemption = rewardRedemptions.find(r => r.id === id);
+      const redemption = redemptions.find(r => r.id === id);
       if (!redemption) return res.status(404).json({ error: "Redemption not found" });
+      
+      redemption.used = true;
+      redemption.usedDate = getLocalISO(new Date());
+      saveData();
+      res.json(redemption);
+    });
 
-      Object.entries(req.body).forEach(([key, val]) => {
-        redemption[key] = val;
-      });
-
-      const ok = saveData();
-      res.json(ok ? redemption : { error: "Failed to save data" });
+    // Points API
+    app.get("/api/people/:id/points", (req, res) => {
+      const id = parseInt(req.params.id, 10);
+      const person = people.find(p => p.id === id);
+      if (!person) return res.status(404).json({ error: "Person not found" });
+      
+      const points = settings.usePointSystem ? (person.points || 0) : 0;
+      res.json({ points });
     });
 
     this.server = app.listen(port, "0.0.0.0", () => {

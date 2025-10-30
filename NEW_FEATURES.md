@@ -1,137 +1,237 @@
-# MMM-Chores New Features
+# New Features Added to MMM-Chores
 
-This document outlines the new features added to the MMM-Chores module, including custom repeat options, points system, rewards, and email notifications.
+## Overview
+This update adds a comprehensive point-based reward system and enhanced recurring task options to MMM-Chores, while maintaining backward compatibility with the existing level-based system.
 
-## 🔄 Custom Repeat Options
+## ✨ New Features
 
-### New Repeat Types Available:
-- **Every 2 Days** - Task repeats every 2 days after completion
-- **Every 2 Weeks** - Task repeats every 2 weeks after completion  
-- **First Monday of Month** - Task repeats on the first Monday of each month
+### 1. Enhanced Recurring Task Options
+- **Every X Days**: Create tasks that repeat every 2, 3, or more days
+- **Every X Weeks**: Create tasks that repeat every 2, 3, or more weeks  
+- **First Monday of Month**: Tasks that occur on the first Monday of each month
+- All existing recurring options (daily, weekly, monthly, yearly) remain available
 
-### Usage:
-When creating or editing a task, select from the expanded repeat dropdown menu in the admin interface.
+### 2. Point-Based Reward System
+A complete alternative to the traditional level system that allows for more granular reward management.
 
-## 🏆 Points System
+#### Key Features:
+- **Custom Points per Task**: Each chore can be assigned a custom point value (default: 1 point)
+- **Automatic Point Calculation**: Points are automatically awarded when tasks are completed
+- **Point Distribution**: Points are awarded to the person assigned to the task
+- **Flexible Rewards**: Create custom rewards with specific point costs
 
-### Task Points
-- Each task can now be assigned a custom number of points (default: 1 point)
-- Points are displayed as badges next to task names
-- Points field is available when creating or editing tasks
+### 3. Reward Management
+- **Create Custom Rewards**: Admin can create rewards with custom point costs
+- **Reward Descriptions**: Optional descriptions for each reward
+- **Email Templates**: Optional email templates sent when rewards are redeemed
+- **Active/Inactive Rewards**: Toggle rewards on/off without deleting them
 
-### Earning Points
-- People automatically earn points when they complete assigned tasks
-- Points are distributed to the person assigned to the task
-- If a task is marked as undone, points are automatically deducted
-- Points are displayed next to each person's name in the admin interface
+### 4. Reward Redemption System
+- **Point Spending**: People can spend their earned points on available rewards
+- **Redemption Tracking**: All redemptions are tracked with timestamps
+- **Email Notifications**: Optional email notifications when rewards are redeemed
+- **Usage Tracking**: Admins can mark redemptions as "used"
 
-## 🎁 Rewards System
+### 5. System Migration Options
+- **Dual System Support**: Choose between traditional level system or new point system
+- **Backward Compatibility**: Existing level system remains as default
+- **Seamless Migration**: Existing users can opt-in to point system
+- **Data Preservation**: All existing data is preserved during migration
 
-### Reward Management
-- Admins can create custom rewards with point costs
-- Each reward can have a name, description, and point cost
-- Rewards can be edited or deleted through the admin interface
+## 🔧 Technical Implementation
 
-### Reward Redemption
-- People can spend their earned points on available rewards
-- Click the gift icon (🎁) next to a person's name to open the reward shop
-- Only rewards they can afford (have enough points for) are available for redemption
-- Points are automatically deducted when rewards are redeemed
+### New API Endpoints
 
-### Reward Tracking
-- All reward redemptions are tracked with timestamps
-- Admins can mark redemptions as "used" once they've been fulfilled
-- Recent redemptions are visible in the rewards management interface
+#### Rewards Management
+- `GET /api/rewards` - List all rewards
+- `POST /api/rewards` - Create new reward
+- `PUT /api/rewards/:id` - Update existing reward  
+- `DELETE /api/rewards/:id` - Delete reward
 
-## 📧 Email Notifications
+#### Redemptions
+- `GET /api/redemptions` - List all redemptions
+- `POST /api/redemptions` - Redeem a reward
+- `PUT /api/redemptions/:id/use` - Mark redemption as used
 
-### Email Setup
-- Email notifications can be configured in the admin settings
-- Supports SMTP with configurable host, port, security settings
-- Compatible with services like Gmail, Outlook, custom SMTP servers
+#### Points
+- `GET /api/people/:id/points` - Get person's point balance
 
-### Email Configuration Options:
-- **SMTP Host**: Your email provider's SMTP server
-- **SMTP Port**: Usually 587 for TLS or 465 for SSL
-- **Security**: Enable SSL/TLS as needed
-- **Username/Password**: Your email credentials
-- **From/To Addresses**: Optional custom sender/recipient addresses
+### New Data Structures
 
-### Automatic Notifications
-- When someone redeems a reward, an email is automatically sent
-- Email includes the person's name, reward details, and timestamp
-- Helps admins track when rewards need to be fulfilled
-
-## 🛠 Installation and Setup
-
-### Installing Email Dependencies (Optional)
-To enable email notifications, install nodemailer:
-```bash
-cd ~/MagicMirror/modules/MMM-Chores
-npm install nodemailer
+#### Task Object Extensions
+```json
+{
+  "id": 123,
+  "name": "Clean Kitchen",
+  "points": 3,
+  "recurring": "every_X_days_2",
+  // ... existing fields
+}
 ```
 
-### Configuration
-1. **Points are enabled by default** - no configuration needed
-2. **Rewards** - Add rewards through the admin interface ("Manage Rewards" button)
-3. **Email** - Configure through "Email Settings" button in admin interface
+#### Reward Object
+```json
+{
+  "id": 456,
+  "name": "Extra Screen Time",
+  "pointCost": 50,
+  "description": "30 minutes extra screen time",
+  "emailTemplate": "Enjoy your extra screen time!",
+  "active": true,
+  "created": "2025-01-01T12:00:00Z"
+}
+```
 
-## 📱 Admin Interface Updates
+#### Redemption Object
+```json
+{
+  "id": 789,
+  "rewardId": 456,
+  "personId": 123,
+  "rewardName": "Extra Screen Time",
+  "personName": "John",
+  "pointCost": 50,
+  "redeemed": "2025-01-01T12:00:00Z",
+  "used": false,
+  "emailSent": true
+}
+```
 
-### New Buttons and Interfaces:
-- **Points field** in task creation/editing forms
-- **Manage Rewards** button in settings
-- **Email Settings** button in settings  
-- **Gift icon** next to people for reward shopping
-- **Points badges** displayed throughout the interface
+#### Person Object Extensions
+```json
+{
+  "id": 123,
+  "name": "John",
+  "points": 150,
+  // ... existing fields
+}
+```
 
-### New Modals:
-- **Reward Shop** - Where people can spend points
-- **Manage Rewards** - Admin interface for reward management
-- **Email Settings** - Email configuration interface
+### New Settings
+- `usePointSystem`: Boolean - Enable/disable point system
+- `emailEnabled`: Boolean - Enable/disable email notifications
 
-## 🔧 Technical Details
+## 🎯 Usage Guide
 
-### Data Structure Changes:
-- Tasks now include a `points` field (integer, default: 1)
-- People now include a `points` field (integer, default: 0)
-- New `rewards` array with reward definitions
-- New `rewardRedemptions` array tracking redemption history
+### For Administrators
 
-### API Endpoints Added:
-- `GET/POST/PUT/DELETE /api/rewards` - Reward management
-- `GET/POST/PUT /api/redemptions` - Redemption management
-- Enhanced `/api/settings` to include email configuration
+#### Enabling Point System
+1. Go to the Rewards tab in admin interface
+2. Toggle "Use Point System" switch
+3. System will automatically calculate existing points based on completed tasks
 
-### Backward Compatibility:
-- All existing functionality remains unchanged
-- Existing tasks automatically get 1 point assigned
-- Existing people start with 0 points
-- New features are additive and don't break existing installations
+#### Creating Rewards
+1. In the Rewards tab, enter reward details:
+   - Name (required)
+   - Point cost (required)
+   - Description (optional)
+   - Email template (optional)
+2. Click "Add Reward"
 
-## 💡 Usage Tips
+#### Managing Redemptions
+1. View recent redemptions in the "Recent Redemptions" section
+2. Mark redemptions as "used" when appropriate
+3. Track point balances for all users
 
-1. **Point Balancing**: Start with 1-point tasks and adjust based on difficulty
-2. **Reward Pricing**: Price rewards appropriately (e.g., small treat = 5 points, big reward = 50 points)
-3. **Email Testing**: Test email configuration with a test redemption
-4. **Regular Review**: Check redemption history to ensure rewards are being fulfilled
+#### Setting Task Points
+1. When creating tasks, specify point value in the "Points" field
+2. Default is 1 point if not specified
+3. Higher point values for more difficult/important tasks
 
-## 🐛 Troubleshooting
+#### Using Enhanced Recurring Options
+1. In task creation form, select from new recurring options:
+   - "Every 2 Days", "Every 3 Days"
+   - "Every 2 Weeks", "Every 3 Weeks" 
+   - "First Monday of Month"
 
-### Email Not Working:
-1. Verify SMTP settings are correct
-2. Check that nodemailer is installed: `npm list nodemailer`
-3. Ensure email credentials are valid
-4. Check server logs for error messages
+### For Users
 
-### Points Not Updating:
-1. Ensure tasks have points assigned (check edit modal)
-2. Verify people are properly assigned to tasks
-3. Check that tasks are being marked as complete
+#### Viewing Points
+- Points are displayed next to each person's name
+- Points are automatically updated when tasks are completed
 
-### Rewards Not Appearing:
-1. Ensure rewards have been created in "Manage Rewards"
-2. Check that people have sufficient points
-3. Verify reward shop modal is loading properly
+#### Redeeming Rewards
+1. Click "Redeem" button next to a person's name
+2. Select person and desired reward
+3. System checks if sufficient points are available
+4. Confirm redemption
 
-This completes the implementation of all requested features for the MMM-Chores module!
+## 🔄 Migration Path
+
+### From Level System to Point System
+1. **Backup Data**: System automatically backs up existing data
+2. **Enable Point System**: Toggle the switch in admin interface
+3. **Point Calculation**: System calculates points based on completed tasks
+4. **Create Rewards**: Set up custom rewards to replace level titles
+5. **Gradual Transition**: Both systems can coexist during transition
+
+### Rollback Option
+- Disable point system to return to level-based rewards
+- All data is preserved, allowing seamless switching between systems
+
+## ⚙️ Configuration
+
+### Email Setup (Optional)
+To enable email notifications for reward redemptions:
+
+1. Configure email service in your server environment
+2. Set `emailEnabled: true` in config
+3. Customize email templates per reward
+
+### Custom Points Strategy
+- **Simple**: 1 point per task (default)
+- **Difficulty-based**: 1-3 points based on task complexity
+- **Time-based**: Points proportional to estimated time
+- **Importance-based**: Higher points for critical tasks
+
+## 🚀 Benefits
+
+### For Families
+- **Motivation**: Clear point system encourages task completion
+- **Fairness**: Transparent reward system based on contribution
+- **Flexibility**: Customize rewards for different family members
+- **Engagement**: Gamification increases participation
+
+### For Organizations
+- **Tracking**: Detailed analytics on task completion and rewards
+- **Customization**: Tailor point values and rewards to organizational goals
+- **Reporting**: Comprehensive redemption and usage tracking
+- **Scalability**: System scales with organization size
+
+## 🔧 Backward Compatibility
+
+- **Existing Users**: Continue using level system by default
+- **Data Preservation**: All existing tasks, people, and analytics preserved
+- **Gradual Migration**: Can switch between systems at any time
+- **Feature Overlap**: Both systems can coexist indefinitely
+
+## 📋 Future Enhancements
+
+Potential future additions:
+- **Point Multipliers**: Bonus points for consecutive days
+- **Seasonal Rewards**: Time-limited special rewards
+- **Group Rewards**: Family/team rewards requiring combined points
+- **Achievement System**: Badges and milestones
+- **Point Decay**: Optional point expiration for active engagement
+- **Advanced Scheduling**: More complex recurring patterns
+- **Reward Categories**: Organize rewards by type/category
+- **Point Transfer**: Allow sharing points between family members
+
+## 🐛 Known Limitations
+
+- Email functionality requires additional server configuration
+- Point calculations are based on task completion, not task difficulty verification
+- Large point balances may require UI adjustments for display
+- Custom recurring patterns are limited to predefined options
+
+## 📞 Support
+
+For questions or issues with the new features:
+1. Check the existing documentation
+2. Review the admin interface tooltips
+3. Test in a non-production environment first
+4. Report issues through the standard channels
+
+---
+
+**Note**: This is a major feature update. Please test thoroughly in a development environment before deploying to production.

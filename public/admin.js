@@ -170,6 +170,90 @@ function initSettingsForm(settings) {
   const form = document.getElementById('settingsForm');
   if (!form) return;
 
+  // Reward system selection
+  const useLevelSystem = document.getElementById('useLevelSystem');
+  const usePointSystem = document.getElementById('usePointSystem');
+  const levelSystemCard = document.getElementById('levelSystemCard');
+  const pointSystemCard = document.getElementById('pointSystemCard');
+  const migrationWarning = document.getElementById('migrationWarning');
+  const levelSettings = document.getElementById('levelSettings');
+  const pointSettings = document.getElementById('pointSettings');
+
+  // Initialize reward system selection
+  const currentSystem = settings.usePointSystem ? 'points' : 'level';
+  if (useLevelSystem && usePointSystem) {
+    useLevelSystem.checked = currentSystem === 'level';
+    usePointSystem.checked = currentSystem === 'points';
+    updateRewardSystemUI(currentSystem);
+  }
+
+  // Reward system change handlers
+  if (useLevelSystem) {
+    useLevelSystem.addEventListener('change', () => {
+      if (useLevelSystem.checked) {
+        updateRewardSystemUI('level');
+      }
+    });
+  }
+
+  if (usePointSystem) {
+    usePointSystem.addEventListener('change', () => {
+      if (usePointSystem.checked) {
+        updateRewardSystemUI('points');
+        if (migrationWarning) {
+          migrationWarning.classList.remove('d-none');
+        }
+      }
+    });
+  }
+
+  // Card click handlers
+  if (levelSystemCard) {
+    levelSystemCard.addEventListener('click', () => {
+      if (useLevelSystem) {
+        useLevelSystem.checked = true;
+        updateRewardSystemUI('level');
+      }
+    });
+  }
+
+  if (pointSystemCard) {
+    pointSystemCard.addEventListener('click', () => {
+      if (usePointSystem) {
+        usePointSystem.checked = true;
+        updateRewardSystemUI('points');
+        if (migrationWarning) {
+          migrationWarning.classList.remove('d-none');
+        }
+      }
+    });
+  }
+
+  function updateRewardSystemUI(system) {
+    // Update card styles
+    if (levelSystemCard && pointSystemCard) {
+      levelSystemCard.classList.toggle('selected', system === 'level');
+      pointSystemCard.classList.toggle('selected', system === 'points');
+    }
+
+    // Show/hide settings sections
+    if (levelSettings) {
+      levelSettings.classList.toggle('d-none', system !== 'level');
+    }
+    if (pointSettings) {
+      pointSettings.classList.toggle('d-none', system !== 'points');
+    }
+
+    // Update rewards tab visibility
+    updateRewardsTabVisibility(system === 'points');
+
+    // Hide migration warning for level system
+    if (system === 'level' && migrationWarning) {
+      migrationWarning.classList.add('d-none');
+    }
+  }
+
+  // Other settings
   const showPast = document.getElementById('settingsShowPast');
   const textSize = document.getElementById('settingsTextSize');
   const dateFmt = document.getElementById('settingsDateFmt');
@@ -179,16 +263,8 @@ function initSettingsForm(settings) {
   const autoUpdate = document.getElementById('settingsAutoUpdate');
   const pushoverEnable = document.getElementById('settingsPushoverEnable');
   const reminderTime = document.getElementById('settingsReminderTime');
-  const reminderContainer = reminderTime ? reminderTime.parentElement : null;
-  const editRewardsBtn = document.getElementById('editRewardsBtn');
-  const rewardsModalEl = document.getElementById('rewardsModal');
-  const levelModeSelect = document.getElementById('rewardsLevelMode');
-  const choresToMaxInput = document.getElementById('rewardsChoresToMax');
-  const yearsInput = document.getElementById('rewardsYears');
-  const perWeekInput = document.getElementById('rewardsPerWeek');
-  const rewardTitlesContainer = document.getElementById('rewardTitlesContainer');
-  const rewardTitleInputs = [];
   const backgroundSelect = document.getElementById('settingsBackground');
+  const editRewardsBtn = document.getElementById('editRewardsBtn');
 
   if (showPast) showPast.checked = !!settings.showPast;
   if (textSize) textSize.value = settings.textMirrorSize || 'small';
@@ -199,134 +275,123 @@ function initSettingsForm(settings) {
   if (autoUpdate) autoUpdate.checked = !!settings.autoUpdate;
   if (pushoverEnable) pushoverEnable.checked = !!settings.pushoverEnabled;
   if (reminderTime) reminderTime.value = settings.reminderTime || '';
-  if (levelModeSelect) levelModeSelect.value = settings.leveling?.mode || 'years';
-  if (choresToMaxInput) choresToMaxInput.value = settings.leveling?.choresToMaxLevel || '';
-  if (yearsInput) yearsInput.value = settings.leveling?.yearsToMaxLevel || 3;
-  if (perWeekInput) perWeekInput.value = settings.leveling?.choresPerWeekEstimate || 4;
-  if (backgroundSelect) backgroundSelect.value = settings.background || 'forest.png';
-  if (rewardTitlesContainer) {
-    rewardTitlesContainer.innerHTML = '';
-    const titles = Array.isArray(settings.levelTitles) ? settings.levelTitles : [];
-    levelTitles = titles;
-    for (let i = 0; i < 10; i++) {
-      const wrap = document.createElement('div');
-      const lbl = document.createElement('label');
-      lbl.className = 'form-label reward-title-label';
-      lbl.setAttribute('for', `rewardTitle${i}`);
-      lbl.textContent = `${LANGUAGES[currentLang].levelRangeLabel || 'Levels'} ${i*10+1}-${(i+1)*10}`;
-      const inp = document.createElement('input');
-      inp.type = 'text';
-      inp.className = 'form-control reward-title-input';
-      inp.id = `rewardTitle${i}`;
-      inp.value = titles[i] || '';
-      wrap.appendChild(lbl);
-      wrap.appendChild(inp);
-      rewardTitlesContainer.appendChild(wrap);
-      rewardTitleInputs.push(inp);
-    }
-  }
+  if (backgroundSelect) backgroundSelect.value = settings.background || '';
 
-  const toggleRewardsBtn = () => {
-    if (editRewardsBtn) editRewardsBtn.classList.toggle('d-none', !(levelEnable && levelEnable.checked));
-  };
-  if (levelEnable) {
-    levelEnable.addEventListener('change', toggleRewardsBtn);
-  }
-  toggleRewardsBtn();
+  // Update point totals preview
+  updatePointTotalsPreview();
 
-  const toggleLevelModeFields = () => {
-    const mode = levelModeSelect ? levelModeSelect.value : 'years';
-    const rewardsModal = rewardsModalEl;
-    if (rewardsModal) {
-      rewardsModal.querySelectorAll('.level-mode-years').forEach(el => el.classList.toggle('d-none', mode !== 'years'));
-      rewardsModal.querySelectorAll('.level-mode-chores').forEach(el => el.classList.toggle('d-none', mode !== 'chores'));
-    }
-  };
-  if (levelModeSelect) {
-    levelModeSelect.addEventListener('change', () => {
-      toggleLevelModeFields();
-      settingsChanged = true;
-    });
-  }
-  toggleLevelModeFields();
-
-  const toggleReminderField = () => {
-    const show = pushoverEnable && pushoverEnable.checked;
-    if (reminderContainer) reminderContainer.classList.toggle('d-none', !show);
-  };
-  if (pushoverEnable) {
-    pushoverEnable.addEventListener('change', toggleReminderField);
-  }
-  toggleReminderField();
-
-  if (editRewardsBtn && rewardsModalEl) {
+  // Edit rewards button handler
+  if (editRewardsBtn) {
     editRewardsBtn.addEventListener('click', () => {
-      renderPersonRewardsList();
-      const modal = new bootstrap.Modal(rewardsModalEl);
-      modal.show();
-    });
-  }
-  const rewardsForm = document.getElementById('rewardsForm');
-  if (rewardsForm && rewardsModalEl) {
-    rewardsForm.addEventListener('submit', e => {
-      e.preventDefault();
-      const modal = bootstrap.Modal.getInstance(rewardsModalEl);
-      if (modal) modal.hide();
+      const rewardsModal = document.getElementById('rewardsModal');
+      if (rewardsModal) {
+        const modal = new bootstrap.Modal(rewardsModal);
+        modal.show();
+      }
     });
   }
 
-  settingsChanged = false;
-  settingsSaved = false;
-
-  const inputs = [showPast, textSize, dateFmt, useAI, showAnalytics, levelEnable, autoUpdate, pushoverEnable, reminderTime, levelModeSelect, choresToMaxInput, yearsInput, perWeekInput, backgroundSelect, ...rewardTitleInputs];
-  inputs.forEach(el => {
-    if (el) {
-      el.addEventListener('input', () => { settingsChanged = true; });
-      el.addEventListener('change', () => { settingsChanged = true; });
-    }
-  });
-
-  form.addEventListener('submit', async e => {
+  // Form submission
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    settingsSaved = true;
-      const payload = {
-        showPast: showPast.checked,
-        textMirrorSize: textSize.value,
-        dateFormatting: dateFmt.value,
-        useAI: useAI.checked,
-        showAnalyticsOnMirror: showAnalytics.checked,
-        levelingEnabled: levelEnable.checked,
-        autoUpdate: autoUpdate.checked,
-        pushoverEnabled: pushoverEnable.checked,
-        reminderTime: reminderTime.value,
-        background: backgroundSelect.value,
-        leveling: {
-          mode: levelModeSelect ? levelModeSelect.value : 'years',
-          choresToMaxLevel: parseFloat(choresToMaxInput?.value) || 0,
-          yearsToMaxLevel: parseFloat(yearsInput.value) || 3,
-          choresPerWeekEstimate: parseFloat(perWeekInput.value) || 4,
-        },
-        levelTitles: rewardTitleInputs.map(inp => inp.value)
-      };
+    
+    const newSettings = {
+      usePointSystem: usePointSystem ? usePointSystem.checked : false,
+      showPast: showPast ? showPast.checked : false,
+      textMirrorSize: textSize ? textSize.value : 'small',
+      dateFormatting: dateFmt ? dateFmt.value : '',
+      useAI: useAI ? useAI.checked : false,
+      showAnalyticsOnMirror: showAnalytics ? showAnalytics.checked : false,
+      levelingEnabled: levelEnable ? levelEnable.checked : false,
+      autoUpdate: autoUpdate ? autoUpdate.checked : false,
+      pushoverEnabled: pushoverEnable ? pushoverEnable.checked : false,
+      reminderTime: reminderTime ? reminderTime.value : '',
+      background: backgroundSelect ? backgroundSelect.value : ''
+    };
+
     try {
       const res = await authFetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(newSettings)
       });
-      if (res.ok) {
-        const data = await res.json();
-        await applySettings(data.settings || payload);
-        const instance = bootstrap.Modal.getInstance(document.getElementById('settingsModal'));
-        if (instance) instance.hide();
-      } else {
-        const out = await res.json().catch(() => ({}));
-        alert(out.error || 'Failed saving settings');
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to save settings');
       }
-    } catch (err) {
-      console.error('Failed saving settings', err);
+
+      settingsSaved = true;
+      setBackground(newSettings.background);
+      localStorage.setItem('choresBackground', newSettings.background || '');
+      
+      // Update rewards tab based on new system
+      updateRewardsTabVisibility(newSettings.usePointSystem);
+      
+      // Refresh data if switching systems
+      if (settings.usePointSystem !== newSettings.usePointSystem) {
+        if (newSettings.usePointSystem) {
+          await fetchRewards();
+          await fetchRedemptions();
+        }
+        await fetchPeople();
+      }
+
+      showToast('Settings saved successfully', 'success');
+      bootstrap.Modal.getInstance(document.getElementById('settingsModal')).hide();
+    } catch (e) {
+      console.error('Failed to save settings:', e);
+      showToast(e.message || 'Failed to save settings', 'danger');
     }
   });
+}
+
+function updateRewardsTabVisibility(usePointSystem) {
+  const rewardsSystemEnabled = document.getElementById('rewardsSystemEnabled');
+  const rewardsSystemDisabled = document.getElementById('rewardsSystemDisabled');
+  
+  if (rewardsSystemEnabled && rewardsSystemDisabled) {
+    if (usePointSystem) {
+      rewardsSystemEnabled.classList.remove('d-none');
+      rewardsSystemDisabled.classList.add('d-none');
+    } else {
+      rewardsSystemEnabled.classList.add('d-none');
+      rewardsSystemDisabled.classList.remove('d-none');
+    }
+  }
+}
+
+function updatePointTotalsPreview() {
+  const preview = document.getElementById('pointTotalsPreview');
+  if (!preview) return;
+  
+  if (peopleCache.length === 0) {
+    preview.textContent = 'No people added yet';
+    return;
+  }
+  
+  const pointsText = peopleCache.map(person => {
+    const points = person.points || 0;
+    return `${person.name}: ${points} points`;
+  }).join('\n');
+  
+  preview.textContent = pointsText || 'Loading point totals...';
+}
+
+function openSettingsToRewardSystem() {
+  const settingsModal = document.getElementById('settingsModal');
+  const usePointSystem = document.getElementById('usePointSystem');
+  
+  if (settingsModal && usePointSystem) {
+    const modal = new bootstrap.Modal(settingsModal);
+    modal.show();
+    
+    // After modal opens, select point system
+    setTimeout(() => {
+      usePointSystem.checked = true;
+      usePointSystem.dispatchEvent(new Event('change'));
+    }, 500);
+  }
 }
 
 // ==========================
@@ -374,6 +439,7 @@ function setLanguage(lang) {
   const tabs = document.querySelectorAll(".nav-link");
   if (tabs[0]) tabs[0].textContent = t.tabs[0];
   if (tabs[1]) tabs[1].textContent = t.tabs[1];
+  if (tabs[2]) tabs[2].textContent = t.tabs[2] || 'Rewards';
 
   const themeToggleBtn = document.getElementById('themeToggle');
   if (themeToggleBtn) themeToggleBtn.title = t.toggleTheme || 'Toggle theme';
@@ -551,6 +617,7 @@ async function fetchPeople() {
   const res = await authFetch("/api/people");
   peopleCache = await res.json();
   renderPeople();
+  renderPeoplePoints(); // Update points display when people data changes
 }
 
 async function fetchTasks() {
@@ -603,68 +670,29 @@ function openPersonRewards(person) {
 }
 
 function showPersonRewards(person) {
-  openRewardShop(person);
-}
-
-async function openRewardShop(person) {
-  await fetchRewards();
-  
-  const titleEl = document.getElementById('shopModalTitle');
-  const infoEl = document.getElementById('shopPersonInfo');
-  const listEl = document.getElementById('shopRewardsList');
-  
-  if (titleEl) titleEl.textContent = `Reward Shop - ${person.name}`;
-  if (infoEl) infoEl.innerHTML = `<strong>${person.name}</strong> has <strong>${person.points || 0} points</strong> available to spend.`;
-  if (listEl) {
-    listEl.innerHTML = '';
-    
-    if (rewardsCache.length === 0) {
-      listEl.innerHTML = '<div class="col-12"><p class="text-center text-muted">No rewards available. Add some rewards in the admin settings!</p></div>';
-    } else {
-      rewardsCache.forEach(reward => {
-        const canAfford = (person.points || 0) >= reward.pointCost;
-        const col = document.createElement('div');
-        col.className = 'col-md-6 mb-3';
-        col.innerHTML = `
-          <div class="card ${canAfford ? '' : 'text-muted'}">
-            <div class="card-body">
-              <h6 class="card-title">${reward.name}</h6>
-              <p class="card-text">${reward.description || 'No description'}</p>
-              <div class="d-flex justify-content-between align-items-center">
-                <span class="badge bg-warning text-dark">${reward.pointCost} points</span>
-                <button class="btn btn-sm ${canAfford ? 'btn-primary' : 'btn-secondary'}" 
-                        onclick="redeemRewardForPerson(${reward.id}, ${person.id})"
-                        ${canAfford ? '' : 'disabled'}>
-                  ${canAfford ? 'Redeem' : 'Not enough points'}
-                </button>
-              </div>
-            </div>
-          </div>
-        `;
-        listEl.appendChild(col);
-      });
-    }
+  const list = document.getElementById('viewRewardsList');
+  if (!list) return;
+  list.innerHTML = '';
+  const t = LANGUAGES[currentLang];
+  const titles = (customLevelTitles[person.name] && customLevelTitles[person.name].length)
+    ? customLevelTitles[person.name]
+    : levelTitles;
+  for (let i = 0; i < 10; i++) {
+    const li = document.createElement('li');
+    li.className = 'list-group-item d-flex justify-content-between';
+    const range = document.createElement('span');
+    range.textContent = `${t.levelRangeLabel || 'Levels'} ${i * 10 + 1}-${(i + 1) * 10}`;
+    const txt = document.createElement('span');
+    txt.textContent = titles[i] || '';
+    li.appendChild(range);
+    li.appendChild(txt);
+    list.appendChild(li);
   }
-  
-  const modal = new bootstrap.Modal(document.getElementById('rewardShopModal'));
-  modal.show();
-}
-
-async function redeemRewardForPerson(rewardId, personId) {
-  try {
-    await redeemReward(rewardId, personId);
-    showToast('Reward redeemed successfully!', 'success');
-    
-    // Refresh person data and reopen shop
-    await fetchPeople();
-    const person = peopleCache.find(p => p.id === personId);
-    if (person) {
-      await openRewardShop(person);
-    }
-  } catch (e) {
-    const error = await e.response?.json?.() || { error: 'Failed to redeem reward' };
-    showToast(error.error || 'Failed to redeem reward', 'danger');
-  }
+  const modalTitle = document.getElementById('viewRewardsModalLabel');
+  if (modalTitle) modalTitle.textContent = `${t.viewRewardsButton || 'Rewards'} - ${person.name}`;
+  const modalEl = document.getElementById('viewRewardsModal');
+  const modal = modalEl ? new bootstrap.Modal(modalEl) : null;
+  if (modal) modal.show();
 }
 
 function renderPersonRewardsList() {
@@ -720,12 +748,6 @@ function renderPeople() {
       small.textContent = `lvl${person.level}${titlePart}`;
       info.appendChild(small);
     }
-    
-    // Add points display
-    const pointsBadge = document.createElement("span");
-    pointsBadge.className = "badge bg-primary ms-2";
-    pointsBadge.textContent = `${person.points || 0} pts`;
-    info.appendChild(pointsBadge);
 
     li.appendChild(info);
 
@@ -859,10 +881,9 @@ function renderTasks() {
     const recurText = LANGUAGES[currentLang].taskRecurring[task.recurring] || task.recurring;
     span.innerHTML += ` <span class="badge bg-info text-dark">${recurText}</span>`;
   }
-  // Add points display
-  const points = task.points || 1;
-  span.innerHTML += ` <span class="badge bg-warning text-dark">${points} pt${points !== 1 ? 's' : ''}</span>`;
-  
+  if (task.points && task.points > 1) {
+    span.innerHTML += ` <span class="badge bg-warning text-dark">${task.points} pts</span>`;
+  }
   if (task.done) span.classList.add("task-done");
   const person = peopleCache.find(p => p.id === task.assignedTo);
   const personName = person ? person.name : LANGUAGES[currentLang].unassigned;
@@ -934,11 +955,9 @@ function openEditModal(task) {
   const nameInput = document.getElementById('editTaskName');
   const dateInput = document.getElementById('editTaskDate');
   const personSelect = document.getElementById('editTaskPerson');
-  const pointsInput = document.getElementById('editTaskPoints');
   if (nameInput) nameInput.value = task.name;
   if (dateInput) dateInput.value = task.date || '';
   if (personSelect) personSelect.value = task.assignedTo || '';
-  if (pointsInput) pointsInput.value = task.points || 1;
   if (!editTaskModal) {
     const modalEl = document.getElementById('editTaskModal');
     if (modalEl) editTaskModal = new bootstrap.Modal(modalEl);
@@ -1164,12 +1183,10 @@ document.getElementById('editTaskForm').addEventListener('submit', async e => {
   const name = document.getElementById('editTaskName').value.trim();
   const date = document.getElementById('editTaskDate').value;
   const assigned = document.getElementById('editTaskPerson').value;
-  const points = document.getElementById('editTaskPoints').value || 1;
   await updateTask(editTaskId, {
     name,
     date,
-    assignedTo: assigned ? parseInt(assigned) : null,
-    points: parseInt(points)
+    assignedTo: assigned ? parseInt(assigned) : null
   });
   if (editTaskModal) editTaskModal.hide();
   editTaskId = null;
@@ -1637,6 +1654,14 @@ async function initApp() {
   setLanguage(currentLang);
   await applySettings(userSettings);
 
+  // Initialize rewards system visibility
+  updateRewardsTabVisibility(!!userSettings.usePointSystem);
+  
+  if (userSettings.usePointSystem) {
+    await fetchRewards();
+    await fetchRedemptions();
+  }
+
   const savedBoards = await fetchSavedBoards();
     if (savedBoards.length) {
       savedBoards.forEach(type => addChart(type));
@@ -1758,20 +1783,20 @@ if (aiBtn) {
 }
 
 // ==========================
-// ====== REWARDS SYSTEM ====
+// ===== REWARDS SYSTEM =====
 // ==========================
 
 let rewardsCache = [];
 let redemptionsCache = [];
+let editRewardId = null;
 
 async function fetchRewards() {
   try {
     const res = await authFetch('/api/rewards');
     rewardsCache = await res.json();
-    return rewardsCache;
+    renderRewards();
   } catch (e) {
     console.error('Failed to fetch rewards:', e);
-    return [];
   }
 }
 
@@ -1779,258 +1804,300 @@ async function fetchRedemptions() {
   try {
     const res = await authFetch('/api/redemptions');
     redemptionsCache = await res.json();
-    return redemptionsCache;
+    renderRedemptions();
   } catch (e) {
     console.error('Failed to fetch redemptions:', e);
-    return [];
   }
 }
 
-async function addReward(name, pointCost, description) {
-  try {
-    const res = await authFetch('/api/rewards', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, pointCost, description })
-    });
-    return await res.json();
-  } catch (e) {
-    console.error('Failed to add reward:', e);
-    throw e;
-  }
-}
+function renderRewards() {
+  const list = document.getElementById('rewardsList');
+  if (!list) return;
 
-async function deleteReward(id) {
-  try {
-    await authFetch(`/api/rewards/${id}`, { method: 'DELETE' });
-  } catch (e) {
-    console.error('Failed to delete reward:', e);
-    throw e;
-  }
-}
-
-async function redeemReward(rewardId, personId) {
-  try {
-    const res = await authFetch('/api/redemptions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ rewardId, personId })
-    });
-    return await res.json();
-  } catch (e) {
-    console.error('Failed to redeem reward:', e);
-    throw e;
-  }
-}
-
-async function markRedemptionUsed(redemptionId, used = true) {
-  try {
-    const res = await authFetch(`/api/redemptions/${redemptionId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ used })
-    });
-    return await res.json();
-  } catch (e) {
-    console.error('Failed to mark redemption as used:', e);
-    throw e;
-  }
+  list.innerHTML = '';
+  rewardsCache.filter(r => r.active !== false).forEach(reward => {
+    const item = document.createElement('li');
+    item.className = 'list-group-item d-flex justify-content-between align-items-center';
+    item.innerHTML = `
+      <div>
+        <strong>${reward.name}</strong>
+        <span class="badge bg-primary ms-2">${reward.pointCost} pts</span>
+        ${reward.description ? `<br><small class="text-muted">${reward.description}</small>` : ''}
+      </div>
+      <div class="btn-group" role="group">
+        <button class="btn btn-sm btn-outline-secondary" onclick="editReward(${reward.id})" title="Edit">
+          <i class="bi bi-pencil"></i>
+        </button>
+        <button class="btn btn-sm btn-outline-success" onclick="openRedeemModal(${reward.id})" title="Redeem">
+          <i class="bi bi-gift"></i>
+        </button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteReward(${reward.id})" title="Delete">
+          <i class="bi bi-trash"></i>
+        </button>
+      </div>
+    `;
+    list.appendChild(item);
+  });
 }
 
 function renderPeoplePoints() {
   const list = document.getElementById('peoplePointsList');
   if (!list) return;
-  
+
   list.innerHTML = '';
   peopleCache.forEach(person => {
-    const li = document.createElement('li');
-    li.className = 'list-group-item d-flex justify-content-between align-items-center';
-    li.innerHTML = `
-      <span>${person.name}</span>
-      <span class="badge bg-primary rounded-pill">${person.points || 0} points</span>
-    `;
-    list.appendChild(li);
-  });
-}
-
-function renderRewardsList() {
-  const list = document.getElementById('rewardsList');
-  if (!list) return;
-  
-  list.innerHTML = '';
-  rewardsCache.forEach(reward => {
-    const li = document.createElement('li');
-    li.className = 'list-group-item d-flex justify-content-between align-items-center';
-    li.innerHTML = `
+    const points = person.points || 0;
+    const item = document.createElement('li');
+    item.className = 'list-group-item d-flex justify-content-between align-items-center';
+    item.innerHTML = `
       <div>
-        <strong>${reward.name}</strong><br>
-        <small class="text-muted">${reward.description || ''}</small>
+        <strong>${person.name}</strong>
+        <span class="badge bg-warning text-dark ms-2">${points} points</span>
       </div>
-      <div class="d-flex align-items-center gap-2">
-        <span class="badge bg-warning text-dark">${reward.pointCost} pts</span>
-        <button class="btn btn-sm btn-danger" onclick="deleteRewardFromList(${reward.id})">
-          <i class="bi bi-trash"></i>
-        </button>
-      </div>
+      <button class="btn btn-sm btn-outline-primary" onclick="openRedeemModalForPerson(${person.id})" title="Redeem Reward">
+        <i class="bi bi-gift"></i> Redeem
+      </button>
     `;
-    list.appendChild(li);
+    list.appendChild(item);
   });
 }
 
-function renderRedemptionsList() {
+function renderRedemptions() {
   const list = document.getElementById('redemptionsList');
   if (!list) return;
-  
+
   list.innerHTML = '';
   const recent = redemptionsCache.slice(-10).reverse(); // Show 10 most recent
+  
+  if (recent.length === 0) {
+    list.innerHTML = '<li class="list-group-item text-muted text-center">No redemptions yet</li>';
+    return;
+  }
+
   recent.forEach(redemption => {
-    const li = document.createElement('li');
-    li.className = `list-group-item d-flex justify-content-between align-items-center ${redemption.used ? 'text-muted' : ''}`;
-    li.innerHTML = `
+    const item = document.createElement('li');
+    item.className = 'list-group-item d-flex justify-content-between align-items-center';
+    const statusClass = redemption.used ? 'bg-success' : 'bg-warning text-dark';
+    const statusText = redemption.used ? 'Used' : 'Pending';
+    
+    item.innerHTML = `
       <div>
-        <strong>${redemption.personName}</strong><br>
-        <small>${redemption.rewardName} (${redemption.pointCost} pts)</small><br>
-        <small class="text-muted">${new Date(redemption.date).toLocaleDateString()}</small>
+        <strong>${redemption.personName}</strong> redeemed <strong>${redemption.rewardName}</strong>
+        <br><small class="text-muted">${new Date(redemption.redeemed).toLocaleDateString()} - ${redemption.pointCost} points</small>
       </div>
-      <div>
-        <button class="btn btn-sm ${redemption.used ? 'btn-secondary' : 'btn-success'}" 
-                onclick="toggleRedemptionUsed(${redemption.id}, ${!redemption.used})">
-          ${redemption.used ? 'Used' : 'Mark Used'}
-        </button>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge ${statusClass}">${statusText}</span>
+        ${!redemption.used ? `<button class="btn btn-sm btn-outline-success" onclick="markRedemptionUsed(${redemption.id})" title="Mark as used">
+          <i class="bi bi-check2"></i>
+        </button>` : ''}
       </div>
     `;
-    list.appendChild(li);
+    list.appendChild(item);
   });
 }
 
-async function deleteRewardFromList(id) {
-  if (confirm('Are you sure you want to delete this reward?')) {
-    try {
-      await deleteReward(id);
-      await fetchRewards();
-      renderRewardsList();
-      showToast('Reward deleted successfully', 'success');
-    } catch (e) {
-      showToast('Failed to delete reward', 'danger');
-    }
-  }
-}
-
-async function toggleRedemptionUsed(id, used) {
+async function markRedemptionUsed(redemptionId) {
+  if (!confirm('Mark this redemption as used?')) return;
+  
   try {
-    await markRedemptionUsed(id, used);
+    await authFetch(`/api/redemptions/${redemptionId}/use`, { method: 'PUT' });
     await fetchRedemptions();
-    renderRedemptionsList();
-    showToast(`Redemption marked as ${used ? 'used' : 'unused'}`, 'success');
+    showToast('Redemption marked as used', 'success');
   } catch (e) {
-    showToast('Failed to update redemption status', 'danger');
+    showToast('Failed to mark redemption as used', 'danger');
   }
 }
 
-// Manage Rewards Modal Handler
-const manageRewardsBtn = document.getElementById('manageRewardsBtn');
-if (manageRewardsBtn) {
-  manageRewardsBtn.addEventListener('click', async () => {
+function openRedeemModal(rewardId = null) {
+  const modal = new bootstrap.Modal(document.getElementById('redeemRewardModal'));
+  const personSelect = document.getElementById('redeemPerson');
+  const rewardSelect = document.getElementById('redeemReward');
+  const info = document.getElementById('redeemInfo');
+  
+  // Populate people
+  personSelect.innerHTML = '<option value="">Select person...</option>';
+  peopleCache.forEach(person => {
+    const option = document.createElement('option');
+    option.value = person.id;
+    option.textContent = `${person.name} (${person.points || 0} points)`;
+    personSelect.appendChild(option);
+  });
+  
+  // Populate rewards
+  rewardSelect.innerHTML = '<option value="">Select reward...</option>';
+  rewardsCache.filter(r => r.active !== false).forEach(reward => {
+    const option = document.createElement('option');
+    option.value = reward.id;
+    option.textContent = `${reward.name} (${reward.pointCost} points)`;
+    if (rewardId && reward.id === rewardId) {
+      option.selected = true;
+    }
+    rewardSelect.appendChild(option);
+  });
+  
+  info.style.display = 'none';
+  modal.show();
+}
+
+function openRedeemModalForPerson(personId) {
+  openRedeemModal();
+  const personSelect = document.getElementById('redeemPerson');
+  personSelect.value = personId;
+  updateRedeemInfo();
+}
+
+function updateRedeemInfo() {
+  const personId = parseInt(document.getElementById('redeemPerson').value);
+  const rewardId = parseInt(document.getElementById('redeemReward').value);
+  const info = document.getElementById('redeemInfo');
+  
+  if (!personId || !rewardId) {
+    info.style.display = 'none';
+    return;
+  }
+  
+  const person = peopleCache.find(p => p.id === personId);
+  const reward = rewardsCache.find(r => r.id === rewardId);
+  
+  if (!person || !reward) {
+    info.style.display = 'none';
+    return;
+  }
+  
+  const personPoints = person.points || 0;
+  const canRedeem = personPoints >= reward.pointCost;
+  
+  info.className = `alert ${canRedeem ? 'alert-success' : 'alert-danger'}`;
+  info.textContent = canRedeem 
+    ? `${person.name} has enough points to redeem ${reward.name}`
+    : `${person.name} needs ${reward.pointCost - personPoints} more points to redeem ${reward.name}`;
+  info.style.display = 'block';
+}
+
+function editReward(rewardId) {
+  const reward = rewardsCache.find(r => r.id === rewardId);
+  if (!reward) return;
+  
+  editRewardId = rewardId;
+  const modal = new bootstrap.Modal(document.getElementById('editRewardModal'));
+  
+  document.getElementById('editRewardName').value = reward.name;
+  document.getElementById('editRewardPoints').value = reward.pointCost;
+  document.getElementById('editRewardDescription').value = reward.description || '';
+  document.getElementById('editRewardEmail').value = reward.emailTemplate || '';
+  document.getElementById('editRewardActive').checked = reward.active !== false;
+  
+  modal.show();
+}
+
+async function deleteReward(rewardId) {
+  if (!confirm('Delete this reward? This action cannot be undone.')) return;
+  
+  try {
+    await authFetch(`/api/rewards/${rewardId}`, { method: 'DELETE' });
     await fetchRewards();
-    await fetchRedemptions();
-    renderPeoplePoints();
-    renderRewardsList();
-    renderRedemptionsList();
-    
-    const modal = new bootstrap.Modal(document.getElementById('manageRewardsModal'));
-    modal.show();
-  });
+    showToast('Reward deleted', 'success');
+  } catch (e) {
+    showToast('Failed to delete reward', 'danger');
+  }
 }
 
-// Add Reward Form Handler
-const addRewardForm = document.getElementById('addRewardForm');
-if (addRewardForm) {
-  addRewardForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const name = document.getElementById('rewardName').value.trim();
-    const cost = document.getElementById('rewardCost').value;
-    const description = document.getElementById('rewardDescription').value.trim();
-    
-    if (!name || !cost) {
-      showToast('Name and point cost are required', 'danger');
-      return;
-    }
-    
-    try {
-      await addReward(name, parseInt(cost), description);
-      await fetchRewards();
-      renderRewardsList();
-      addRewardForm.reset();
-      showToast('Reward added successfully', 'success');
-    } catch (e) {
-      showToast('Failed to add reward', 'danger');
-    }
-  });
-}
-
-// Email Settings Modal Handler
-const emailSettingsBtn = document.getElementById('emailSettingsBtn');
-if (emailSettingsBtn) {
-  emailSettingsBtn.addEventListener('click', async () => {
-    // Load current email settings
-    try {
-      const res = await authFetch('/api/settings');
-      const settings = await res.json();
-      const email = settings.email || {};
+// Event listeners for rewards system
+document.addEventListener('DOMContentLoaded', () => {
+  // Reward form
+  const rewardForm = document.getElementById('rewardForm');
+  if (rewardForm) {
+    rewardForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
       
-      document.getElementById('emailEnabled').checked = email.enabled || false;
-      document.getElementById('emailHost').value = email.host || '';
-      document.getElementById('emailPort').value = email.port || 587;
-      document.getElementById('emailSecure').checked = email.secure || false;
-      document.getElementById('emailUser').value = email.user || '';
-      document.getElementById('emailPass').value = email.pass || '';
-      document.getElementById('emailFrom').value = email.from || '';
-      document.getElementById('emailTo').value = email.to || '';
+      const name = document.getElementById('rewardName').value;
+      const pointCost = document.getElementById('rewardPoints').value;
+      const description = document.getElementById('rewardDescription').value;
       
-      const modal = new bootstrap.Modal(document.getElementById('emailSettingsModal'));
-      modal.show();
-    } catch (e) {
-      showToast('Failed to load email settings', 'danger');
-    }
-  });
-}
-
-// Email Settings Form Handler
-const emailSettingsForm = document.getElementById('emailSettingsForm');
-if (emailSettingsForm) {
-  emailSettingsForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const emailSettings = {
-      email: {
-        enabled: document.getElementById('emailEnabled').checked,
-        host: document.getElementById('emailHost').value.trim(),
-        port: parseInt(document.getElementById('emailPort').value) || 587,
-        secure: document.getElementById('emailSecure').checked,
-        user: document.getElementById('emailUser').value.trim(),
-        pass: document.getElementById('emailPass').value,
-        from: document.getElementById('emailFrom').value.trim(),
-        to: document.getElementById('emailTo').value.trim()
+      try {
+        await authFetch('/api/rewards', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, pointCost, description })
+        });
+        
+        rewardForm.reset();
+        await fetchRewards();
+        showToast('Reward added', 'success');
+      } catch (e) {
+        showToast('Failed to add reward', 'danger');
       }
-    };
-    
-    try {
-      const res = await authFetch('/api/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(emailSettings)
-      });
+    });
+  }
+  
+  // Edit reward form
+  const editRewardForm = document.getElementById('editRewardForm');
+  if (editRewardForm) {
+    editRewardForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
       
-      if (res.ok) {
-        showToast('Email settings saved successfully', 'success');
-        const modal = bootstrap.Modal.getInstance(document.getElementById('emailSettingsModal'));
-        modal.hide();
-      } else {
-        const error = await res.json();
-        showToast(error.error || 'Failed to save email settings', 'danger');
+      if (!editRewardId) return;
+      
+      const name = document.getElementById('editRewardName').value;
+      const pointCost = document.getElementById('editRewardPoints').value;
+      const description = document.getElementById('editRewardDescription').value;
+      const emailTemplate = document.getElementById('editRewardEmail').value;
+      const active = document.getElementById('editRewardActive').checked;
+      
+      try {
+        await authFetch(`/api/rewards/${editRewardId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, pointCost, description, emailTemplate, active })
+        });
+        
+        bootstrap.Modal.getInstance(document.getElementById('editRewardModal')).hide();
+        await fetchRewards();
+        showToast('Reward updated', 'success');
+      } catch (e) {
+        showToast('Failed to update reward', 'danger');
       }
-    } catch (e) {
-      showToast('Failed to save email settings', 'danger');
-    }
-  });
-}
+    });
+  }
+  
+  // Redeem reward form
+  const redeemRewardForm = document.getElementById('redeemRewardForm');
+  if (redeemRewardForm) {
+    redeemRewardForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const personId = parseInt(document.getElementById('redeemPerson').value);
+      const rewardId = parseInt(document.getElementById('redeemReward').value);
+      
+      if (!personId || !rewardId) return;
+      
+      try {
+        await authFetch('/api/redemptions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ personId, rewardId })
+        });
+        
+        bootstrap.Modal.getInstance(document.getElementById('redeemRewardModal')).hide();
+        await fetchRedemptions();
+        await fetchPeople(); // Refresh to update points
+        renderPeoplePoints();
+        showToast('Reward redeemed successfully', 'success');
+      } catch (e) {
+        const errorText = await e.response?.text() || 'Failed to redeem reward';
+        showToast(errorText, 'danger');
+      }
+    });
+    
+    // Update info when selections change
+    document.getElementById('redeemPerson').addEventListener('change', updateRedeemInfo);
+    document.getElementById('redeemReward').addEventListener('change', updateRedeemInfo);
+  }
+  
+  // Update task form to include points
+  const taskPointsField = document.getElementById('taskPoints');
+  if (taskPointsField && !taskPointsField.hasAttribute('data-initialized')) {
+    taskPointsField.setAttribute('data-initialized', 'true');
+    // Field is already handled by the existing task form handler above
+  }
+});

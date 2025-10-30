@@ -12,6 +12,8 @@
   --list-hover: rgba(0,0,0,.03);
   --border: rgba(255,255,255,0.4);
   --blur: 10px;
+  --points-color: #ffc107;
+  --reward-color: #28a745;
 }
 
 [data-theme="dark"] {
@@ -26,6 +28,8 @@
   --list-hover: rgba(255,255,255,.03);
   --border: rgba(255,255,255,0.1);
   --blur: 10px;
+  --points-color: #ffc107;
+  --reward-color: #28a745;
 }
 
 /* Global */
@@ -297,4 +301,176 @@ h1, h2 {
 }
 #loginContainer .card {
   width: 320px;
+}
+
+/* Points and Rewards System */
+.badge.bg-warning.text-dark {
+  background-color: var(--points-color) !important;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
+.btn-outline-success:hover {
+  background-color: var(--reward-color) !important;
+  border-color: var(--reward-color) !important;
+}
+
+.list-group-item .badge {
+  margin-left: 0.5rem;
+}
+
+#pointSystemContent {
+  transition: all 0.3s ease;
+}
+
+#levelSystemContent {
+  transition: all 0.3s ease;
+}
+
+.reward-item {
+  border-left: 4px solid var(--reward-color);
+}
+
+.redemption-item {
+  border-left: 4px solid var(--points-color);
+}
+
+.points-display {
+  font-weight: 600;
+  color: var(--points-color);
+}
+
+.reward-description {
+  font-size: 0.9em;
+  color: var(--text);
+  opacity: 0.8;
+  margin-top: 0.25rem;
+}
+
+/* Custom recurring options styling */
+select#taskRecurring option[value^="every_"] {
+  font-style: italic;
+}
+
+select#taskRecurring option[value="first_monday_month"] {
+  font-style: italic;
+}
+
+/* Points input field */
+#taskPoints {
+  max-width: 80px;
+  text-align: center;
+}
+
+/* Reward management cards */
+.reward-card {
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.reward-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+/* Points badge in people list */
+.people-points-badge {
+  background: linear-gradient(45deg, var(--points-color), #ffcd39);
+  color: #000;
+  font-weight: 600;
+}
+
+/* New Settings Page Styles */
+.reward-system-card {
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  height: 100%;
+}
+
+.reward-system-card:hover {
+  border-color: var(--hero-start);
+  transform: translateY(-2px);
+}
+
+.reward-system-card.selected {
+  border-color: var(--hero-start);
+  background: linear-gradient(135deg, var(--hero-start)10, var(--hero-end)10);
+  color: white;
+}
+
+.reward-system-card.selected .text-muted {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.reward-system-card .form-check-input:checked {
+  background-color: var(--hero-start);
+  border-color: var(--hero-start);
+}
+
+.settings-section {
+  border-left: 4px solid var(--hero-start);
+  background: rgba(var(--hero-start), 0.05);
+}
+
+#migrationWarning {
+  border-left: 4px solid #ffc107;
+}
+
+.card-title {
+  margin-bottom: 0;
+  font-weight: 600;
+}
+
+/* Settings modal larger size */
+.modal-lg {
+  max-width: 900px;
+}
+
+/* Point totals preview */
+#pointTotalsPreview {
+  max-height: 120px;
+  overflow-y: auto;
+  background: var(--field-bg);
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+}
+
+/* Disabled rewards tab styling */
+#rewardsSystemDisabled {
+  background: var(--card-bg);
+  border-radius: 1rem;
+  margin: 2rem;
+  backdrop-filter: blur(var(--blur));
+}
+
+#rewardsSystemDisabled .display-1 {
+  font-size: 4rem;
+  opacity: 0.5;
+}
+
+/* Settings cards */
+.settings-card {
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  backdrop-filter: blur(var(--blur));
+}
+
+.settings-card .card-header {
+  background: rgba(var(--hero-start), 0.1);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Form sections */
+.settings-form-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-form-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
