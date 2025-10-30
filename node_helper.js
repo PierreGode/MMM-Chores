@@ -484,6 +484,7 @@ module.exports = NodeHelper.create({
         textMirrorSize: settings.textMirrorSize ?? payload.textMirrorSize,
         showPast: settings.showPast ?? payload.showPast,
         showAnalyticsOnMirror: settings.showAnalyticsOnMirror ?? payload.showAnalyticsOnMirror,
+        showRewardsTab: settings.showRewardsTab ?? payload.showRewardsTab ?? false,
         useAI: settings.useAI ?? payload.useAI,
         autoUpdate: settings.autoUpdate ?? payload.autoUpdate,
         pushoverEnabled: settings.pushoverEnabled ?? payload.pushoverEnabled,
