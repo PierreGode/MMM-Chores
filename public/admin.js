@@ -352,8 +352,6 @@ function updateRewardsTabVisibility(usePointSystem) {
   if (rewardsSection) {
     if (usePointSystem) {
       rewardsSection.classList.remove('d-none');
-      loadSettingsRewards();
-      loadSettingsPeoplePoints();
     } else {
       rewardsSection.classList.add('d-none');
     }
@@ -1713,8 +1711,20 @@ async function initApp() {
   updateRewardsTabVisibility(!!userSettings.usePointSystem);
   
   if (userSettings.usePointSystem) {
-    await fetchRewards();
-    await fetchRedemptions();
+    // Fetch rewards data but don't render to old tab elements
+    try {
+      const rewardsRes = await authFetch('/api/rewards');
+      rewardsCache = await rewardsRes.json();
+    } catch (e) {
+      console.error('Failed to fetch rewards:', e);
+    }
+    
+    try {
+      const redemptionsRes = await authFetch('/api/redemptions');
+      redemptionsCache = await redemptionsRes.json();
+    } catch (e) {
+      console.error('Failed to fetch redemptions:', e);
+    }
   }
 
   const savedBoards = await fetchSavedBoards();
@@ -1765,6 +1775,15 @@ async function initApp() {
   }
 
   if (settingsModalEl) {
+    settingsModalEl.addEventListener('shown.bs.modal', () => {
+      // Load rewards data when modal is shown and point system is enabled
+      const usePointSystemCheckbox = document.getElementById('usePointSystem');
+      if (usePointSystemCheckbox && usePointSystemCheckbox.checked) {
+        loadSettingsRewards();
+        loadSettingsPeoplePoints();
+      }
+    });
+    
     settingsModalEl.addEventListener('hidden.bs.modal', () => {
       if (!settingsSaved && settingsChanged) {
         window.location.reload();
