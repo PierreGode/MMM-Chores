@@ -40,7 +40,7 @@
       </div>
       <!-- language selector inserted via JS -->
       <button class="btn btn-outline-secondary btn-icon" id="settingsBtn" title="Settings">
-        <i class="bi bi-gear"></i>
+        <i class="bi bi-gear-fill"></i>
       </button>
       <button class="btn btn-outline-secondary btn-icon" id="logoutBtn" title="Logout">
         <i class="bi bi-box-arrow-right"></i>
@@ -357,19 +357,54 @@
             <div class="card mb-4 d-none" id="pointSettings">
               <div class="card-header">
                 <h6 class="card-title mb-0">
-                  <i class="bi bi-coin me-2"></i>Point System Settings
+                  <i class="bi bi-coin me-2"></i>Point System & Rewards
                 </h6>
               </div>
               <div class="card-body">
-                <div class="alert alert-success">
-                  <i class="bi bi-check-circle me-2"></i>
-                  Point system is active. Visit the <strong>Rewards</strong> tab to manage custom rewards and view point balances.
-                </div>
-                <div class="row gy-3">
+                <div class="row gy-4">
+                  <!-- Point Totals Section -->
                   <div class="col-12">
-                    <label class="form-label">Current Point Totals:</label>
+                    <label class="form-label fw-bold">Current Point Totals:</label>
                     <div id="pointTotalsPreview" class="small text-muted">
                       Loading...
+                    </div>
+                  </div>
+
+                  <!-- Rewards Management Section -->
+                  <div class="col-12">
+                    <hr class="my-2" />
+                    <h6 class="mb-3">
+                      <i class="bi bi-gift me-2"></i>Manage Rewards
+                    </h6>
+                    <form id="settingsRewardForm" class="row g-2 mb-3">
+                      <div class="col-md-5">
+                        <input type="text" id="settingsRewardName" class="form-control" placeholder="Reward name…" required />
+                      </div>
+                      <div class="col-md-2">
+                        <input type="number" id="settingsRewardPoints" class="form-control" placeholder="Points" min="1" required />
+                      </div>
+                      <div class="col-md-3">
+                        <input type="text" id="settingsRewardDescription" class="form-control" placeholder="Description (optional)" />
+                      </div>
+                      <div class="col-md-2">
+                        <button class="btn btn-primary w-100" type="submit">
+                          <i class="bi bi-plus-lg"></i> Add
+                        </button>
+                      </div>
+                    </form>
+                    <div style="max-height: 300px; overflow-y: auto;">
+                      <ul id="settingsRewardsList" class="list-group"></ul>
+                    </div>
+                  </div>
+
+                  <!-- Recent Redemptions Section -->
+                  <div class="col-12">
+                    <hr class="my-2" />
+                    <h6 class="mb-3">
+                      <i class="bi bi-clock-history me-2"></i>Recent Redemptions
+                    </h6>
+                    <div style="max-height: 250px; overflow-y: auto;">
+                      <ul id="settingsRedemptionsList" class="list-group"></ul>
                     </div>
                   </div>
                 </div>
@@ -419,61 +454,6 @@
                   <div class="col-12 col-sm-6">
                     <label class="form-label" for="settingsReminderTime">Reminder time</label>
                     <input type="time" id="settingsReminderTime" class="form-control" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Rewards Management Section -->
-            <div id="rewardsManagementSection" class="d-none">
-              <hr>
-              <h6 class="mb-3">
-                <i class="bi bi-gift me-2"></i>Rewards Management
-              </h6>
-              
-              <div class="row g-3">
-                <!-- Add New Reward -->
-                <div class="col-12">
-                  <div class="card">
-                    <div class="card-body">
-                      <h6 class="card-title">Add New Reward</h6>
-                      <form id="settingsRewardForm" class="row g-2">
-                        <div class="col-md-4">
-                          <input type="text" id="settingsRewardName" class="form-control" placeholder="Reward name" required />
-                        </div>
-                        <div class="col-md-2">
-                          <input type="number" id="settingsRewardPoints" class="form-control" placeholder="Points" min="1" required />
-                        </div>
-                        <div class="col-md-4">
-                          <input type="text" id="settingsRewardDescription" class="form-control" placeholder="Description (optional)" />
-                        </div>
-                        <div class="col-md-2">
-                          <button class="btn btn-primary w-100" type="submit">
-                            <i class="bi bi-plus-lg"></i>
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Current Rewards -->
-                <div class="col-12">
-                  <div class="card">
-                    <div class="card-body">
-                      <h6 class="card-title">Current Rewards</h6>
-                      <ul id="settingsRewardsList" class="list-group list-group-flush"></ul>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- People Points Summary -->
-                <div class="col-12">
-                  <div class="card">
-                    <div class="card-body">
-                      <h6 class="card-title">Points Summary</h6>
-                      <ul id="settingsPeoplePointsList" class="list-group list-group-flush"></ul>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -657,7 +637,7 @@
 
   <script src="lang.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="admin.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
