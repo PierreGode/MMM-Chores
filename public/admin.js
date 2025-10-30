@@ -23,6 +23,7 @@ let editTaskId = null;
 let editTaskModal = null;
 let customLevelTitles = {};
 let personRewardsTarget = null;
+let editCoinsPersonId = null;
 let levelTitles = [];
 const personRewardsModalEl = document.getElementById('personRewardsModal');
 const personRewardTitlesContainer = document.getElementById('personRewardTitlesContainer');
@@ -730,6 +731,18 @@ function showPersonRewards(person) {
   if (modal) modal.show();
 }
 
+function openEditCoinsModal(person) {
+  editCoinsPersonId = person.id;
+  const modal = new bootstrap.Modal(document.getElementById('editCoinsModal'));
+  const titleEl = document.getElementById('editCoinsModalTitle');
+  const amountInput = document.getElementById('editCoinsAmount');
+  
+  if (titleEl) titleEl.textContent = `Edit Coins - ${person.name}`;
+  if (amountInput) amountInput.value = person.points || 0;
+  
+  modal.show();
+}
+
 function renderPersonRewardsList() {
   const list = document.getElementById('personRewardsList');
   if (!list) return;
@@ -762,6 +775,10 @@ function renderPersonRewardsList() {
 function renderPeople() {
   const list = document.getElementById("peopleList");
   list.innerHTML = "";
+  
+  // Check if point system is active
+  const usePointSystem = document.getElementById('usePointSystem');
+  const isPointSystemActive = usePointSystem && usePointSystem.checked;
 
   if (peopleCache.length === 0) {
     const li = document.createElement("li");
@@ -776,7 +793,15 @@ function renderPeople() {
     li.className = "list-group-item d-flex justify-content-between align-items-center";
     const info = document.createElement("span");
     info.textContent = person.name;
-    if (levelingEnabled && person.level) {
+    
+    // Show coins if point system is active, otherwise show level
+    if (isPointSystemActive) {
+      const small = document.createElement("small");
+      small.className = "ms-2 text-muted";
+      const coins = person.points || 0;
+      small.innerHTML = `<i class="bi bi-coin text-warning"></i> ${coins} coins`;
+      info.appendChild(small);
+    } else if (levelingEnabled && person.level) {
       const small = document.createElement("small");
       small.className = "ms-2 text-muted";
       const titlePart = person.title ? ` - ${person.title}` : "";
@@ -789,7 +814,16 @@ function renderPeople() {
     if (userPermission === 'write') {
       const actions = document.createElement('div');
       actions.className = 'btn-group btn-group-sm';
-      if (levelingEnabled) {
+      
+      // Show edit coins button if point system is active
+      if (isPointSystemActive) {
+        const editCoinsBtn = document.createElement('button');
+        editCoinsBtn.className = 'btn btn-outline-warning';
+        editCoinsBtn.title = 'Edit coins';
+        editCoinsBtn.innerHTML = '<i class="bi bi-coin"></i>';
+        editCoinsBtn.onclick = () => openEditCoinsModal(person);
+        actions.appendChild(editCoinsBtn);
+      } else if (levelingEnabled) {
         const viewBtn = document.createElement('button');
         viewBtn.className = 'btn btn-outline-secondary';
         viewBtn.title = LANGUAGES[currentLang].viewRewardsButton || 'Rewards';
@@ -797,6 +831,7 @@ function renderPeople() {
         viewBtn.onclick = () => showPersonRewards(person);
         actions.appendChild(viewBtn);
       }
+      
       const delBtn = document.createElement('button');
       delBtn.className = 'btn btn-outline-danger';
       delBtn.title = LANGUAGES[currentLang].remove;
@@ -1237,6 +1272,8 @@ async function updateTask(id, changes) {
     body: JSON.stringify(changes)
   });
   await fetchTasks();
+  await fetchPeople(); // Refresh people to update points after task completion
+  renderPeoplePoints(); // Update the rewards tab if visible
 }
 
 async function deletePerson(id) {
@@ -2134,5 +2171,41 @@ document.addEventListener('DOMContentLoaded', () => {
   if (taskPointsField && !taskPointsField.hasAttribute('data-initialized')) {
     taskPointsField.setAttribute('data-initialized', 'true');
     // Field is already handled by the existing task form handler above
+  }
+  
+  // Edit coins form
+  const editCoinsForm = document.getElementById('editCoinsForm');
+  if (editCoinsForm) {
+    editCoinsForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      if (!editCoinsPersonId) return;
+      
+      const newAmount = parseInt(document.getElementById('editCoinsAmount').value);
+      
+      try {
+        const person = peopleCache.find(p => p.id === editCoinsPersonId);
+        if (!person) {
+          showToast('Person not found', 'danger');
+          return;
+        }
+        
+        person.points = newAmount;
+        
+        // Save via settings endpoint to update the data file
+        await authFetch('/api/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ _updatePersonCoins: { personId: editCoinsPersonId, points: newAmount } })
+        });
+        
+        bootstrap.Modal.getInstance(document.getElementById('editCoinsModal')).hide();
+        await fetchPeople();
+        renderPeoplePoints();
+        showToast('Coins updated successfully', 'success');
+      } catch (e) {
+        showToast('Failed to update coins', 'danger');
+      }
+    });
   }
 });

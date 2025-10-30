@@ -81,7 +81,11 @@ function applyLoadedData(json, sourceLabel = "data.json") {
   // Initialize points for existing people if point system is enabled
   if (settings.usePointSystem) {
     people.forEach(person => {
-      if (person.points === undefined) {
+      // Restore saved points if available, otherwise calculate from tasks
+      if (person._savedPoints !== undefined) {
+        person.points = person._savedPoints;
+        delete person._savedPoints;
+      } else if (person.points === undefined) {
         person.points = calculatePersonPoints(person.id);
       }
     });
@@ -993,6 +997,20 @@ module.exports = NodeHelper.create({
       if (typeof newSettings !== "object") {
         return res.status(400).json({ error: "Invalid settings data" });
       }
+      
+      // Handle manual coin editing
+      if (newSettings._updatePersonCoins) {
+        const { personId, points } = newSettings._updatePersonCoins;
+        const person = people.find(p => p.id === personId);
+        if (person) {
+          person.points = points;
+          saveData();
+          self.sendSocketNotification("PEOPLE_UPDATE", people);
+          return res.json({ success: true });
+        }
+        return res.status(404).json({ error: "Person not found" });
+      }
+      
       if (newSettings.pushoverEnabled && (!self.config.pushoverApiKey || !self.config.pushoverUser)) {
         return res.status(400).json({
           error: "Please set pushoverApiKey and pushoverUser in config.js to use Pushover notifications."
@@ -1013,7 +1031,7 @@ module.exports = NodeHelper.create({
       }
       
       Object.entries(newSettings).forEach(([key, val]) => {
-        if (key === "leveling" || key === "openaiApiKey" || key === "pushoverApiKey" || key === "pushoverUser") return;
+        if (key === "leveling" || key === "openaiApiKey" || key === "pushoverApiKey" || key === "pushoverUser" || key === "_updatePersonCoins") return;
         settings[key] = val;
         if (self.config) {
           if (key === "levelingEnabled") {

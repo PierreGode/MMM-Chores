@@ -57,6 +57,14 @@
   font-size: 0.8em;
 }
 
+/* Coin badge next to person name */
+.MMM-Chores .coin-badge {
+  margin-left: 3px;
+  opacity: 0.8;
+  font-size: 0.8em;
+  color: #ffc107;
+}
+
 /* Analytics charts */
 .MMM-Chores .analytics-wrapper {
   margin-top: 10px;
