@@ -244,6 +244,16 @@ function initSettingsForm(settings) {
       pointSettings.classList.toggle('d-none', system !== 'points');
     }
 
+    // Show/hide Rewards tab setting
+    const showRewardsTabContainer = document.getElementById('settingsShowRewardsTabContainer');
+    if (showRewardsTabContainer) {
+      if (system === 'points') {
+        showRewardsTabContainer.style.display = '';
+      } else {
+        showRewardsTabContainer.style.display = 'none';
+      }
+    }
+
     // Update rewards tab visibility
     updateRewardsTabVisibility(system === 'points');
 
@@ -259,6 +269,8 @@ function initSettingsForm(settings) {
   const dateFmt = document.getElementById('settingsDateFmt');
   const useAI = document.getElementById('settingsUseAI');
   const showAnalytics = document.getElementById('settingsShowAnalytics');
+  const showRewardsTab = document.getElementById('settingsShowRewardsTab');
+  const showRewardsTabContainer = document.getElementById('settingsShowRewardsTabContainer');
   const levelEnable = document.getElementById('settingsLevelEnable');
   const autoUpdate = document.getElementById('settingsAutoUpdate');
   const pushoverEnable = document.getElementById('settingsPushoverEnable');
@@ -271,11 +283,21 @@ function initSettingsForm(settings) {
   if (dateFmt) dateFmt.value = settings.dateFormatting || '';
   if (useAI) useAI.checked = settings.useAI !== false;
   if (showAnalytics) showAnalytics.checked = !!settings.showAnalyticsOnMirror;
+  if (showRewardsTab) showRewardsTab.checked = settings.showRewardsTab !== false;
   if (levelEnable) levelEnable.checked = settings.levelingEnabled !== false;
   if (autoUpdate) autoUpdate.checked = !!settings.autoUpdate;
   if (pushoverEnable) pushoverEnable.checked = !!settings.pushoverEnabled;
   if (reminderTime) reminderTime.value = settings.reminderTime || '';
   if (backgroundSelect) backgroundSelect.value = settings.background || '';
+  
+  // Show/hide Rewards tab setting based on point system
+  if (showRewardsTabContainer) {
+    if (currentSystem === 'points') {
+      showRewardsTabContainer.style.display = '';
+    } else {
+      showRewardsTabContainer.style.display = 'none';
+    }
+  }
 
   // Update point totals preview
   updatePointTotalsPreview();
