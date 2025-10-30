@@ -59,9 +59,6 @@
       <li class="nav-item" role="presentation">
         <button class="nav-link" data-bs-toggle="tab" data-bs-target="#analytics" type="button" id="tabAnalytics">Analytics</button>
       </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#rewards" type="button" id="tabRewards">Rewards</button>
-      </li>
     </ul>
 
     <div class="tab-content">
@@ -166,86 +163,6 @@
           </select>
         </div>
         <div id="analyticsContainer" class="row g-3"></div>
-      </div>
-
-      <!-- Rewards Tab -->
-      <div class="tab-pane fade" id="rewards" role="tabpanel">
-        <div id="rewardsSystemDisabled" class="text-center py-5">
-          <i class="bi bi-coin text-muted display-1"></i>
-          <h4 class="text-muted mt-3">Point System Not Enabled</h4>
-          <p class="text-muted">
-            The point-based reward system is currently disabled. You're using the traditional level system.
-          </p>
-          <button class="btn btn-primary" onclick="openSettingsToRewardSystem()">
-            <i class="bi bi-gear me-2"></i>Enable Point System in Settings
-          </button>
-          <div class="mt-3">
-            <small class="text-muted">
-              <i class="bi bi-info-circle me-1"></i>
-              You can switch between level and point systems anytime without losing data.
-            </small>
-          </div>
-        </div>
-
-        <div id="rewardsSystemEnabled" class="d-none">
-          <div class="row g-4">
-            <div class="col-lg-6">
-              <div class="card card-shadow h-100">
-                <div class="card-header">
-                  <span id="rewardsHeader">
-                    <i class="bi bi-gift me-2"></i>Rewards Management
-                  </span>
-                </div>
-                <div class="card-body">
-                  <form id="rewardForm" class="row gy-2 gx-2 align-items-center mb-3">
-                    <div class="col-sm">
-                      <input type="text" id="rewardName" class="form-control" placeholder="Reward name…" required />
-                    </div>
-                    <div class="col-sm-auto">
-                      <input type="number" id="rewardPoints" class="form-control" placeholder="Points" min="1" required />
-                    </div>
-                    <div class="col-sm">
-                      <input type="text" id="rewardDescription" class="form-control" placeholder="Description (optional)" />
-                    </div>
-                    <div class="col-sm-auto">
-                      <button class="btn btn-primary" type="submit">
-                        <i class="bi bi-plus-lg me-1"></i>Add Reward
-                      </button>
-                    </div>
-                  </form>
-                  <ul id="rewardsList" class="list-group"></ul>
-                </div>
-              </div>
-            </div>
-            <div class="col-lg-6">
-              <div class="card card-shadow h-100">
-                <div class="card-header">
-                  <span id="peoplePointsHeader">
-                    <i class="bi bi-people me-2"></i>People & Points
-                  </span>
-                </div>
-                <div class="card-body">
-                  <ul id="peoplePointsList" class="list-group"></ul>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="row g-4 mt-2">
-            <div class="col-12">
-              <div class="card card-shadow">
-                <div class="card-header">
-                  <span id="redemptionsHeader">
-                    <i class="bi bi-clock-history me-2"></i>Recent Redemptions
-                  </span>
-                </div>
-                <div class="card-body">
-                  <ul id="redemptionsList" class="list-group"></ul>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
 
     </div>
@@ -502,6 +419,61 @@
                   <div class="col-12 col-sm-6">
                     <label class="form-label" for="settingsReminderTime">Reminder time</label>
                     <input type="time" id="settingsReminderTime" class="form-control" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Rewards Management Section -->
+            <div id="rewardsManagementSection" class="d-none">
+              <hr>
+              <h6 class="mb-3">
+                <i class="bi bi-gift me-2"></i>Rewards Management
+              </h6>
+              
+              <div class="row g-3">
+                <!-- Add New Reward -->
+                <div class="col-12">
+                  <div class="card">
+                    <div class="card-body">
+                      <h6 class="card-title">Add New Reward</h6>
+                      <form id="settingsRewardForm" class="row g-2">
+                        <div class="col-md-4">
+                          <input type="text" id="settingsRewardName" class="form-control" placeholder="Reward name" required />
+                        </div>
+                        <div class="col-md-2">
+                          <input type="number" id="settingsRewardPoints" class="form-control" placeholder="Points" min="1" required />
+                        </div>
+                        <div class="col-md-4">
+                          <input type="text" id="settingsRewardDescription" class="form-control" placeholder="Description (optional)" />
+                        </div>
+                        <div class="col-md-2">
+                          <button class="btn btn-primary w-100" type="submit">
+                            <i class="bi bi-plus-lg"></i>
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Current Rewards -->
+                <div class="col-12">
+                  <div class="card">
+                    <div class="card-body">
+                      <h6 class="card-title">Current Rewards</h6>
+                      <ul id="settingsRewardsList" class="list-group list-group-flush"></ul>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- People Points Summary -->
+                <div class="col-12">
+                  <div class="card">
+                    <div class="card-body">
+                      <h6 class="card-title">Points Summary</h6>
+                      <ul id="settingsPeoplePointsList" class="list-group list-group-flush"></ul>
+                    </div>
                   </div>
                 </div>
               </div>
