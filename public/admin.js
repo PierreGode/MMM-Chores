@@ -25,6 +25,7 @@ let customLevelTitles = {};
 let personRewardsTarget = null;
 let editCoinsPersonId = null;
 let levelTitles = [];
+let taskPointsRules = [];
 const personRewardsModalEl = document.getElementById('personRewardsModal');
 const personRewardTitlesContainer = document.getElementById('personRewardTitlesContainer');
 const personRewardTitleInputs = [];
@@ -170,6 +171,15 @@ async function saveUserLanguage(lang) {
 function initSettingsForm(settings) {
   const form = document.getElementById('settingsForm');
   if (!form) return;
+
+  // Load task points rules
+  if (settings.taskPointsRules && Array.isArray(settings.taskPointsRules)) {
+    taskPointsRules = settings.taskPointsRules;
+    renderTaskPointsRules();
+  }
+  
+  // Populate gift points person select
+  populateGiftPersonSelect();
 
   // Reward system selection
   const useLevelSystem = document.getElementById('useLevelSystem');
@@ -654,6 +664,7 @@ async function fetchPeople() {
   peopleCache = await res.json();
   renderPeople();
   renderPeoplePoints(); // Update points display when people data changes
+  populateGiftPersonSelect(); // Update gift points dropdown
 }
 
 async function fetchTasks() {
@@ -741,6 +752,105 @@ function openEditCoinsModal(person) {
   if (amountInput) amountInput.value = person.points || 0;
   
   modal.show();
+}
+
+// Task Points Rules Management
+function renderTaskPointsRules() {
+  const list = document.getElementById('taskPointsRulesList');
+  if (!list) return;
+  
+  list.innerHTML = '';
+  
+  if (taskPointsRules.length === 0) {
+    const li = document.createElement('li');
+    li.className = 'list-group-item text-center text-muted small';
+    li.textContent = 'No task point rules defined';
+    list.appendChild(li);
+    return;
+  }
+  
+  taskPointsRules.forEach((rule, index) => {
+    const li = document.createElement('li');
+    li.className = 'list-group-item d-flex justify-content-between align-items-center py-2';
+    li.innerHTML = `
+      <div>
+        <strong class="small">${rule.pattern}</strong>
+        <span class="badge bg-warning text-dark ms-2">${rule.points} pts</span>
+      </div>
+      <button class="btn btn-sm btn-outline-danger" onclick="removeTaskPointsRule(${index})" title="Remove">
+        <i class="bi bi-trash"></i>
+      </button>
+    `;
+    list.appendChild(li);
+  });
+}
+
+function removeTaskPointsRule(index) {
+  taskPointsRules.splice(index, 1);
+  saveTaskPointsRules();
+  renderTaskPointsRules();
+}
+
+// Make function available globally for onclick
+window.removeTaskPointsRule = removeTaskPointsRule;
+
+async function saveTaskPointsRules() {
+  try {
+    await authFetch('/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ taskPointsRules })
+    });
+  } catch (e) {
+    console.error('Failed to save task points rules:', e);
+  }
+}
+
+async function applyTaskPointsRules() {
+  if (taskPointsRules.length === 0) {
+    showToast('No rules to apply', 'warning');
+    return;
+  }
+  
+  let updatedCount = 0;
+  
+  for (const task of tasksCache) {
+    if (task.deleted) continue;
+    
+    for (const rule of taskPointsRules) {
+      const pattern = rule.pattern.toLowerCase();
+      const taskName = task.name.toLowerCase();
+      
+      if (taskName.includes(pattern)) {
+        if (task.points !== rule.points) {
+          await authFetch(`/api/tasks/${task.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ points: rule.points })
+          });
+          updatedCount++;
+        }
+        break; // Only apply first matching rule
+      }
+    }
+  }
+  
+  await fetchTasks();
+  showToast(`Applied rules to ${updatedCount} task(s)`, 'success');
+}
+
+// Populate gift points person select
+function populateGiftPersonSelect() {
+  const select = document.getElementById('giftPersonSelect');
+  if (!select) return;
+  
+  select.innerHTML = '<option value="">Select person…</option>';
+  peopleCache.forEach(person => {
+    const option = document.createElement('option');
+    option.value = person.id;
+    option.textContent = `${person.name} (${person.points || 0} coins)`;
+    select.appendChild(option);
+  });
 }
 
 function renderPersonRewardsList() {
@@ -2205,6 +2315,72 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast('Coins updated successfully', 'success');
       } catch (e) {
         showToast('Failed to update coins', 'danger');
+      }
+    });
+  }
+  
+  // Task points form
+  const taskPointsForm = document.getElementById('taskPointsForm');
+  if (taskPointsForm) {
+    taskPointsForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const pattern = document.getElementById('taskPatternName').value.trim();
+      const points = parseInt(document.getElementById('taskPatternPoints').value);
+      
+      if (!pattern || !points) return;
+      
+      taskPointsRules.push({ pattern, points });
+      await saveTaskPointsRules();
+      renderTaskPointsRules();
+      taskPointsForm.reset();
+      showToast('Task point rule added', 'success');
+    });
+  }
+  
+  // Apply task points button
+  const applyTaskPointsBtn = document.getElementById('applyTaskPointsBtn');
+  if (applyTaskPointsBtn) {
+    applyTaskPointsBtn.addEventListener('click', applyTaskPointsRules);
+  }
+  
+  // Gift points form
+  const giftPointsForm = document.getElementById('giftPointsForm');
+  if (giftPointsForm) {
+    giftPointsForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const personId = parseInt(document.getElementById('giftPersonSelect').value);
+      const points = parseInt(document.getElementById('giftPointsAmount').value);
+      const reason = document.getElementById('giftPointsReason').value.trim();
+      
+      if (!personId || !points) return;
+      
+      try {
+        const person = peopleCache.find(p => p.id === personId);
+        if (!person) {
+          showToast('Person not found', 'danger');
+          return;
+        }
+        
+        const newTotal = (person.points || 0) + points;
+        
+        await authFetch('/api/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            _updatePersonCoins: { personId, points: newTotal },
+            _giftReason: reason || 'Gift'
+          })
+        });
+        
+        await fetchPeople();
+        renderPeoplePoints();
+        populateGiftPersonSelect();
+        giftPointsForm.reset();
+        showToast(`Gifted ${points} points to ${person.name}`, 'success');
+      } catch (e) {
+        showToast('Failed to gift points', 'danger');
       }
     });
   }

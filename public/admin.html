@@ -469,6 +469,64 @@
                     <ul id="rewardsList" class="list-group"></ul>
                   </div>
                 </div>
+                
+                <!-- Task Points Assignment -->
+                <div class="border-top pt-3 mt-3">
+                  <h6 class="mb-3">
+                    <i class="bi bi-list-task me-2"></i>Task Points Assignment
+                  </h6>
+                  <p class="small text-muted">Assign point values to tasks by matching their names. Tasks matching these patterns will automatically award the specified points.</p>
+                  <form id="taskPointsForm" class="row gy-2 gx-2 align-items-end mb-3">
+                    <div class="col-sm-6">
+                      <label class="form-label small" for="taskPatternName">Task Name Pattern</label>
+                      <input type="text" id="taskPatternName" class="form-control form-control-sm" placeholder="e.g., 'dishes', 'clean', 'vacuum'…" required />
+                    </div>
+                    <div class="col-sm-3">
+                      <label class="form-label small" for="taskPatternPoints">Points Value</label>
+                      <input type="number" id="taskPatternPoints" class="form-control form-control-sm" placeholder="Points" min="1" required />
+                    </div>
+                    <div class="col-sm-3">
+                      <button class="btn btn-primary btn-sm w-100" type="submit">
+                        <i class="bi bi-plus-lg me-1"></i>Add Rule
+                      </button>
+                    </div>
+                  </form>
+                  <div style="max-height: 200px; overflow-y: auto;">
+                    <ul id="taskPointsRulesList" class="list-group"></ul>
+                  </div>
+                  <button class="btn btn-success btn-sm mt-2" type="button" id="applyTaskPointsBtn">
+                    <i class="bi bi-check-circle me-1"></i>Apply Rules to Existing Tasks
+                  </button>
+                </div>
+                
+                <!-- Gift Points -->
+                <div class="border-top pt-3 mt-3">
+                  <h6 class="mb-3">
+                    <i class="bi bi-gift-fill me-2"></i>Gift Points to Person
+                  </h6>
+                  <p class="small text-muted">Give bonus points to people without completing a task.</p>
+                  <form id="giftPointsForm" class="row gy-2 gx-2 align-items-end mb-3">
+                    <div class="col-sm-5">
+                      <label class="form-label small" for="giftPersonSelect">Person</label>
+                      <select id="giftPersonSelect" class="form-select form-select-sm" required>
+                        <option value="">Select person…</option>
+                      </select>
+                    </div>
+                    <div class="col-sm-3">
+                      <label class="form-label small" for="giftPointsAmount">Points to Gift</label>
+                      <input type="number" id="giftPointsAmount" class="form-control form-control-sm" placeholder="Points" min="1" required />
+                    </div>
+                    <div class="col-sm-4">
+                      <label class="form-label small" for="giftPointsReason">Reason (optional)</label>
+                      <input type="text" id="giftPointsReason" class="form-control form-control-sm" placeholder="e.g., Bonus" />
+                    </div>
+                    <div class="col-sm-12">
+                      <button class="btn btn-success btn-sm" type="submit">
+                        <i class="bi bi-gift-fill me-1"></i>Gift Points
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
             </div>
 

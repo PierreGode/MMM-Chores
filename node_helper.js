@@ -1031,7 +1031,7 @@ module.exports = NodeHelper.create({
       }
       
       Object.entries(newSettings).forEach(([key, val]) => {
-        if (key === "leveling" || key === "openaiApiKey" || key === "pushoverApiKey" || key === "pushoverUser" || key === "_updatePersonCoins") return;
+        if (key === "leveling" || key === "openaiApiKey" || key === "pushoverApiKey" || key === "pushoverUser" || key === "_updatePersonCoins" || key === "_giftReason") return;
         settings[key] = val;
         if (self.config) {
           if (key === "levelingEnabled") {

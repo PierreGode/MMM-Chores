@@ -570,6 +570,27 @@ select#taskRecurring option[value="first_monday_month"] {
   box-shadow: 0 0 0 0.25rem rgba(78, 116, 255, 0.25);
 }
 
+/* Task points rules and gift points sections */
+.border-top {
+  border-top: 1px solid var(--border) !important;
+}
+
+.form-control-sm,
+.form-select-sm {
+  font-size: 0.875rem;
+}
+
+#taskPointsRulesList .list-group-item,
+#rewardsList .list-group-item {
+  transition: background-color 0.2s ease;
+}
+
+#taskPointsRulesList .list-group-item:hover,
+#rewardsList .list-group-item:hover {
+  background-color: var(--list-hover);
+}
+
+
 /* Point totals preview */
 #pointTotalsPreview {
   max-height: 120px;
