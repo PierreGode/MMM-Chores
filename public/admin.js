@@ -1076,6 +1076,8 @@ function renderTasks() {
   const canWrite = userPermission === 'write';
   const list = document.getElementById("taskList");
   list.innerHTML = "";
+  const useCoinSystem = document.getElementById('useCoinSystem');
+  const isCoinSystemActive = useCoinSystem && useCoinSystem.checked;
 
   if (tasksCache.length === 0) {
     const li = document.createElement("li");
@@ -1139,7 +1141,7 @@ function renderTasks() {
     const recurText = LANGUAGES[currentLang].taskRecurring[task.recurring] || task.recurring;
     span.innerHTML += ` <span class="badge bg-info text-dark">${recurText}</span>`;
   }
-  if (typeof task.points === 'number' && task.points > 0) {
+  if (isCoinSystemActive && typeof task.points === 'number' && task.points > 0) {
     span.innerHTML += ` <span class="badge bg-warning text-dark">${task.points} coins</span>`;
   }
   if (task.done) span.classList.add("task-done");
