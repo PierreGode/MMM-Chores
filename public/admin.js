@@ -877,7 +877,7 @@ async function applyTaskPointsRules() {
 
 function resolveTaskCoinValue(taskName) {
   if (!taskName || !Array.isArray(taskPointsRules) || taskPointsRules.length === 0) {
-    return 1;
+    return null;
   }
 
   const normalized = taskName.toLowerCase();
@@ -886,8 +886,10 @@ function resolveTaskCoinValue(taskName) {
     return normalized.includes(rule.pattern.toLowerCase());
   });
 
-  const parsed = parseInt(matchingRule?.points, 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+  if (!matchingRule) return null;
+
+  const parsed = parseInt(matchingRule.points, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
 // Populate gift points person select
@@ -1141,8 +1143,8 @@ function renderTasks() {
     const recurText = LANGUAGES[currentLang].taskRecurring[task.recurring] || task.recurring;
     span.innerHTML += ` <span class="badge bg-info text-dark">${recurText}</span>`;
   }
-  if (task.points && task.points > 1) {
-    span.innerHTML += ` <span class="badge bg-warning text-dark">${task.points} pts</span>`;
+  if (typeof task.points === 'number' && task.points > 0) {
+    span.innerHTML += ` <span class="badge bg-warning text-dark">${task.points} coins</span>`;
   }
   if (task.done) span.classList.add("task-done");
   const person = peopleCache.find(p => p.id === task.assignedTo);
@@ -1420,18 +1422,23 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
     pad(now.getMinutes())
   );
 
+  const payload = {
+    name,
+    date,
+    recurring,
+    assignedTo: assigned ? parseInt(assigned) : null,
+    created: iso,
+    createdShort: stamp("C")
+  };
+
+  if (typeof points === 'number' && points > 0) {
+    payload.points = points;
+  }
+
   await authFetch("/api/tasks", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name,
-      date,
-      recurring,
-      assignedTo: assigned ? parseInt(assigned) : null,
-      points,
-      created: iso,
-      createdShort: stamp("C")
-    })
+    body: JSON.stringify(payload)
   });
   e.target.reset();
   await fetchTasks();
