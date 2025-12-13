@@ -882,7 +882,7 @@ function populateTaskPatternSelect() {
   if (!select) return;
 
   const availableTasks = Array.isArray(tasksCache)
-    ? tasksCache.filter(task => !task.deleted && task.name)
+    ? tasksCache.filter(task => task && task.name)
     : [];
   const placeholder = LANGUAGES[currentLang].taskPatternSelectPlaceholder || 'Select task…';
   const emptyText = LANGUAGES[currentLang].taskPatternNoTasks || 'No tasks available';
