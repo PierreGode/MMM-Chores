@@ -543,29 +543,38 @@ module.exports = NodeHelper.create({
     if (notification === "INIT_SERVER") {
       this.config = payload;
 
+      const previousSettings = (settings && typeof settings === "object") ? settings : {};
+
       settings = {
-        language: settings.language ?? payload.language,
-        dateFormatting: settings.dateFormatting ?? payload.dateFormatting,
-        textMirrorSize: settings.textMirrorSize ?? payload.textMirrorSize,
-        showPast: settings.showPast ?? payload.showPast,
-        showAnalyticsOnMirror: settings.showAnalyticsOnMirror ?? payload.showAnalyticsOnMirror,
-        useAI: settings.useAI ?? payload.useAI,
-        autoUpdate: settings.autoUpdate ?? payload.autoUpdate,
-        pushoverEnabled: settings.pushoverEnabled ?? payload.pushoverEnabled,
-        reminderTime: settings.reminderTime ?? payload.reminderTime,
-        background: settings.background ?? payload.background ?? 'forest.png',
-        levelingEnabled: settings.levelingEnabled ?? (payload.leveling?.enabled !== false),
-        usePointSystem: settings.usePointSystem ?? payload.usePointSystem ?? false, // Default: level system
-        emailEnabled: settings.emailEnabled ?? payload.emailEnabled ?? false,
+        ...previousSettings,
+        language: previousSettings.language ?? payload.language,
+        dateFormatting: previousSettings.dateFormatting ?? payload.dateFormatting,
+        textMirrorSize: previousSettings.textMirrorSize ?? payload.textMirrorSize,
+        showPast: previousSettings.showPast ?? payload.showPast,
+        showAnalyticsOnMirror: previousSettings.showAnalyticsOnMirror ?? payload.showAnalyticsOnMirror,
+        useAI: previousSettings.useAI ?? payload.useAI,
+        autoUpdate: previousSettings.autoUpdate ?? payload.autoUpdate,
+        pushoverEnabled: previousSettings.pushoverEnabled ?? payload.pushoverEnabled,
+        reminderTime: previousSettings.reminderTime ?? payload.reminderTime,
+        background: previousSettings.background ?? payload.background ?? 'forest.png',
+        levelingEnabled: previousSettings.levelingEnabled ?? (payload.leveling?.enabled !== false),
+        usePointSystem: previousSettings.usePointSystem ?? payload.usePointSystem ?? false,
+        emailEnabled: previousSettings.emailEnabled ?? payload.emailEnabled ?? false,
         leveling: {
-          mode: settings.leveling?.mode ?? payload.leveling?.mode ?? 'years',
-          choresToMaxLevel: settings.leveling?.choresToMaxLevel ?? payload.leveling?.choresToMaxLevel,
-          yearsToMaxLevel: settings.leveling?.yearsToMaxLevel ?? payload.leveling?.yearsToMaxLevel,
-          choresPerWeekEstimate: settings.leveling?.choresPerWeekEstimate ?? payload.leveling?.choresPerWeekEstimate
+          mode: previousSettings.leveling?.mode ?? payload.leveling?.mode ?? 'years',
+          choresToMaxLevel: previousSettings.leveling?.choresToMaxLevel ?? payload.leveling?.choresToMaxLevel,
+          yearsToMaxLevel: previousSettings.leveling?.yearsToMaxLevel ?? payload.leveling?.yearsToMaxLevel,
+          choresPerWeekEstimate: previousSettings.leveling?.choresPerWeekEstimate ?? payload.leveling?.choresPerWeekEstimate
         },
-        levelTitles: settings.levelTitles ?? payload.levelTitles,
-        customLevelTitles: settings.customLevelTitles ?? payload.customLevelTitles
+        levelTitles: previousSettings.levelTitles ?? payload.levelTitles,
+        customLevelTitles: previousSettings.customLevelTitles ?? payload.customLevelTitles
       };
+
+      if (!Array.isArray(settings.taskPointsRules)) {
+        settings.taskPointsRules = Array.isArray(previousSettings.taskPointsRules)
+          ? previousSettings.taskPointsRules
+          : [];
+      }
 
       Object.assign(this.config, settings, {
         leveling: { ...payload.leveling, ...settings.leveling, enabled: settings.levelingEnabled }
