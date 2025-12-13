@@ -520,9 +520,8 @@
                   <form id="taskPointsForm" class="row gy-2 gx-2 align-items-end mb-3">
                     <div class="col-sm-6">
                       <label class="form-label small" for="taskPatternName">Task Name (any chore, even deleted)</label>
-                      <select id="taskPatternName" class="form-select form-select-sm" required>
-                        <option value="">Loading tasks...</option>
-                      </select>
+                      <input type="text" id="taskPatternName" class="form-control form-control-sm" list="taskPatternSuggestions" placeholder="Type a task name..." required />
+                      <datalist id="taskPatternSuggestions"></datalist>
                     </div>
                     <div class="col-sm-3">
                       <label class="form-label small" for="taskPatternPoints">Coins Awarded</label>

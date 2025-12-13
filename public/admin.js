@@ -907,22 +907,19 @@ function populateGiftPersonSelect() {
 }
 
 function populateTaskPatternSelect() {
-  const select = document.getElementById('taskPatternName');
-  if (!select) return;
+  const input = document.getElementById('taskPatternName');
+  const datalist = document.getElementById('taskPatternSuggestions');
+  if (!input || !datalist) return;
 
   const availableTasks = Array.isArray(tasksCache)
     ? tasksCache.filter(task => task && task.name)
     : [];
-  const placeholder = LANGUAGES[currentLang].taskPatternSelectPlaceholder || 'Select task…';
-  const emptyText = LANGUAGES[currentLang].taskPatternNoTasks || 'No tasks available';
+  const placeholder = LANGUAGES[currentLang].taskPatternSelectPlaceholder || 'Type a task name…';
+  const emptyText = LANGUAGES[currentLang].taskPatternNoTasks || 'Type any task name';
 
-  select.innerHTML = '';
-  const defaultOption = document.createElement('option');
-  defaultOption.value = '';
-  defaultOption.textContent = availableTasks.length ? placeholder : emptyText;
-  select.appendChild(defaultOption);
-  select.disabled = availableTasks.length === 0;
+  input.placeholder = availableTasks.length ? placeholder : emptyText;
 
+  datalist.innerHTML = '';
   if (!availableTasks.length) return;
 
   const names = [...new Set(availableTasks.map(task => task.name.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
@@ -930,8 +927,7 @@ function populateTaskPatternSelect() {
   names.forEach(name => {
     const option = document.createElement('option');
     option.value = name;
-    option.textContent = name;
-    select.appendChild(option);
+    datalist.appendChild(option);
   });
 }
 
@@ -2686,8 +2682,8 @@ document.addEventListener('DOMContentLoaded', () => {
     taskPointsForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
-      const patternSelect = document.getElementById('taskPatternName');
-      const pattern = patternSelect ? patternSelect.value : '';
+      const patternInput = document.getElementById('taskPatternName');
+      const pattern = patternInput ? patternInput.value.trim() : '';
       const points = parseInt(document.getElementById('taskPatternPoints').value);
       
       if (!pattern || !points) return;
