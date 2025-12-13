@@ -169,8 +169,10 @@ async function saveUserLanguage(lang) {
 // Init settings form and save handler
 // ==========================
 function initSettingsForm(settings) {
-  const form = document.getElementById('settingsForm');
-  if (!form) return;
+  const settingsContainer = document.getElementById('settingsForm');
+  if (!settingsContainer) return;
+  const settingsSaveBtn = settingsContainer.querySelector('#settingsSaveBtn');
+  if (!settingsSaveBtn) return;
 
   // Load task coin rules
   if (settings.taskPointsRules && Array.isArray(settings.taskPointsRules)) {
@@ -325,10 +327,7 @@ function initSettingsForm(settings) {
     });
   }
 
-  // Form submission
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
+  async function handleSettingsSave() {
     const coinSystemSelected = useCoinSystem ? useCoinSystem.checked : false;
     const newSettings = {
       useCoinSystem: coinSystemSelected,
@@ -379,12 +378,18 @@ function initSettingsForm(settings) {
       settings.usePointSystem = newSettings.useCoinSystem;
 
       showToast('Settings saved successfully', 'success');
-      bootstrap.Modal.getInstance(document.getElementById('settingsModal')).hide();
+      const settingsModal = document.getElementById('settingsModal');
+      const modalInstance = settingsModal ? bootstrap.Modal.getInstance(settingsModal) : null;
+      if (modalInstance) {
+        modalInstance.hide();
+      }
     } catch (e) {
       console.error('Failed to save settings:', e);
       showToast(e.message || 'Failed to save settings', 'danger');
     }
-  });
+  }
+
+  settingsSaveBtn.addEventListener('click', handleSettingsSave);
 }
 
 function updateRewardsTabVisibility(useCoinSystem, showRewardsTab = true) {
