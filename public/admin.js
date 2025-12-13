@@ -2024,6 +2024,7 @@ if (aiBtn) {
 let rewardsCache = [];
 let redemptionsCache = [];
 let editRewardId = null;
+let rewardFormEditId = null;
 
 async function fetchRewards() {
   try {
@@ -2046,20 +2047,21 @@ async function fetchRedemptions() {
 }
 
 function renderRewards() {
-  const lists = [
-    document.getElementById('rewardsList'),
-    document.getElementById('rewardsManageList')
-  ].filter(Boolean);
+  const settingsList = document.getElementById('rewardsList');
+  const libraryList = document.getElementById('rewardsManageList');
 
-  if (!lists.length) return;
+  if (!settingsList && !libraryList) return;
 
   const t = LANGUAGES[currentLang] || {};
   const emptyMessage = t.noRewardsConfigured || 'No rewards configured yet';
 
-  lists.forEach(list => (list.innerHTML = ''));
+  [settingsList, libraryList].forEach(list => {
+    if (list) list.innerHTML = '';
+  });
 
   if (!rewardsCache.length) {
-    lists.forEach(list => {
+    [settingsList, libraryList].forEach(list => {
+      if (!list) return;
       const li = document.createElement('li');
       li.className = 'list-group-item text-center text-muted';
       li.textContent = emptyMessage;
@@ -2073,9 +2075,8 @@ function renderRewards() {
     .sort((a, b) => a.name.localeCompare(b.name));
 
   sortedRewards.forEach(reward => {
-    lists.forEach(list => {
-      list.appendChild(createRewardListItem(reward, t));
-    });
+    if (settingsList) settingsList.appendChild(createSettingsRewardItem(reward, t));
+    if (libraryList) libraryList.appendChild(createRewardListItem(reward, t));
   });
 }
 
@@ -2122,6 +2123,99 @@ function createRewardListItem(reward, t) {
 
   item.append(details, buttons);
   return item;
+}
+
+function createSettingsRewardItem(reward, t) {
+  const item = document.createElement('li');
+  item.className = 'list-group-item d-flex justify-content-between align-items-start flex-column flex-md-row gap-2';
+
+  const inactiveBadge = reward.active === false
+    ? `<span class="badge bg-secondary ms-2">${t.rewardInactive || 'Inactive'}</span>`
+    : '';
+
+  const details = document.createElement('div');
+  details.innerHTML = `
+    <strong>${reward.name}</strong>
+    <span class="badge bg-primary ms-2">${reward.pointCost} ${t.pointsLabel || 'points'}</span>
+    ${inactiveBadge}
+    ${reward.description ? `<br><small class="text-muted">${reward.description}</small>` : ''}
+  `;
+
+  const buttons = document.createElement('div');
+  buttons.className = 'btn-group btn-group-sm';
+
+  const editBtn = document.createElement('button');
+  editBtn.className = 'btn btn-outline-secondary';
+  editBtn.title = t.editReward || 'Edit Reward';
+  editBtn.innerHTML = '<i class="bi bi-pencil"></i>';
+  editBtn.onclick = () => startRewardFormEdit(reward.id);
+  buttons.appendChild(editBtn);
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.className = 'btn btn-outline-danger';
+  deleteBtn.title = t.deleteReward || 'Delete';
+  deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
+  deleteBtn.onclick = () => deleteReward(reward.id);
+  buttons.appendChild(deleteBtn);
+
+  item.append(details, buttons);
+  return item;
+}
+
+function startRewardFormEdit(rewardId) {
+  const reward = rewardsCache.find(r => r.id === rewardId);
+  if (!reward) return;
+
+  rewardFormEditId = rewardId;
+
+  const nameInput = document.getElementById('rewardName');
+  const pointsInput = document.getElementById('rewardPoints');
+  const descriptionInput = document.getElementById('rewardDescription');
+
+  if (nameInput) nameInput.value = reward.name || '';
+  if (pointsInput) pointsInput.value = reward.pointCost || '';
+  if (descriptionInput) descriptionInput.value = reward.description || '';
+
+  updateRewardFormModeUI(true, reward.name || '');
+
+  const rewardForm = document.getElementById('rewardForm');
+  if (rewardForm) {
+    rewardForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+function updateRewardFormModeUI(isEditing, rewardName = '') {
+  const submitBtn = document.getElementById('rewardFormSubmitBtn');
+  const cancelBtn = document.getElementById('rewardFormCancelBtn');
+  const notice = document.getElementById('rewardEditNotice');
+  const target = document.getElementById('rewardEditTarget');
+
+  if (submitBtn) {
+    submitBtn.innerHTML = isEditing
+      ? '<i class="bi bi-check-lg me-1"></i>Update'
+      : '<i class="bi bi-plus-lg me-1"></i>Add';
+  }
+
+  if (cancelBtn) {
+    cancelBtn.classList.toggle('d-none', !isEditing);
+  }
+
+  if (notice) {
+    notice.classList.toggle('d-none', !isEditing);
+  }
+
+  if (target) {
+    target.textContent = isEditing ? rewardName : '';
+  }
+}
+
+function cancelRewardFormEdit() {
+  rewardFormEditId = null;
+  const rewardForm = document.getElementById('rewardForm');
+  if (rewardForm) {
+    rewardForm.reset();
+  }
+  updateRewardFormModeUI(false);
 }
 
 function renderPeoplePoints() {
@@ -2392,26 +2486,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Reward form
   const rewardForm = document.getElementById('rewardForm');
+  const rewardFormCancelBtn = document.getElementById('rewardFormCancelBtn');
+  if (rewardFormCancelBtn) {
+    rewardFormCancelBtn.addEventListener('click', cancelRewardFormEdit);
+  }
   if (rewardForm) {
     rewardForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
-      const name = document.getElementById('rewardName').value;
-      const pointCost = document.getElementById('rewardPoints').value;
-      const description = document.getElementById('rewardDescription').value;
-      
+      const nameInput = document.getElementById('rewardName');
+      const pointsInput = document.getElementById('rewardPoints');
+      const descriptionInput = document.getElementById('rewardDescription');
+
+      const name = (nameInput?.value || '').trim();
+      const pointCost = parseInt(pointsInput?.value, 10);
+      const description = (descriptionInput?.value || '').trim();
+
+      if (!name || !pointCost || pointCost <= 0) {
+        showToast('Enter a reward name and coin cost first', 'warning');
+        return;
+      }
+
+      const payload = { name, pointCost, description };
+
       try {
-        await authFetch('/api/rewards', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, pointCost, description })
-        });
-        
-        rewardForm.reset();
+        if (rewardFormEditId) {
+          const existing = rewardsCache.find(r => r.id === rewardFormEditId);
+          if (existing) {
+            payload.emailTemplate = existing.emailTemplate || '';
+            payload.active = existing.active === false ? false : true;
+          }
+
+          await authFetch(`/api/rewards/${rewardFormEditId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          showToast('Reward updated', 'success');
+        } else {
+          await authFetch('/api/rewards', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          showToast('Reward added', 'success');
+        }
+
+        cancelRewardFormEdit();
         await fetchRewards();
-        showToast('Reward added', 'success');
-      } catch (e) {
-        showToast('Failed to add reward', 'danger');
+      } catch (err) {
+        showToast(rewardFormEditId ? 'Failed to update reward' : 'Failed to add reward', 'danger');
       }
     });
   }
