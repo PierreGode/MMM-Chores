@@ -172,7 +172,7 @@ function initSettingsForm(settings) {
   const form = document.getElementById('settingsForm');
   if (!form) return;
 
-  // Load task points rules
+  // Load task coin rules
   if (settings.taskPointsRules && Array.isArray(settings.taskPointsRules)) {
     taskPointsRules = settings.taskPointsRules;
     renderTaskPointsRules();
@@ -778,7 +778,7 @@ function openEditCoinsModal(person) {
   modal.show();
 }
 
-// Task Points Rules Management
+// Task Coin Rules Management
 function renderTaskPointsRules() {
   const list = document.getElementById('taskPointsRulesList');
   if (!list) return;
@@ -788,7 +788,7 @@ function renderTaskPointsRules() {
   if (taskPointsRules.length === 0) {
     const li = document.createElement('li');
     li.className = 'list-group-item text-center text-muted small';
-    li.textContent = 'No task point rules defined';
+    li.textContent = 'No task coin rules defined';
     list.appendChild(li);
     return;
   }
@@ -799,7 +799,7 @@ function renderTaskPointsRules() {
     li.innerHTML = `
       <div>
         <strong class="small">${rule.pattern}</strong>
-        <span class="badge bg-warning text-dark ms-2">${rule.points} pts</span>
+        <span class="badge bg-warning text-dark ms-2">${rule.points} coins</span>
       </div>
       <button class="btn btn-sm btn-outline-danger" onclick="removeTaskPointsRule(${index})" title="Remove">
         <i class="bi bi-trash"></i>
@@ -826,7 +826,7 @@ async function saveTaskPointsRules() {
       body: JSON.stringify({ taskPointsRules })
     });
   } catch (e) {
-    console.error('Failed to save task points rules:', e);
+    console.error('Failed to save task coin rules:', e);
   }
 }
 
@@ -2523,7 +2523,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   
-  // Task points form
+  // Task coin form
   const taskPointsForm = document.getElementById('taskPointsForm');
   if (taskPointsForm) {
     taskPointsForm.addEventListener('submit', async (e) => {
@@ -2539,17 +2539,17 @@ document.addEventListener('DOMContentLoaded', () => {
       await saveTaskPointsRules();
       renderTaskPointsRules();
       taskPointsForm.reset();
-      showToast('Task point rule added', 'success');
+      showToast('Task coin rule added', 'success');
     });
   }
   
-  // Apply task points button
+  // Apply task coin button
   const applyTaskPointsBtn = document.getElementById('applyTaskPointsBtn');
   if (applyTaskPointsBtn) {
     applyTaskPointsBtn.addEventListener('click', applyTaskPointsRules);
   }
   
-  // Gift points form
+  // Gift coins form
   const giftPointsForm = document.getElementById('giftPointsForm');
   if (giftPointsForm) {
     giftPointsForm.addEventListener('submit', async (e) => {
@@ -2583,9 +2583,9 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPeoplePoints();
         populateGiftPersonSelect();
         giftPointsForm.reset();
-        showToast(`Gifted ${points} points to ${person.name}`, 'success');
+        showToast(`Gifted ${points} coins to ${person.name}`, 'success');
       } catch (e) {
-        showToast('Failed to gift points', 'danger');
+        showToast('Failed to gift coins', 'danger');
       }
     });
   }

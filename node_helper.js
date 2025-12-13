@@ -412,7 +412,10 @@ function calculatePersonPoints(personId) {
   
   return tasks
     .filter(t => t.done && t.assignedTo === personId)
-    .reduce((total, task) => total + (task.awardedPoints ?? task.points ?? 1), 0);
+    .reduce((total, task) => {
+      const value = Number(task.awardedPoints ?? task.points ?? 1) || 0;
+      return total + value;
+    }, 0);
 }
 
 function awardPointsForTask(task) {
@@ -422,7 +425,7 @@ function awardPointsForTask(task) {
   const person = people.find(p => p.id === task.assignedTo);
   if (!person) return;
   
-  const points = task.points || 1;
+  const points = Number(task.points) || 1;
   person.points = (person.points || 0) + points;
   task.awardedPoints = points;
   
@@ -430,12 +433,13 @@ function awardPointsForTask(task) {
 }
 
 function revokePointsForTask(task) {
-  if (!settings.usePointSystem || !task.assignedTo || task.awardedPoints === undefined) return;
+  if (!settings.usePointSystem || !task.assignedTo) return;
   
   const person = people.find(p => p.id === task.assignedTo);
   if (!person) return;
   
-  const points = task.awardedPoints;
+  const points = Number(task.awardedPoints ?? task.points ?? 1) || 0;
+  if (!points) return;
   person.points = Math.max(0, (person.points || 0) - points);
   delete task.awardedPoints;
   
