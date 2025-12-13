@@ -139,7 +139,13 @@ const LANGUAGES = {
     manualCoinsDescription: "View everyone and adjust their coin balances directly from settings.",
     manualCoinsGiveButton: "Give",
     manualCoinsEditButton: "Set total",
-    manualCoinsInput: "Coins"
+    manualCoinsInput: "Coins",
+    rewardsLibraryTitle: "Rewards Library",
+    rewardsLibraryDescription: "Review every reward below. Use the edit button to update names, costs, or descriptions.",
+    noRewardsConfigured: "No rewards configured yet",
+    rewardInactive: "Inactive",
+    taskPatternSelectPlaceholder: "Select task…",
+    taskPatternNoTasks: "No tasks available"
   },
   sv: {
     title: "MMM-Chores Admin  ",

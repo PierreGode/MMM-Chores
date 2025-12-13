@@ -214,6 +214,27 @@
               </div>
             </div>
           </div>
+
+          <div class="row g-4 mt-2">
+            <div class="col-12">
+              <div class="card card-shadow h-100">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                  <span id="rewardsLibraryHeader">
+                    <i class="bi bi-collection me-2"></i>Rewards Library
+                  </span>
+                  <button type="button" class="btn btn-sm btn-outline-primary" id="addRewardFromTab">
+                    <i class="bi bi-plus-circle me-1"></i>Add Reward
+                  </button>
+                </div>
+                <div class="card-body">
+                  <p class="small text-muted" id="rewardsLibraryDescription">
+                    Review every reward below. Use the edit button to update names, costs, or descriptions.
+                  </p>
+                  <ul id="rewardsManageList" class="list-group"></ul>
+                </div>
+              </div>
+            </div>
+          </div>
           
           <div class="row g-4 mt-2">
             <div class="col-12">
@@ -491,7 +512,9 @@
                   <form id="taskPointsForm" class="row gy-2 gx-2 align-items-end mb-3">
                     <div class="col-sm-6">
                       <label class="form-label small" for="taskPatternName">Task Name Pattern</label>
-                      <input type="text" id="taskPatternName" class="form-control form-control-sm" placeholder="e.g., 'dishes', 'clean', 'vacuum'…" required />
+                      <select id="taskPatternName" class="form-select form-select-sm" required>
+                        <option value="">Loading tasks...</option>
+                      </select>
                     </div>
                     <div class="col-sm-3">
                       <label class="form-label small" for="taskPatternPoints">Points Value</label>

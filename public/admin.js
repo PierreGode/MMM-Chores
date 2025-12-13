@@ -523,6 +523,12 @@ function setLanguage(lang) {
   document.querySelectorAll('.manual-coin-edit').forEach(btn => {
     btn.innerHTML = `<i class="bi bi-pencil"></i> ${t.manualCoinsEditButton || 'Set total'}`;
   });
+  const rewardsLibraryHeader = document.getElementById('rewardsLibraryHeader');
+  if (rewardsLibraryHeader) rewardsLibraryHeader.innerHTML = `<i class="bi bi-collection me-2"></i>${t.rewardsLibraryTitle || 'Rewards Library'}`;
+  const rewardsLibraryDescription = document.getElementById('rewardsLibraryDescription');
+  if (rewardsLibraryDescription) rewardsLibraryDescription.textContent = t.rewardsLibraryDescription || 'Review every reward below and edit details as needed.';
+  const addRewardFromTabBtn = document.getElementById('addRewardFromTab');
+  if (addRewardFromTabBtn) addRewardFromTabBtn.innerHTML = `<i class="bi bi-plus-circle me-1"></i>${t.addRewardButton || 'Add Reward'}`;
   const textSizeLbl = document.querySelector("label[for='settingsTextSize']");
   if (textSizeLbl) textSizeLbl.textContent = t.textSizeLabel || 'Mirror text size';
   const textSizeSelect = document.getElementById('settingsTextSize');
@@ -660,6 +666,8 @@ function setLanguage(lang) {
   renderPeople();
   renderTasks();
   renderCalendar();
+  renderRewards();
+  populateTaskPatternSelect();
 
   Object.entries(chartInstances).forEach(([id, chart]) => {
     const cardHeaderSpan = document.querySelector(`#${id}`).closest(".card").querySelector(".card-header span");
@@ -692,6 +700,7 @@ async function fetchTasks() {
   });
   renderTasks();
   renderCalendar();
+  populateTaskPatternSelect();
 }
 
 async function applySettings(newSettings) {
@@ -864,6 +873,35 @@ function populateGiftPersonSelect() {
     const option = document.createElement('option');
     option.value = person.id;
     option.textContent = `${person.name} (${person.points || 0} coins)`;
+    select.appendChild(option);
+  });
+}
+
+function populateTaskPatternSelect() {
+  const select = document.getElementById('taskPatternName');
+  if (!select) return;
+
+  const availableTasks = Array.isArray(tasksCache)
+    ? tasksCache.filter(task => !task.deleted && task.name)
+    : [];
+  const placeholder = LANGUAGES[currentLang].taskPatternSelectPlaceholder || 'Select task…';
+  const emptyText = LANGUAGES[currentLang].taskPatternNoTasks || 'No tasks available';
+
+  select.innerHTML = '';
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = availableTasks.length ? placeholder : emptyText;
+  select.appendChild(defaultOption);
+  select.disabled = availableTasks.length === 0;
+
+  if (!availableTasks.length) return;
+
+  const names = [...new Set(availableTasks.map(task => task.name.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+
+  names.forEach(name => {
+    const option = document.createElement('option');
+    option.value = name;
+    option.textContent = name;
     select.appendChild(option);
   });
 }
@@ -2008,33 +2046,82 @@ async function fetchRedemptions() {
 }
 
 function renderRewards() {
-  const list = document.getElementById('rewardsList');
-  if (!list) return;
+  const lists = [
+    document.getElementById('rewardsList'),
+    document.getElementById('rewardsManageList')
+  ].filter(Boolean);
 
-  list.innerHTML = '';
-  rewardsCache.filter(r => r.active !== false).forEach(reward => {
-    const item = document.createElement('li');
-    item.className = 'list-group-item d-flex justify-content-between align-items-center';
-    item.innerHTML = `
-      <div>
-        <strong>${reward.name}</strong>
-        <span class="badge bg-primary ms-2">${reward.pointCost} pts</span>
-        ${reward.description ? `<br><small class="text-muted">${reward.description}</small>` : ''}
-      </div>
-      <div class="btn-group" role="group">
-        <button class="btn btn-sm btn-outline-secondary" onclick="editReward(${reward.id})" title="Edit">
-          <i class="bi bi-pencil"></i>
-        </button>
-        <button class="btn btn-sm btn-outline-success" onclick="openRedeemModal(${reward.id})" title="Redeem">
-          <i class="bi bi-gift"></i>
-        </button>
-        <button class="btn btn-sm btn-outline-danger" onclick="deleteReward(${reward.id})" title="Delete">
-          <i class="bi bi-trash"></i>
-        </button>
-      </div>
-    `;
-    list.appendChild(item);
+  if (!lists.length) return;
+
+  const t = LANGUAGES[currentLang] || {};
+  const emptyMessage = t.noRewardsConfigured || 'No rewards configured yet';
+
+  lists.forEach(list => (list.innerHTML = ''));
+
+  if (!rewardsCache.length) {
+    lists.forEach(list => {
+      const li = document.createElement('li');
+      li.className = 'list-group-item text-center text-muted';
+      li.textContent = emptyMessage;
+      list.appendChild(li);
+    });
+    return;
+  }
+
+  const sortedRewards = rewardsCache
+    .slice()
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  sortedRewards.forEach(reward => {
+    lists.forEach(list => {
+      list.appendChild(createRewardListItem(reward, t));
+    });
   });
+}
+
+function createRewardListItem(reward, t) {
+  const item = document.createElement('li');
+  item.className = 'list-group-item d-flex justify-content-between align-items-center flex-column flex-md-row gap-2';
+
+  const inactiveBadge = reward.active === false
+    ? `<span class="badge bg-secondary ms-2">${t.rewardInactive || 'Inactive'}</span>`
+    : '';
+
+  const details = document.createElement('div');
+  details.innerHTML = `
+    <strong>${reward.name}</strong>
+    <span class="badge bg-primary ms-2">${reward.pointCost} ${t.pointsLabel || 'points'}</span>
+    ${inactiveBadge}
+    ${reward.description ? `<br><small class="text-muted">${reward.description}</small>` : ''}
+  `;
+
+  const buttons = document.createElement('div');
+  buttons.className = 'btn-group btn-group-sm';
+
+  const editBtn = document.createElement('button');
+  editBtn.className = 'btn btn-outline-secondary';
+  editBtn.title = t.editReward || 'Edit Reward';
+  editBtn.innerHTML = '<i class="bi bi-pencil"></i>';
+  editBtn.onclick = () => editReward(reward.id);
+  buttons.appendChild(editBtn);
+
+  const redeemBtn = document.createElement('button');
+  redeemBtn.className = 'btn btn-outline-success';
+  redeemBtn.title = t.redeemReward || 'Redeem Reward';
+  redeemBtn.innerHTML = '<i class="bi bi-gift"></i>';
+  redeemBtn.disabled = reward.active === false;
+  redeemBtn.onclick = () => openRedeemModal(reward.id);
+  buttons.appendChild(redeemBtn);
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.className = 'btn btn-outline-danger';
+  deleteBtn.title = t.deleteReward || 'Delete';
+  deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
+  deleteBtn.onclick = () => deleteReward(reward.id);
+  buttons.appendChild(deleteBtn);
+
+  item.append(details, buttons);
+  return item;
 }
 
 function renderPeoplePoints() {
@@ -2292,6 +2379,17 @@ async function deleteReward(rewardId) {
 
 // Event listeners for rewards system
 document.addEventListener('DOMContentLoaded', () => {
+  const addRewardFromTabBtn = document.getElementById('addRewardFromTab');
+  if (addRewardFromTabBtn) {
+    addRewardFromTabBtn.addEventListener('click', () => {
+      openSettingsToRewardSystem();
+      setTimeout(() => {
+        const rewardNameInput = document.getElementById('rewardName');
+        if (rewardNameInput) rewardNameInput.focus();
+      }, 600);
+    });
+  }
+
   // Reward form
   const rewardForm = document.getElementById('rewardForm');
   if (rewardForm) {
@@ -2431,7 +2529,8 @@ document.addEventListener('DOMContentLoaded', () => {
     taskPointsForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       
-      const pattern = document.getElementById('taskPatternName').value.trim();
+      const patternSelect = document.getElementById('taskPatternName');
+      const pattern = patternSelect ? patternSelect.value : '';
       const points = parseInt(document.getElementById('taskPatternPoints').value);
       
       if (!pattern || !points) return;
