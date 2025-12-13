@@ -172,13 +172,9 @@ h1, h2 {
   border-radius: 0.5rem;
 }
 
-.task-name-input {
-  flex: 1 1 320px;
-  min-width: 280px;
-}
-
-[data-theme="dark"] .task-name-input {
-  background-color: var(--field-bg);
+.task-name-col {
+  flex: 1 1 240px;
+  min-width: 210px;
 }
 [data-theme="dark"] .form-control,
 [data-theme="dark"] .form-select {
