@@ -24,15 +24,25 @@ try {
 
 const DATA_FILE     = path.join(__dirname, "data.json");
 const DATA_FILE_BAK = `${DATA_FILE}.bak`;
+const COINS_FILE    = path.join(__dirname, "rewards.json");
+const COINS_FILE_BAK = `${COINS_FILE}.bak`;
 const CERT_DIR      = path.join(__dirname, "certs");
 
 let tasks = [];
 let people = [];
 let analyticsBoards = [];
-let rewards = [];
-let redemptions = [];
+let coinStore = {
+  settings: {
+    useCoinSystem: false,
+    taskCoinRules: []
+  },
+  rewards: [],
+  redemptions: [],
+  peopleCoins: {}
+};
 let sessions = {};
 const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
+let legacyCoinState = null;
 
 const DEFAULT_TITLES = [
   "Junior",
@@ -52,6 +62,8 @@ let autoUpdateTimer = null;
 let reminderTimer = null;
 
 function applyLoadedData(json, sourceLabel = "data.json") {
+  legacyCoinState = legacyCoinState || { rewards: [], redemptions: [], settings: {}, peopleCoins: {} };
+  const legacyPeopleCoins = legacyCoinState.peopleCoins || {};
   tasks = json.tasks || [];
   if (tasks.some(t => t.order !== undefined)) {
     tasks.sort((a, b) => {
@@ -69,41 +81,52 @@ function applyLoadedData(json, sourceLabel = "data.json") {
     }
   });
 
-  people          = json.people          || [];
+  people = (json.people || []).map(person => {
+    const clone = { ...person };
+    if (clone.points !== undefined) {
+      legacyPeopleCoins[clone.id] = clone.points;
+      delete clone.points;
+    }
+    if (clone._savedPoints !== undefined) {
+      if (legacyPeopleCoins[clone.id] === undefined) {
+        legacyPeopleCoins[clone.id] = clone._savedPoints;
+      }
+      delete clone._savedPoints;
+    }
+    return clone;
+  });
+  legacyCoinState.peopleCoins = legacyPeopleCoins;
   analyticsBoards = json.analyticsBoards || [];
-  rewards         = json.rewards         || [];
-  redemptions     = json.redemptions     || [];
-  settings        = json.settings        || {};
+  if (Array.isArray(json.rewards) && json.rewards.length) {
+    legacyCoinState.rewards = json.rewards;
+  }
+  if (Array.isArray(json.redemptions) && json.redemptions.length) {
+    legacyCoinState.redemptions = json.redemptions;
+  }
+
+  settings = { ...(json.settings || {}) };
   if (settings.openaiApiKey !== undefined) delete settings.openaiApiKey;
   if (settings.pushoverApiKey !== undefined) delete settings.pushoverApiKey;
   if (settings.pushoverUser !== undefined) delete settings.pushoverUser;
 
-  // Initialize points for existing people if point system is enabled
-  if (settings.usePointSystem) {
-    people.forEach(person => {
-      // Restore saved points if available, otherwise calculate from tasks
-      if (person._savedPoints !== undefined) {
-        person.points = person._savedPoints;
-        delete person._savedPoints;
-      } else if (person.points === undefined) {
-        person.points = calculatePersonPoints(person.id);
-      }
-    });
-  } else {
-    // Ensure points are not displayed when using level system
-    people.forEach(person => {
-      if (person.points !== undefined) {
-        // Keep points data but don't display it in level mode
-        person._savedPoints = person.points;
-        delete person.points;
-      }
-    });
+  if (settings.usePointSystem !== undefined) {
+    legacyCoinState.settings = legacyCoinState.settings || {};
+    legacyCoinState.settings.useCoinSystem = settings.usePointSystem;
+    delete settings.usePointSystem;
+  }
+  if (Array.isArray(settings.taskPointsRules)) {
+    legacyCoinState.settings = legacyCoinState.settings || {};
+    legacyCoinState.settings.taskCoinRules = settings.taskPointsRules;
+    delete settings.taskPointsRules;
+  }
+  if (settings.taskCoinRules) {
+    delete settings.taskCoinRules;
   }
 
   updatePeopleLevels({});
 
   Log.log(
-    `MMM-Chores: Loaded ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, ${rewards.length} rewards, ${redemptions.length} redemptions from ${sourceLabel}`
+    `MMM-Chores: Loaded ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards from ${sourceLabel}`
   );
 }
 
@@ -134,6 +157,16 @@ function writeDataFileAtomic(filePath, contents) {
 function getLocalISO(date = new Date()) {
   const offsetMs = date.getTimezoneOffset() * 60000;
   return new Date(date.getTime() - offsetMs).toISOString().slice(0, -1);
+}
+
+function normalizeBooleanInput(value) {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === "string") {
+    const normalized = value.toLowerCase().trim();
+    if (normalized === "true" || normalized === "1") return true;
+    if (normalized === "false" || normalized === "0") return false;
+  }
+  return Boolean(value);
 }
 
 function scheduleAutoUpdate() {
@@ -214,31 +247,165 @@ function sendPushover(self, settings, message) {
 }
 
 function loadData() {
+  let generalLoaded = false;
   if (fs.existsSync(DATA_FILE)) {
     Log.log("loadData: reading", DATA_FILE);
     try {
       const j = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
       applyLoadedData(j);
-      return;
+      generalLoaded = true;
     } catch (e) {
       Log.error("MMM-Chores: Error reading data.json:", e);
     }
   }
 
-  if (fs.existsSync(DATA_FILE_BAK)) {
+  if (!generalLoaded && fs.existsSync(DATA_FILE_BAK)) {
     try {
       const backup = JSON.parse(fs.readFileSync(DATA_FILE_BAK, "utf8"));
       applyLoadedData(backup, "data.json.bak");
+      generalLoaded = true;
     } catch (backupErr) {
       Log.error("MMM-Chores: Failed to load backup data file:", backupErr);
     }
   }
+
+  if (!generalLoaded) {
+    applyLoadedData({}, "defaults");
+  }
+
+  loadCoinData();
+}
+
+function applyCoinStoreData(data, sourceLabel = "rewards.json") {
+  const coinSettings = data?.settings || {};
+  coinStore = {
+    settings: {
+      useCoinSystem: coinSettings.useCoinSystem ?? false,
+      taskCoinRules: Array.isArray(coinSettings.taskCoinRules) ? coinSettings.taskCoinRules : []
+    },
+    rewards: Array.isArray(data?.rewards) ? data.rewards : [],
+    redemptions: Array.isArray(data?.redemptions) ? data.redemptions : [],
+    peopleCoins: data?.peopleCoins || {}
+  };
+
+  settings.useCoinSystem = coinStore.settings.useCoinSystem ?? false;
+  settings.usePointSystem = settings.useCoinSystem;
+  settings.taskCoinRules = coinStore.settings.taskCoinRules;
+  settings.taskPointsRules = settings.taskCoinRules; // backwards compatibility for older clients
+
+  syncPeopleCoinsFromStore();
+
+  Log.log(
+    `MMM-Chores: Loaded coin data (${coinStore.rewards.length} rewards, ${coinStore.redemptions.length} redemptions) from ${sourceLabel}`
+  );
+}
+
+function syncPeopleCoinsFromStore() {
+  const coins = coinStore.peopleCoins || {};
+  people.forEach(person => {
+    const value = coins[person.id];
+    const normalized = Number.isFinite(value) ? value : parseInt(value, 10);
+    const safe = Number.isFinite(normalized) ? normalized : 0;
+    person.points = safe;
+    coins[person.id] = safe;
+  });
+  coinStore.peopleCoins = coins;
+}
+
+function updateCoinStoreFromPeople() {
+  const coins = {};
+  people.forEach(person => {
+    const normalized = Number(person.points);
+    coins[person.id] = Number.isFinite(normalized) ? normalized : 0;
+  });
+  coinStore.peopleCoins = coins;
+}
+
+function buildCoinStoreFromLegacy() {
+  const legacySettings = legacyCoinState?.settings || {};
+  const peopleCoins = { ...(legacyCoinState?.peopleCoins || {}) };
+  people.forEach(person => {
+    if (peopleCoins[person.id] === undefined) {
+      peopleCoins[person.id] = calculatePersonPoints(person.id);
+    }
+  });
+  return {
+    settings: {
+      useCoinSystem: legacySettings.useCoinSystem ?? false,
+      taskCoinRules: Array.isArray(legacySettings.taskCoinRules) ? legacySettings.taskCoinRules : []
+    },
+    rewards: legacyCoinState?.rewards || [],
+    redemptions: legacyCoinState?.redemptions || [],
+    peopleCoins
+  };
+}
+
+function loadCoinData() {
+  let loaded = false;
+  if (fs.existsSync(COINS_FILE)) {
+    try {
+      const j = JSON.parse(fs.readFileSync(COINS_FILE, "utf8"));
+      applyCoinStoreData(j);
+      loaded = true;
+    } catch (err) {
+      Log.error("MMM-Chores: Error reading rewards.json:", err);
+    }
+  }
+
+  if (!loaded && fs.existsSync(COINS_FILE_BAK)) {
+    try {
+      const backup = JSON.parse(fs.readFileSync(COINS_FILE_BAK, "utf8"));
+      applyCoinStoreData(backup, "rewards.json.bak");
+      loaded = true;
+    } catch (err) {
+      Log.error("MMM-Chores: Failed to load rewards backup:", err);
+    }
+  }
+
+  if (!loaded) {
+    const legacyCoinStore = buildCoinStoreFromLegacy();
+    applyCoinStoreData(legacyCoinStore, "legacy data");
+    persistCoinData();
+  }
+}
+
+function sanitizeGeneralSettingsForSave() {
+  const snapshot = { ...settings };
+  delete snapshot.useCoinSystem;
+  delete snapshot.usePointSystem;
+  delete snapshot.taskCoinRules;
+  delete snapshot.taskPointsRules;
+  return snapshot;
+}
+
+function buildGeneralDataSnapshot() {
+  return {
+    tasks,
+    people: people.map(({ points, ...rest }) => ({ ...rest })),
+    analyticsBoards,
+    settings: sanitizeGeneralSettingsForSave()
+  };
+}
+
+function persistCoinData() {
+  updateCoinStoreFromPeople();
+  coinStore.settings.useCoinSystem = settings.useCoinSystem ?? coinStore.settings.useCoinSystem ?? false;
+  coinStore.settings.taskCoinRules = settings.taskCoinRules || coinStore.settings.taskCoinRules || [];
+  const coinPayload = JSON.stringify(coinStore, null, 2);
+  if (fs.existsSync(COINS_FILE)) {
+    try {
+      fs.copyFileSync(COINS_FILE, COINS_FILE_BAK);
+    } catch (err) {
+      Log.error("MMM-Chores: Failed to create rewards backup:", err);
+    }
+  }
+  writeDataFileAtomic(COINS_FILE, coinPayload);
 }
 
 function saveData() {
   try {
     Log.log("saveData: writing", DATA_FILE);
-    const payload = JSON.stringify({ tasks, people, analyticsBoards, rewards, redemptions, settings }, null, 2);
+    const payload = JSON.stringify(buildGeneralDataSnapshot(), null, 2);
     if (fs.existsSync(DATA_FILE)) {
       try {
         fs.copyFileSync(DATA_FILE, DATA_FILE_BAK);
@@ -247,8 +414,9 @@ function saveData() {
       }
     }
     writeDataFileAtomic(DATA_FILE, payload);
+    persistCoinData();
     Log.log(
-      `MMM-Chores: Saved ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, ${rewards.length} rewards, ${redemptions.length} redemptions, language: ${settings.language}`
+      `MMM-Chores: Saved ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, ${coinStore.rewards.length} coin rewards, ${coinStore.redemptions.length} redemptions, language: ${settings.language}`
     );
     return true;
   } catch (e) {
@@ -446,8 +614,6 @@ function autoAssignTaskPoints(task, options = {}) {
 }
 
 function calculatePersonPoints(personId) {
-  if (!settings.usePointSystem) return 0;
-  
   return tasks
     .filter(t => t.done && t.assignedTo === personId)
     .reduce((total, task) => {
@@ -457,7 +623,7 @@ function calculatePersonPoints(personId) {
 }
 
 function awardPointsForTask(task) {
-  if (!settings.usePointSystem || !task.done || !task.assignedTo) return;
+  if (!task.done || !task.assignedTo) return;
   if (task.awardedPoints !== undefined) return;
   
   const person = people.find(p => p.id === task.assignedTo);
@@ -475,7 +641,7 @@ function awardPointsForTask(task) {
 }
 
 function revokePointsForTask(task) {
-  if (!settings.usePointSystem || !task.assignedTo) return;
+  if (!task.assignedTo) return;
   
   const person = people.find(p => p.id === task.assignedTo);
   if (!person) return;
@@ -489,33 +655,16 @@ function revokePointsForTask(task) {
 }
 
 function migrateToPointSystem() {
-  Log.log('MMM-Chores: Migrating to point system...');
-  
-  people.forEach(person => {
-    // Restore saved points or calculate from completed tasks
-    if (person._savedPoints !== undefined) {
-      person.points = person._savedPoints;
-      delete person._savedPoints;
-    } else {
-      person.points = calculatePersonPoints(person.id);
-    }
-  });
-  
-  Log.log('MMM-Chores: Point system migration completed');
+  Log.log('MMM-Chores: Preparing coin system state...');
+  syncPeopleCoinsFromStore();
+  persistCoinData();
+  Log.log('MMM-Chores: Coin system ready');
 }
 
 function migrateToLevelSystem() {
-  Log.log('MMM-Chores: Migrating to level system...');
-  
-  people.forEach(person => {
-    // Save points data but remove from active use
-    if (person.points !== undefined) {
-      person._savedPoints = person.points;
-      delete person.points;
-    }
-  });
-  
-  Log.log('MMM-Chores: Level system migration completed');
+  Log.log('MMM-Chores: Switching to level display only (coins preserved)');
+  persistCoinData();
+  Log.log('MMM-Chores: Level system active with coins still accruing');
 }
 
 function sendRedemptionEmail(person, reward, redemption) {
@@ -544,6 +693,12 @@ module.exports = NodeHelper.create({
       this.config = payload;
 
       const previousSettings = (settings && typeof settings === "object") ? settings : {};
+      const resolvedCoinToggle =
+        previousSettings.useCoinSystem ??
+        previousSettings.usePointSystem ??
+        payload.useCoinSystem ??
+        payload.usePointSystem ??
+        false;
 
       settings = {
         ...previousSettings,
@@ -558,7 +713,8 @@ module.exports = NodeHelper.create({
         reminderTime: previousSettings.reminderTime ?? payload.reminderTime,
         background: previousSettings.background ?? payload.background ?? 'forest.png',
         levelingEnabled: previousSettings.levelingEnabled ?? (payload.leveling?.enabled !== false),
-        usePointSystem: previousSettings.usePointSystem ?? payload.usePointSystem ?? false,
+        useCoinSystem: resolvedCoinToggle,
+        usePointSystem: resolvedCoinToggle,
         emailEnabled: previousSettings.emailEnabled ?? payload.emailEnabled ?? false,
         leveling: {
           mode: previousSettings.leveling?.mode ?? payload.leveling?.mode ?? 'years',
@@ -902,7 +1058,9 @@ module.exports = NodeHelper.create({
       const id = Date.now();
       const newPersonBase = { id, name };
       const info = getLevelInfo(self.config || {}, newPersonBase);
-      const newPerson = { ...newPersonBase, level: info.level, title: info.title };
+      const startingCoins = coinStore.peopleCoins?.[id] ?? 0;
+      const newPerson = { ...newPersonBase, level: info.level, title: info.title, points: startingCoins };
+      coinStore.peopleCoins = { ...coinStore.peopleCoins, [id]: startingCoins };
 
       people.push(newPerson);
       saveData();
@@ -913,6 +1071,11 @@ module.exports = NodeHelper.create({
       const id = parseInt(req.params.id, 10);
       people = people.filter(p => p.id !== id);
       tasks  = tasks.map(t => t.assignedTo === id ? { ...t, assignedTo: null } : t);
+      if (coinStore.peopleCoins && Object.prototype.hasOwnProperty.call(coinStore.peopleCoins, id)) {
+        const clone = { ...coinStore.peopleCoins };
+        delete clone[id];
+        coinStore.peopleCoins = clone;
+      }
       const success = saveData();
       self.sendSocketNotification("PEOPLE_UPDATE", people);
       broadcastTasks(self);
@@ -1118,7 +1281,7 @@ module.exports = NodeHelper.create({
     app.put("/api/settings", requireWrite, (req, res) => {
       const newSettings = req.body;
       const wasAutoUpdate = settings.autoUpdate;
-      const wasPointSystem = settings.usePointSystem;
+      const wasCoinSystem = settings.useCoinSystem ?? settings.usePointSystem ?? false;
       let taskPointsRulesUpdated = false;
       
       if (typeof newSettings !== "object") {
@@ -1149,19 +1312,47 @@ module.exports = NodeHelper.create({
       }
       
       // Handle system migration
-      if (newSettings.usePointSystem !== undefined && newSettings.usePointSystem !== wasPointSystem) {
-        if (newSettings.usePointSystem) {
+      const rawCoinToggle =
+        newSettings.useCoinSystem ??
+        newSettings.usePointSystem;
+      const requestedCoinToggle = normalizeBooleanInput(rawCoinToggle);
+      if (requestedCoinToggle !== undefined && requestedCoinToggle !== wasCoinSystem) {
+        if (requestedCoinToggle) {
           migrateToPointSystem();
         } else {
           migrateToLevelSystem();
         }
+        settings.useCoinSystem = Boolean(requestedCoinToggle);
+        settings.usePointSystem = settings.useCoinSystem;
+        if (self.config) {
+          self.config.useCoinSystem = settings.useCoinSystem;
+          self.config.usePointSystem = settings.usePointSystem;
+        }
       }
       
       Object.entries(newSettings).forEach(([key, val]) => {
-        if (key === "leveling" || key === "openaiApiKey" || key === "pushoverApiKey" || key === "pushoverUser" || key === "_updatePersonCoins" || key === "_giftReason") return;
-        if (key === "taskPointsRules" && !Array.isArray(val)) return;
-        if (key === "taskPointsRules") {
+        if (
+          key === "leveling" ||
+          key === "openaiApiKey" ||
+          key === "pushoverApiKey" ||
+          key === "pushoverUser" ||
+          key === "_updatePersonCoins" ||
+          key === "_giftReason" ||
+          key === "usePointSystem" ||
+          key === "useCoinSystem"
+        ) {
+          return;
+        }
+        if ((key === "taskPointsRules" || key === "taskCoinRules") && !Array.isArray(val)) return;
+        if (key === "taskPointsRules" || key === "taskCoinRules") {
           taskPointsRulesUpdated = true;
+          settings.taskPointsRules = val;
+          settings.taskCoinRules = val;
+          if (self.config) {
+            self.config.taskPointsRules = val;
+            self.config.taskCoinRules = val;
+          }
+          return;
         }
         settings[key] = val;
         if (self.config) {
@@ -1208,7 +1399,7 @@ module.exports = NodeHelper.create({
     app.post("/api/ai-generate", requireWrite, (req, res) => self.aiGenerateTasks(req, res));
 
     // Rewards API
-    app.get("/api/rewards", (req, res) => res.json(rewards));
+    app.get("/api/rewards", (req, res) => res.json(coinStore.rewards));
     app.post("/api/rewards", requireWrite, (req, res) => {
       const { name, pointCost, description, emailTemplate } = req.body;
       if (!name || !pointCost) {
@@ -1225,14 +1416,14 @@ module.exports = NodeHelper.create({
         created: getLocalISO(new Date())
       };
       
-      rewards.push(newReward);
+      coinStore.rewards.push(newReward);
       saveData();
       res.status(201).json(newReward);
     });
     
     app.put("/api/rewards/:id", requireWrite, (req, res) => {
       const id = parseInt(req.params.id, 10);
-      const reward = rewards.find(r => r.id === id);
+      const reward = coinStore.rewards.find(r => r.id === id);
       if (!reward) return res.status(404).json({ error: "Reward not found" });
       
       Object.entries(req.body).forEach(([key, val]) => {
@@ -1247,21 +1438,21 @@ module.exports = NodeHelper.create({
     
     app.delete("/api/rewards/:id", requireWrite, (req, res) => {
       const id = parseInt(req.params.id, 10);
-      rewards = rewards.filter(r => r.id !== id);
+      coinStore.rewards = coinStore.rewards.filter(r => r.id !== id);
       saveData();
       res.json({ success: true });
     });
 
     // Redemptions API
-    app.get("/api/redemptions", (req, res) => res.json(redemptions));
+    app.get("/api/redemptions", (req, res) => res.json(coinStore.redemptions));
     app.post("/api/redemptions", requireWrite, (req, res) => {
       const { rewardId, personId } = req.body;
-      const reward = rewards.find(r => r.id === rewardId && r.active);
+      const reward = coinStore.rewards.find(r => r.id === rewardId && r.active);
       const person = people.find(p => p.id === personId);
       
       if (!reward) return res.status(404).json({ error: "Reward not found" });
       if (!person) return res.status(404).json({ error: "Person not found" });
-      if (!settings.usePointSystem) return res.status(400).json({ error: "Point system not enabled" });
+      if (!settings.useCoinSystem) return res.status(400).json({ error: "Coins system not enabled" });
       
       const personPoints = person.points || 0;
       if (personPoints < reward.pointCost) {
@@ -1284,7 +1475,7 @@ module.exports = NodeHelper.create({
         emailSent: false
       };
       
-      redemptions.push(redemption);
+      coinStore.redemptions.push(redemption);
       saveData();
       
       // Send email if template exists
@@ -1298,7 +1489,7 @@ module.exports = NodeHelper.create({
     
     app.put("/api/redemptions/:id/use", requireWrite, (req, res) => {
       const id = parseInt(req.params.id, 10);
-      const redemption = redemptions.find(r => r.id === id);
+      const redemption = coinStore.redemptions.find(r => r.id === id);
       if (!redemption) return res.status(404).json({ error: "Redemption not found" });
       
       redemption.used = true;
@@ -1313,7 +1504,10 @@ module.exports = NodeHelper.create({
       const person = people.find(p => p.id === id);
       if (!person) return res.status(404).json({ error: "Person not found" });
       
-      const points = settings.usePointSystem ? (person.points || 0) : 0;
+      const coins = coinStore.peopleCoins?.[id];
+      const numericCoins = Number(coins);
+      const fallback = Number(person.points) || 0;
+      const points = Number.isFinite(numericCoins) ? numericCoins : fallback;
       res.json({ points });
     });
 
