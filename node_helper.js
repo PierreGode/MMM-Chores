@@ -407,6 +407,44 @@ function getNextDate(dateStr, recurring) {
   return d.toISOString().slice(0, 10);
 }
 
+function getMatchingTaskRule(taskName) {
+  if (!taskName || !Array.isArray(settings.taskPointsRules)) return null;
+
+  const normalized = `${taskName}`.toLowerCase();
+  for (const rule of settings.taskPointsRules) {
+    if (!rule || !rule.pattern) continue;
+    const pattern = `${rule.pattern}`.toLowerCase();
+    if (!pattern || !normalized.includes(pattern)) continue;
+
+    const points = Number(rule.points);
+    if (Number.isFinite(points) && points > 0) {
+      return { pattern: rule.pattern, points };
+    }
+  }
+  return null;
+}
+
+function autoAssignTaskPoints(task, options = {}) {
+  if (!task || !task.name) return false;
+  const { force = false } = options;
+  const match = getMatchingTaskRule(task.name);
+
+  if (!match) {
+    if (force && task.autoPointsRule) {
+      delete task.autoPointsRule;
+    }
+    return false;
+  }
+
+  const hasManualPoints = task.points !== undefined && !task.autoPointsRule;
+  if (hasManualPoints && !force) return false;
+
+  const changed = task.points !== match.points || task.autoPointsRule !== match.pattern;
+  task.points = match.points;
+  task.autoPointsRule = match.pattern;
+  return changed;
+}
+
 function calculatePersonPoints(personId) {
   if (!settings.usePointSystem) return 0;
   
@@ -425,6 +463,10 @@ function awardPointsForTask(task) {
   const person = people.find(p => p.id === task.assignedTo);
   if (!person) return;
   
+  if (task.points === undefined) {
+    autoAssignTaskPoints(task);
+  }
+
   const points = Number(task.points) || 1;
   person.points = (person.points || 0) + points;
   task.awardedPoints = points;
@@ -884,6 +926,19 @@ module.exports = NodeHelper.create({
         assignedTo: req.body.assignedTo ? parseInt(req.body.assignedTo, 10) : null,
         recurring: req.body.recurring || "none",
       };
+
+      if (newTask.points !== undefined) {
+        const numericPoints = Number(newTask.points);
+        if (Number.isFinite(numericPoints) && numericPoints > 0) {
+          newTask.points = numericPoints;
+        } else {
+          delete newTask.points;
+        }
+      }
+
+      if (newTask.points === undefined) {
+        autoAssignTaskPoints(newTask);
+      }
       Log.log("POST /api/tasks", newTask);
       tasks.push(newTask);
       sendPushover(self, settings, `New task: ${newTask.name}`);
@@ -939,14 +994,46 @@ module.exports = NodeHelper.create({
       if (!task) return res.status(404).json({ error: "Task not found" });
 
       const prevDone = task.done;
+      const updates = req.body || {};
+      const hasPointsUpdate = Object.prototype.hasOwnProperty.call(updates, "points");
+      const hasAutoRuleUpdate = Object.prototype.hasOwnProperty.call(updates, "autoPointsRule");
+      const hasNameUpdate = Object.prototype.hasOwnProperty.call(updates, "name");
 
-      Object.entries(req.body).forEach(([key, val]) => {
+      Object.entries(updates).forEach(([key, val]) => {
+        if (key === "points" || key === "autoPointsRule") return;
         if (val === undefined || val === null) {
           delete task[key];
+        } else if (key === "assignedTo") {
+          task[key] = val ? parseInt(val, 10) : null;
         } else {
           task[key] = val;
         }
       });
+
+      if (hasPointsUpdate) {
+        const numericPoints = Number(updates.points);
+        if (Number.isFinite(numericPoints) && numericPoints > 0) {
+          task.points = numericPoints;
+        } else {
+          delete task.points;
+        }
+        if (!hasAutoRuleUpdate) {
+          delete task.autoPointsRule;
+        }
+      }
+
+      if (hasAutoRuleUpdate) {
+        if (updates.autoPointsRule) {
+          task.autoPointsRule = updates.autoPointsRule;
+        } else {
+          delete task.autoPointsRule;
+        }
+      }
+
+      if (!hasPointsUpdate) {
+        const force = hasNameUpdate ? Boolean(task.autoPointsRule) : task.points === undefined;
+        autoAssignTaskPoints(task, { force });
+      }
       Log.log("PUT /api/tasks/" + id, req.body);
 
       // Adjust coins when completion status changes
@@ -969,6 +1056,15 @@ module.exports = NodeHelper.create({
             done: false,
             created: getLocalISO(new Date()),
           };
+          if (task.points !== undefined) {
+            newTask.points = task.points;
+          }
+          if (task.autoPointsRule) {
+            newTask.autoPointsRule = task.autoPointsRule;
+          }
+          if (newTask.points === undefined) {
+            autoAssignTaskPoints(newTask);
+          }
           tasks.push(newTask);
         }
       }
@@ -1014,6 +1110,7 @@ module.exports = NodeHelper.create({
       const newSettings = req.body;
       const wasAutoUpdate = settings.autoUpdate;
       const wasPointSystem = settings.usePointSystem;
+      let taskPointsRulesUpdated = false;
       
       if (typeof newSettings !== "object") {
         return res.status(400).json({ error: "Invalid settings data" });
@@ -1053,6 +1150,10 @@ module.exports = NodeHelper.create({
       
       Object.entries(newSettings).forEach(([key, val]) => {
         if (key === "leveling" || key === "openaiApiKey" || key === "pushoverApiKey" || key === "pushoverUser" || key === "_updatePersonCoins" || key === "_giftReason") return;
+        if (key === "taskPointsRules" && !Array.isArray(val)) return;
+        if (key === "taskPointsRules") {
+          taskPointsRulesUpdated = true;
+        }
         settings[key] = val;
         if (self.config) {
           if (key === "levelingEnabled") {
@@ -1063,6 +1164,21 @@ module.exports = NodeHelper.create({
           }
         }
       });
+      let tasksRecomputed = false;
+      if (taskPointsRulesUpdated) {
+        tasks.forEach(task => {
+          const force = task.autoPointsRule ? true : task.points === undefined;
+          if (force) {
+            const changed = autoAssignTaskPoints(task, { force });
+            tasksRecomputed = tasksRecomputed || changed;
+          }
+        });
+      }
+
+      if (tasksRecomputed) {
+        broadcastTasks(self);
+      }
+
       saveData();
       updatePeopleLevels(self.config);
       self.sendSocketNotification("LEVEL_INFO", getLevelInfo(self.config));

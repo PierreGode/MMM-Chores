@@ -850,7 +850,7 @@ async function applyTaskPointsRules() {
           await authFetch(`/api/tasks/${task.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ points: rule.points })
+            body: JSON.stringify({ points: rule.points, autoPointsRule: rule.pattern })
           });
           updatedCount++;
         }
