@@ -135,6 +135,7 @@ const LANGUAGES = {
     levelSystemEnabled: "Switched to level system",
     noRedemptions: "No redemptions yet",
     noPendingRedemptions: "No pending redemptions",
+    noActiveRewards: "No available rewards",
     userRewardsTitle: "User Reward Config",
     userRewardsDescription: "Review redeemed rewards and mark them as delivered once the user has received them.",
     redeemedRewardLabel: "redeemed",

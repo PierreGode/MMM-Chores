@@ -2096,54 +2096,50 @@ function renderRewards() {
     .slice()
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  sortedRewards.forEach(reward => {
-    if (settingsList) settingsList.appendChild(createSettingsRewardItem(reward, t));
-    if (libraryList) libraryList.appendChild(createRewardListItem(reward, t));
-  });
+  if (settingsList) {
+    sortedRewards.forEach(reward => {
+      settingsList.appendChild(createSettingsRewardItem(reward, t));
+    });
+  }
+
+  if (libraryList) {
+    const availableRewards = sortedRewards.filter(reward => reward.active !== false);
+    const availableMessage = t.noActiveRewards || emptyMessage;
+    if (!availableRewards.length) {
+      const li = document.createElement('li');
+      li.className = 'list-group-item text-center text-muted';
+      li.textContent = availableMessage;
+      libraryList.appendChild(li);
+    } else {
+      availableRewards.forEach(reward => {
+        libraryList.appendChild(createRewardListItem(reward, t));
+      });
+    }
+  }
 }
 
 function createRewardListItem(reward, t) {
   const item = document.createElement('li');
   item.className = 'list-group-item d-flex justify-content-between align-items-center flex-column flex-md-row gap-2';
 
-  const inactiveBadge = reward.active === false
-    ? `<span class="badge bg-secondary ms-2">${t.rewardInactive || 'Inactive'}</span>`
-    : '';
-
   const details = document.createElement('div');
   details.innerHTML = `
     <strong>${reward.name}</strong>
     <span class="badge bg-primary ms-2">${reward.pointCost} ${t.pointsLabel || 'points'}</span>
-    ${inactiveBadge}
     ${reward.description ? `<br><small class="text-muted">${reward.description}</small>` : ''}
   `;
 
-  const buttons = document.createElement('div');
-  buttons.className = 'btn-group btn-group-sm';
-
-  const editBtn = document.createElement('button');
-  editBtn.className = 'btn btn-outline-secondary';
-  editBtn.title = t.editReward || 'Edit Reward';
-  editBtn.innerHTML = '<i class="bi bi-pencil"></i>';
-  editBtn.onclick = () => editReward(reward.id);
-  buttons.appendChild(editBtn);
+  const actionWrapper = document.createElement('div');
+  actionWrapper.className = 'd-flex justify-content-center justify-content-md-end w-100';
 
   const redeemBtn = document.createElement('button');
-  redeemBtn.className = 'btn btn-outline-success';
+  redeemBtn.className = 'btn btn-sm btn-outline-success';
   redeemBtn.title = t.redeemReward || 'Redeem Reward';
   redeemBtn.innerHTML = '<i class="bi bi-gift"></i>';
-  redeemBtn.disabled = reward.active === false;
   redeemBtn.onclick = () => openRedeemModal(reward.id);
-  buttons.appendChild(redeemBtn);
 
-  const deleteBtn = document.createElement('button');
-  deleteBtn.className = 'btn btn-outline-danger';
-  deleteBtn.title = t.deleteReward || 'Delete';
-  deleteBtn.innerHTML = '<i class="bi bi-trash"></i>';
-  deleteBtn.onclick = () => deleteReward(reward.id);
-  buttons.appendChild(deleteBtn);
-
-  item.append(details, buttons);
+  actionWrapper.appendChild(redeemBtn);
+  item.append(details, actionWrapper);
   return item;
 }
 
