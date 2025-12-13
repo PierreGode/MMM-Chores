@@ -510,6 +510,19 @@ function setLanguage(lang) {
   if (showAnalyticsLbl) showAnalyticsLbl.textContent = t.analyticsOnMirrorLabel || 'Analytics on mirror';
   const useAiLbl = document.querySelector("label[for='settingsUseAI']");
   if (useAiLbl) useAiLbl.textContent = t.useAiLabel || 'Use AI features';
+  const manualCoinsHeader = document.getElementById('manualCoinsHeader');
+  if (manualCoinsHeader) manualCoinsHeader.textContent = t.manualCoinsTitle || 'Manual Coin Control';
+  const manualCoinsDescription = document.getElementById('manualCoinsDescription');
+  if (manualCoinsDescription) manualCoinsDescription.textContent = t.manualCoinsDescription || 'View all people and manually adjust their coin balances.';
+  document.querySelectorAll('.manual-coin-input').forEach(input => {
+    input.placeholder = t.manualCoinsInput || 'Coins';
+  });
+  document.querySelectorAll('.manual-coin-give').forEach(btn => {
+    btn.innerHTML = `<i class="bi bi-arrow-up-right-circle"></i> ${t.manualCoinsGiveButton || 'Give'}`;
+  });
+  document.querySelectorAll('.manual-coin-edit').forEach(btn => {
+    btn.innerHTML = `<i class="bi bi-pencil"></i> ${t.manualCoinsEditButton || 'Set total'}`;
+  });
   const textSizeLbl = document.querySelector("label[for='settingsTextSize']");
   if (textSizeLbl) textSizeLbl.textContent = t.textSizeLabel || 'Mirror text size';
   const textSizeSelect = document.getElementById('settingsTextSize');
@@ -665,6 +678,8 @@ async function fetchPeople() {
   renderPeople();
   renderPeoplePoints(); // Update points display when people data changes
   populateGiftPersonSelect(); // Update gift points dropdown
+  renderManualCoinList();
+  updatePointTotalsPreview();
 }
 
 async function fetchTasks() {
@@ -925,14 +940,14 @@ function renderPeople() {
       const actions = document.createElement('div');
       actions.className = 'btn-group btn-group-sm';
       
-      // Show edit coins button if point system is active
+      // Show redeem reward button if point system is active
       if (isPointSystemActive) {
-        const editCoinsBtn = document.createElement('button');
-        editCoinsBtn.className = 'btn btn-outline-warning';
-        editCoinsBtn.title = 'Edit coins';
-        editCoinsBtn.innerHTML = '<i class="bi bi-coin"></i>';
-        editCoinsBtn.onclick = () => openEditCoinsModal(person);
-        actions.appendChild(editCoinsBtn);
+        const redeemBtn = document.createElement('button');
+        redeemBtn.className = 'btn btn-outline-success';
+        redeemBtn.title = LANGUAGES[currentLang].redeemReward || 'Redeem Reward';
+        redeemBtn.innerHTML = '<i class="bi bi-gift"></i>';
+        redeemBtn.onclick = () => openRedeemModalForPerson(person.id);
+        actions.appendChild(redeemBtn);
       } else if (levelingEnabled) {
         const viewBtn = document.createElement('button');
         viewBtn.className = 'btn btn-outline-secondary';
@@ -2042,6 +2057,97 @@ function renderPeoplePoints() {
     `;
     list.appendChild(item);
   });
+}
+
+function renderManualCoinList() {
+  const list = document.getElementById('manualCoinList');
+  if (!list) return;
+
+  list.innerHTML = '';
+
+  if (peopleCache.length === 0) {
+    const li = document.createElement('li');
+    li.className = 'list-group-item text-center text-muted';
+    li.textContent = LANGUAGES[currentLang].noPeople;
+    list.appendChild(li);
+    return;
+  }
+
+  const t = LANGUAGES[currentLang] || {};
+  const pointsLabel = t.pointsLabel || 'points';
+  const placeholder = t.manualCoinsInput || 'Coins';
+  const giveLabel = t.manualCoinsGiveButton || 'Give';
+  const editLabel = t.manualCoinsEditButton || 'Set total';
+
+  peopleCache.forEach(person => {
+    const li = document.createElement('li');
+    li.className = 'list-group-item d-flex flex-column flex-md-row gap-2 align-items-md-center';
+
+    const info = document.createElement('div');
+    info.className = 'flex-grow-1';
+    info.innerHTML = `
+      <strong>${person.name}</strong><br>
+      <small class="text-muted">${person.points || 0} ${pointsLabel}</small>
+    `;
+
+    const controls = document.createElement('div');
+    controls.className = 'd-flex flex-wrap align-items-center gap-2';
+
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.min = '1';
+    input.className = 'form-control form-control-sm manual-coin-input';
+    input.placeholder = placeholder;
+
+    const giveBtn = document.createElement('button');
+    giveBtn.type = 'button';
+    giveBtn.className = 'btn btn-sm btn-success manual-coin-give';
+    giveBtn.innerHTML = `<i class="bi bi-arrow-up-right-circle"></i> ${giveLabel}`;
+    giveBtn.onclick = () => handleManualCoinGift(person.id, input);
+
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'btn btn-sm btn-outline-secondary manual-coin-edit';
+    editBtn.innerHTML = `<i class="bi bi-pencil"></i> ${editLabel}`;
+    editBtn.onclick = () => openEditCoinsModal(person);
+
+    controls.append(input, giveBtn, editBtn);
+    li.append(info, controls);
+    list.appendChild(li);
+  });
+}
+
+async function handleManualCoinGift(personId, inputEl) {
+  const amount = parseInt(inputEl.value, 10);
+  if (!amount || amount <= 0) {
+    showToast('Enter a coin amount first', 'warning');
+    return;
+  }
+
+  const person = peopleCache.find(p => p.id === personId);
+  if (!person) {
+    showToast('Person not found', 'danger');
+    return;
+  }
+
+  const newTotal = (person.points || 0) + amount;
+
+  try {
+    await authFetch('/api/settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        _updatePersonCoins: { personId, points: newTotal },
+        _giftReason: 'Manual config adjustment'
+      })
+    });
+
+    inputEl.value = '';
+    await fetchPeople();
+    showToast(`Gifted ${amount} points to ${person.name}`, 'success');
+  } catch (e) {
+    showToast('Failed to gift points', 'danger');
+  }
 }
 
 function renderRedemptions() {

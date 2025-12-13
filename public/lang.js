@@ -134,7 +134,12 @@ const LANGUAGES = {
     pointSystemEnabled: "Switched to point system",
     levelSystemEnabled: "Switched to level system",
     noRedemptions: "No redemptions yet",
-    taskPointsPlaceholder: "Points"
+    taskPointsPlaceholder: "Points",
+    manualCoinsTitle: "Manual Coin Control",
+    manualCoinsDescription: "View everyone and adjust their coin balances directly from settings.",
+    manualCoinsGiveButton: "Give",
+    manualCoinsEditButton: "Set total",
+    manualCoinsInput: "Coins"
   },
   sv: {
     title: "MMM-Chores Admin  ",
