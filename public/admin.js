@@ -870,6 +870,21 @@ async function applyTaskPointsRules() {
   showToast(`Applied rules to ${updatedCount} task(s)`, 'success');
 }
 
+function resolveTaskCoinValue(taskName) {
+  if (!taskName || !Array.isArray(taskPointsRules) || taskPointsRules.length === 0) {
+    return 1;
+  }
+
+  const normalized = taskName.toLowerCase();
+  const matchingRule = taskPointsRules.find(rule => {
+    if (!rule?.pattern) return false;
+    return normalized.includes(rule.pattern.toLowerCase());
+  });
+
+  const parsed = parseInt(matchingRule?.points, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+}
+
 // Populate gift points person select
 function populateGiftPersonSelect() {
   const select = document.getElementById('giftPersonSelect');
@@ -1385,8 +1400,8 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
   let date = document.getElementById("taskDate").value;
   const recurring = document.getElementById("taskRecurring").value;
   const assigned = document.getElementById("taskPerson").value;
-  const points = document.getElementById("taskPoints").value || 1;
   if (!name) return;
+  const points = resolveTaskCoinValue(name);
   if (!date) date = new Date().toISOString().split("T")[0];
 
   const now = new Date();
@@ -1408,13 +1423,12 @@ document.getElementById("taskForm").addEventListener("submit", async e => {
       date,
       recurring,
       assignedTo: assigned ? parseInt(assigned) : null,
-      points: parseInt(points),
+      points,
       created: iso,
       createdShort: stamp("C")
     })
   });
   e.target.reset();
-  document.getElementById("taskPoints").value = 1; // Reset points to default
   await fetchTasks();
 });
 
@@ -2501,6 +2515,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (rewardForm) {
     rewardForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      e.stopPropagation();
+      if (typeof e.stopImmediatePropagation === 'function') {
+        e.stopImmediatePropagation();
+      }
       
       const nameInput = document.getElementById('rewardName');
       const pointsInput = document.getElementById('rewardPoints');
@@ -2612,13 +2630,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update info when selections change
     document.getElementById('redeemPerson').addEventListener('change', updateRedeemInfo);
     document.getElementById('redeemReward').addEventListener('change', updateRedeemInfo);
-  }
-  
-  // Update task form to include points
-  const taskPointsField = document.getElementById('taskPoints');
-  if (taskPointsField && !taskPointsField.hasAttribute('data-initialized')) {
-    taskPointsField.setAttribute('data-initialized', 'true');
-    // Field is already handled by the existing task form handler above
   }
   
   // Edit coins form
