@@ -412,19 +412,34 @@ function calculatePersonPoints(personId) {
   
   return tasks
     .filter(t => t.done && t.assignedTo === personId)
-    .reduce((total, task) => total + (task.points || 1), 0);
+    .reduce((total, task) => total + (task.awardedPoints ?? task.points ?? 1), 0);
 }
 
 function awardPointsForTask(task) {
   if (!settings.usePointSystem || !task.done || !task.assignedTo) return;
+  if (task.awardedPoints !== undefined) return;
   
   const person = people.find(p => p.id === task.assignedTo);
   if (!person) return;
   
   const points = task.points || 1;
   person.points = (person.points || 0) + points;
+  task.awardedPoints = points;
   
-  Log.log(`MMM-Chores: Awarded ${points} points to ${person.name} for completing "${task.name}"`);
+  Log.log(`MMM-Chores: Awarded ${points} coins to ${person.name} for completing "${task.name}"`);
+}
+
+function revokePointsForTask(task) {
+  if (!settings.usePointSystem || !task.assignedTo || task.awardedPoints === undefined) return;
+  
+  const person = people.find(p => p.id === task.assignedTo);
+  if (!person) return;
+  
+  const points = task.awardedPoints;
+  person.points = Math.max(0, (person.points || 0) - points);
+  delete task.awardedPoints;
+  
+  Log.log(`MMM-Chores: Removed ${points} coins from ${person.name} after undoing "${task.name}"`);
 }
 
 function migrateToPointSystem() {
@@ -930,9 +945,11 @@ module.exports = NodeHelper.create({
       });
       Log.log("PUT /api/tasks/" + id, req.body);
 
-      // Award points when task is completed
+      // Adjust coins when completion status changes
       if (!prevDone && task.done) {
         awardPointsForTask(task);
+      } else if (prevDone && !task.done) {
+        revokePointsForTask(task);
       }
 
       if (!prevDone && task.done && task.recurring && task.recurring !== "none") {

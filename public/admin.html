@@ -451,7 +451,7 @@
               <div class="card-body">
                 <div class="alert alert-success">
                   <i class="bi bi-check-circle me-2"></i>
-                  Point system is active. Manage rewards below and view point balances on the Rewards tab.
+                  Point system is active. Manage rewards below and view coin balances on the Rewards tab.
                 </div>
                 <div class="row gy-3 mb-4">
                   <div class="col-12">
@@ -503,22 +503,22 @@
                   </div>
                 </div>
                 
-                <!-- Task Points Assignment -->
+                <!-- Task Coin Assignment -->
                 <div class="border-top pt-3 mt-3">
                   <h6 class="mb-3">
-                    <i class="bi bi-list-task me-2"></i>Task Points Assignment
+                    <i class="bi bi-list-task me-2"></i>Task Coin Assignment
                   </h6>
-                  <p class="small text-muted">Assign point values to tasks by matching their names. Tasks matching these patterns will automatically award the specified points.</p>
+                  <p class="small text-muted">Assign coin values to tasks by matching their names. Tasks matching these rules will automatically award the specified coins when completed.</p>
                   <form id="taskPointsForm" class="row gy-2 gx-2 align-items-end mb-3">
                     <div class="col-sm-6">
-                      <label class="form-label small" for="taskPatternName">Task Name Pattern</label>
+                      <label class="form-label small" for="taskPatternName">Task Name (matches existing chore)</label>
                       <select id="taskPatternName" class="form-select form-select-sm" required>
                         <option value="">Loading tasks...</option>
                       </select>
                     </div>
                     <div class="col-sm-3">
-                      <label class="form-label small" for="taskPatternPoints">Points Value</label>
-                      <input type="number" id="taskPatternPoints" class="form-control form-control-sm" placeholder="Points" min="1" required />
+                      <label class="form-label small" for="taskPatternPoints">Coins Awarded</label>
+                      <input type="number" id="taskPatternPoints" class="form-control form-control-sm" placeholder="Coins" min="1" required />
                     </div>
                     <div class="col-sm-3">
                       <button class="btn btn-primary btn-sm w-100" type="submit">
@@ -534,12 +534,12 @@
                   </button>
                 </div>
                 
-                <!-- Gift Points -->
+                <!-- Gift Coins -->
                 <div class="border-top pt-3 mt-3">
                   <h6 class="mb-3">
-                    <i class="bi bi-gift-fill me-2"></i>Gift Points to Person
+                    <i class="bi bi-gift-fill me-2"></i>Gift Coins to Person
                   </h6>
-                  <p class="small text-muted">Give bonus points to people without completing a task.</p>
+                  <p class="small text-muted">Give bonus coins to people without completing a task.</p>
                   <form id="giftPointsForm" class="row gy-2 gx-2 align-items-end mb-3">
                     <div class="col-sm-5">
                       <label class="form-label small" for="giftPersonSelect">Person</label>
@@ -548,8 +548,8 @@
                       </select>
                     </div>
                     <div class="col-sm-3">
-                      <label class="form-label small" for="giftPointsAmount">Points to Gift</label>
-                      <input type="number" id="giftPointsAmount" class="form-control form-control-sm" placeholder="Points" min="1" required />
+                      <label class="form-label small" for="giftPointsAmount">Coins to Gift</label>
+                      <input type="number" id="giftPointsAmount" class="form-control form-control-sm" placeholder="Coins" min="1" required />
                     </div>
                     <div class="col-sm-4">
                       <label class="form-label small" for="giftPointsReason">Reason (optional)</label>
@@ -557,7 +557,7 @@
                     </div>
                     <div class="col-sm-12">
                       <button class="btn btn-success btn-sm" type="submit">
-                        <i class="bi bi-gift-fill me-1"></i>Gift Points
+                        <i class="bi bi-gift-fill me-1"></i>Gift Coins
                       </button>
                     </div>
                   </form>
