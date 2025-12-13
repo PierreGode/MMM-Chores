@@ -591,8 +591,8 @@ select#taskRecurring option[value="first_monday_month"] {
 }
 
 
-/* Point totals preview */
-#pointTotalsPreview {
+/* Coin totals preview */
+#coinTotalsPreview {
   max-height: 120px;
   overflow-y: auto;
   background: var(--field-bg);

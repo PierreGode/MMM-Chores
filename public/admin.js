@@ -183,18 +183,19 @@ function initSettingsForm(settings) {
 
   // Reward system selection
   const useLevelSystem = document.getElementById('useLevelSystem');
-  const usePointSystem = document.getElementById('usePointSystem');
+  const useCoinSystem = document.getElementById('useCoinSystem');
   const levelSystemCard = document.getElementById('levelSystemCard');
-  const pointSystemCard = document.getElementById('pointSystemCard');
+  const coinSystemCard = document.getElementById('coinSystemCard');
   const migrationWarning = document.getElementById('migrationWarning');
   const levelSettings = document.getElementById('levelSettings');
-  const pointSettings = document.getElementById('pointSettings');
+  const coinSettings = document.getElementById('coinSettings');
 
   // Initialize reward system selection
-  const currentSystem = settings.usePointSystem ? 'points' : 'level';
-  if (useLevelSystem && usePointSystem) {
+  const coinSystemEnabled = settings.useCoinSystem ?? settings.usePointSystem ?? false;
+  const currentSystem = coinSystemEnabled ? 'coins' : 'level';
+  if (useLevelSystem && useCoinSystem) {
     useLevelSystem.checked = currentSystem === 'level';
-    usePointSystem.checked = currentSystem === 'points';
+    useCoinSystem.checked = currentSystem === 'coins';
     updateRewardSystemUI(currentSystem);
   }
 
@@ -207,10 +208,10 @@ function initSettingsForm(settings) {
     });
   }
 
-  if (usePointSystem) {
-    usePointSystem.addEventListener('change', () => {
-      if (usePointSystem.checked) {
-        updateRewardSystemUI('points');
+  if (useCoinSystem) {
+    useCoinSystem.addEventListener('change', () => {
+      if (useCoinSystem.checked) {
+        updateRewardSystemUI('coins');
         if (migrationWarning) {
           migrationWarning.classList.remove('d-none');
         }
@@ -228,11 +229,11 @@ function initSettingsForm(settings) {
     });
   }
 
-  if (pointSystemCard) {
-    pointSystemCard.addEventListener('click', () => {
-      if (usePointSystem) {
-        usePointSystem.checked = true;
-        updateRewardSystemUI('points');
+  if (coinSystemCard) {
+    coinSystemCard.addEventListener('click', () => {
+      if (useCoinSystem) {
+        useCoinSystem.checked = true;
+        updateRewardSystemUI('coins');
         if (migrationWarning) {
           migrationWarning.classList.remove('d-none');
         }
@@ -242,23 +243,23 @@ function initSettingsForm(settings) {
 
   function updateRewardSystemUI(system) {
     // Update card styles
-    if (levelSystemCard && pointSystemCard) {
+    if (levelSystemCard && coinSystemCard) {
       levelSystemCard.classList.toggle('selected', system === 'level');
-      pointSystemCard.classList.toggle('selected', system === 'points');
+      coinSystemCard.classList.toggle('selected', system === 'coins');
     }
 
     // Show/hide settings sections
     if (levelSettings) {
       levelSettings.classList.toggle('d-none', system !== 'level');
     }
-    if (pointSettings) {
-      pointSettings.classList.toggle('d-none', system !== 'points');
+    if (coinSettings) {
+      coinSettings.classList.toggle('d-none', system !== 'coins');
     }
 
     // Show/hide Rewards tab setting
     const showRewardsTabContainer = document.getElementById('settingsShowRewardsTabContainer');
     if (showRewardsTabContainer) {
-      if (system === 'points') {
+      if (system === 'coins') {
         showRewardsTabContainer.style.display = '';
       } else {
         showRewardsTabContainer.style.display = 'none';
@@ -266,7 +267,7 @@ function initSettingsForm(settings) {
     }
 
     // Update rewards tab visibility
-    updateRewardsTabVisibility(system === 'points');
+    updateRewardsTabVisibility(system === 'coins');
 
     // Hide migration warning for level system
     if (system === 'level' && migrationWarning) {
@@ -301,17 +302,17 @@ function initSettingsForm(settings) {
   if (reminderTime) reminderTime.value = settings.reminderTime || '';
   if (backgroundSelect) backgroundSelect.value = settings.background || '';
   
-  // Show/hide Rewards tab setting based on point system
+  // Show/hide Rewards tab setting based on coins system
   if (showRewardsTabContainer) {
-    if (currentSystem === 'points') {
+    if (currentSystem === 'coins') {
       showRewardsTabContainer.style.display = '';
     } else {
       showRewardsTabContainer.style.display = 'none';
     }
   }
 
-  // Update point totals preview
-  updatePointTotalsPreview();
+  // Update coin totals preview
+  updateCoinTotalsPreview();
 
   // Edit rewards button handler
   if (editRewardsBtn) {
@@ -328,8 +329,10 @@ function initSettingsForm(settings) {
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     
+    const coinSystemSelected = useCoinSystem ? useCoinSystem.checked : false;
     const newSettings = {
-      usePointSystem: usePointSystem ? usePointSystem.checked : false,
+      useCoinSystem: coinSystemSelected,
+      usePointSystem: coinSystemSelected,
       showPast: showPast ? showPast.checked : false,
       textMirrorSize: textSize ? textSize.value : 'small',
       dateFormatting: dateFmt ? dateFmt.value : '',
@@ -360,16 +363,20 @@ function initSettingsForm(settings) {
       localStorage.setItem('choresBackground', newSettings.background || '');
       
       // Update rewards tab based on new system
-      updateRewardsTabVisibility(newSettings.usePointSystem, newSettings.showRewardsTab);
+      updateRewardsTabVisibility(newSettings.useCoinSystem, newSettings.showRewardsTab);
       
       // Refresh data if switching systems
-      if (settings.usePointSystem !== newSettings.usePointSystem) {
-        if (newSettings.usePointSystem) {
+      const previousCoinSetting = settings.useCoinSystem ?? settings.usePointSystem ?? false;
+      if (previousCoinSetting !== newSettings.useCoinSystem) {
+        if (newSettings.useCoinSystem) {
           await fetchRewards();
           await fetchRedemptions();
         }
         await fetchPeople();
       }
+
+      settings.useCoinSystem = newSettings.useCoinSystem;
+      settings.usePointSystem = newSettings.useCoinSystem;
 
       showToast('Settings saved successfully', 'success');
       bootstrap.Modal.getInstance(document.getElementById('settingsModal')).hide();
@@ -380,7 +387,7 @@ function initSettingsForm(settings) {
   });
 }
 
-function updateRewardsTabVisibility(usePointSystem, showRewardsTab = true) {
+function updateRewardsTabVisibility(useCoinSystem, showRewardsTab = true) {
   const rewardsSystemEnabled = document.getElementById('rewardsSystemEnabled');
   const rewardsSystemDisabled = document.getElementById('rewardsSystemDisabled');
   const rewardsTabButton = document.querySelector('[data-bs-target="#rewards"]');
@@ -388,7 +395,7 @@ function updateRewardsTabVisibility(usePointSystem, showRewardsTab = true) {
   
   // Show/hide the rewards tab button itself
   if (rewardsTabLi) {
-    if (usePointSystem && showRewardsTab) {
+    if (useCoinSystem && showRewardsTab) {
       rewardsTabLi.style.display = '';
     } else {
       rewardsTabLi.style.display = 'none';
@@ -397,7 +404,7 @@ function updateRewardsTabVisibility(usePointSystem, showRewardsTab = true) {
   
   // Show appropriate content in rewards tab
   if (rewardsSystemEnabled && rewardsSystemDisabled) {
-    if (usePointSystem) {
+    if (useCoinSystem) {
       rewardsSystemEnabled.classList.remove('d-none');
       rewardsSystemDisabled.classList.add('d-none');
     } else {
@@ -407,8 +414,8 @@ function updateRewardsTabVisibility(usePointSystem, showRewardsTab = true) {
   }
 }
 
-function updatePointTotalsPreview() {
-  const preview = document.getElementById('pointTotalsPreview');
+function updateCoinTotalsPreview() {
+  const preview = document.getElementById('coinTotalsPreview');
   if (!preview) return;
   
   if (peopleCache.length === 0) {
@@ -418,24 +425,24 @@ function updatePointTotalsPreview() {
   
   const pointsText = peopleCache.map(person => {
     const points = person.points || 0;
-    return `${person.name}: ${points} points`;
+    return `${person.name}: ${points} coins`;
   }).join('\n');
   
-  preview.textContent = pointsText || 'Loading point totals...';
+  preview.textContent = pointsText || 'Loading coin totals...';
 }
 
 function openSettingsToRewardSystem() {
   const settingsModal = document.getElementById('settingsModal');
-  const usePointSystem = document.getElementById('usePointSystem');
+  const useCoinSystem = document.getElementById('useCoinSystem');
   
-  if (settingsModal && usePointSystem) {
+  if (settingsModal && useCoinSystem) {
     const modal = new bootstrap.Modal(settingsModal);
     modal.show();
     
-    // After modal opens, select point system
+    // After modal opens, select coins system
     setTimeout(() => {
-      usePointSystem.checked = true;
-      usePointSystem.dispatchEvent(new Event('change'));
+      useCoinSystem.checked = true;
+      useCoinSystem.dispatchEvent(new Event('change'));
     }, 500);
   }
 }
@@ -684,10 +691,10 @@ async function fetchPeople() {
   const res = await authFetch("/api/people");
   peopleCache = await res.json();
   renderPeople();
-  renderPeoplePoints(); // Update points display when people data changes
+  renderPeoplePoints(); // Update coin display when people data changes
   populateGiftPersonSelect(); // Update gift points dropdown
   renderManualCoinList();
-  updatePointTotalsPreview();
+  updateCoinTotalsPreview();
 }
 
 async function fetchTasks() {
@@ -939,9 +946,9 @@ function renderPeople() {
   const list = document.getElementById("peopleList");
   list.innerHTML = "";
   
-  // Check if point system is active
-  const usePointSystem = document.getElementById('usePointSystem');
-  const isPointSystemActive = usePointSystem && usePointSystem.checked;
+  // Check if coin system is active
+  const useCoinSystem = document.getElementById('useCoinSystem');
+  const isCoinSystemActive = useCoinSystem && useCoinSystem.checked;
 
   if (peopleCache.length === 0) {
     const li = document.createElement("li");
@@ -957,8 +964,8 @@ function renderPeople() {
     const info = document.createElement("span");
     info.textContent = person.name;
     
-    // Show coins if point system is active, otherwise show level
-    if (isPointSystemActive) {
+    // Show coins if coin system is active, otherwise show level
+    if (isCoinSystemActive) {
       const small = document.createElement("small");
       small.className = "ms-2 text-muted";
       const coins = person.points || 0;
@@ -978,8 +985,8 @@ function renderPeople() {
       const actions = document.createElement('div');
       actions.className = 'btn-group btn-group-sm';
       
-      // Show redeem reward button if point system is active
-      if (isPointSystemActive) {
+      // Show redeem reward button if coin system is active
+      if (isCoinSystemActive) {
         const redeemBtn = document.createElement('button');
         redeemBtn.className = 'btn btn-outline-success';
         redeemBtn.title = LANGUAGES[currentLang].redeemReward || 'Redeem Reward';
@@ -1890,9 +1897,10 @@ async function initApp() {
   await applySettings(userSettings);
 
   // Initialize rewards system visibility
-  updateRewardsTabVisibility(!!userSettings.usePointSystem, userSettings.showRewardsTab !== false);
+  const userCoinSystemEnabled = userSettings.useCoinSystem ?? userSettings.usePointSystem ?? false;
+  updateRewardsTabVisibility(userCoinSystemEnabled, userSettings.showRewardsTab !== false);
   
-  if (userSettings.usePointSystem) {
+  if (userCoinSystemEnabled) {
     await fetchRewards();
     await fetchRedemptions();
   }
