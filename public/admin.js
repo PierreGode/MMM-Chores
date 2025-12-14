@@ -2139,7 +2139,7 @@ function createRewardListItem(reward, t) {
   const details = document.createElement('div');
   details.innerHTML = `
     <strong>${reward.name}</strong>
-    <span class="badge bg-primary ms-2">${reward.pointCost} ${t.pointsLabel || 'points'}</span>
+    <span class="badge bg-primary ms-2">${reward.pointCost} ${t.pointsLabel || 'coins'}</span>
     ${reward.description ? `<br><small class="text-muted">${reward.description}</small>` : ''}
   `;
 
@@ -2168,7 +2168,7 @@ function createSettingsRewardItem(reward, t) {
   const details = document.createElement('div');
   details.innerHTML = `
     <strong>${reward.name}</strong>
-    <span class="badge bg-primary ms-2">${reward.pointCost} ${t.pointsLabel || 'points'}</span>
+    <span class="badge bg-primary ms-2">${reward.pointCost} ${t.pointsLabel || 'coins'}</span>
     ${inactiveBadge}
     ${reward.description ? `<br><small class="text-muted">${reward.description}</small>` : ''}
   `;
@@ -2254,6 +2254,11 @@ function renderPeoplePoints() {
   const list = document.getElementById('peoplePointsList');
   if (!list) return;
 
+  const t = LANGUAGES[currentLang] || {};
+  const currencyLabel = t.pointsLabel || 'coins';
+  const redeemTitle = t.redeemReward || 'Redeem Reward';
+  const redeemBtnLabel = t.redeemButton || t.redeemReward || 'Redeem';
+
   list.innerHTML = '';
   peopleCache.forEach(person => {
     const points = person.points || 0;
@@ -2262,10 +2267,10 @@ function renderPeoplePoints() {
     item.innerHTML = `
       <div>
         <strong>${person.name}</strong>
-        <span class="badge bg-warning text-dark ms-2">${points} points</span>
+        <span class="badge bg-warning text-dark ms-2">${points} ${currencyLabel}</span>
       </div>
-      <button class="btn btn-sm btn-outline-primary" onclick="openRedeemModalForPerson(${person.id})" title="Redeem Reward">
-        <i class="bi bi-gift"></i> Redeem
+      <button class="btn btn-sm btn-outline-primary" onclick="openRedeemModalForPerson(${person.id})" title="${redeemTitle}">
+        <i class="bi bi-gift"></i> ${redeemBtnLabel}
       </button>
     `;
     list.appendChild(item);
@@ -2298,8 +2303,8 @@ function renderPendingRedemptionsCard(pending, t) {
     item.className = 'list-group-item d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2';
     item.innerHTML = `
       <div>
-        <strong>${redemption.personName}</strong> redeemed <strong>${redemption.rewardName}</strong>
-        <br><small class="text-muted">${new Date(redemption.redeemed).toLocaleString()} • ${redemption.pointCost} ${t.pointsLabel || 'points'}</small>
+        <strong>${redemption.personName}</strong> ${(t.redeemedRewardLabel || 'redeemed')} <strong>${redemption.rewardName}</strong>
+        <br><small class="text-muted">${new Date(redemption.redeemed).toLocaleString()} • ${redemption.pointCost} ${t.pointsLabel || 'coins'}</small>
       </div>
       <span class="badge bg-warning text-dark">${t.rewardPending || 'Pending'}</span>
     `;
@@ -2327,7 +2332,7 @@ function renderPendingRedemptionsSettings(pending, t) {
       <strong>${redemption.personName}</strong>
       <span class="text-muted">${t.redeemedRewardLabel || 'redeemed'}</span>
       <strong>${redemption.rewardName}</strong>
-      <br><small class="text-muted">${new Date(redemption.redeemed).toLocaleString()} • ${redemption.pointCost} ${t.pointsLabel || 'points'}</small>
+      <br><small class="text-muted">${new Date(redemption.redeemed).toLocaleString()} • ${redemption.pointCost} ${t.pointsLabel || 'coins'}</small>
     `;
 
     const actions = document.createElement('div');
@@ -2362,22 +2367,26 @@ function openRedeemModal(rewardId = null) {
   const personSelect = document.getElementById('redeemPerson');
   const rewardSelect = document.getElementById('redeemReward');
   const info = document.getElementById('redeemInfo');
+  const t = LANGUAGES[currentLang] || {};
+  const currencyLabel = t.pointsLabel || 'coins';
+  const personPlaceholder = t.selectPersonLabel || 'Select person...';
+  const rewardPlaceholder = t.selectRewardLabel || 'Select reward...';
   
   // Populate people
-  personSelect.innerHTML = '<option value="">Select person...</option>';
+  personSelect.innerHTML = `<option value="">${personPlaceholder}</option>`;
   peopleCache.forEach(person => {
     const option = document.createElement('option');
     option.value = person.id;
-    option.textContent = `${person.name} (${person.points || 0} points)`;
+    option.textContent = `${person.name} (${person.points || 0} ${currencyLabel})`;
     personSelect.appendChild(option);
   });
   
   // Populate rewards
-  rewardSelect.innerHTML = '<option value="">Select reward...</option>';
+  rewardSelect.innerHTML = `<option value="">${rewardPlaceholder}</option>`;
   rewardsCache.filter(r => r.active !== false).forEach(reward => {
     const option = document.createElement('option');
     option.value = reward.id;
-    option.textContent = `${reward.name} (${reward.pointCost} points)`;
+    option.textContent = `${reward.name} (${reward.pointCost} ${currencyLabel})`;
     if (rewardId && reward.id === rewardId) {
       option.selected = true;
     }
@@ -2399,6 +2408,8 @@ function updateRedeemInfo() {
   const personId = parseInt(document.getElementById('redeemPerson').value);
   const rewardId = parseInt(document.getElementById('redeemReward').value);
   const info = document.getElementById('redeemInfo');
+  const t = LANGUAGES[currentLang] || {};
+  const currencyLabel = t.pointsLabel || 'coins';
   
   if (!personId || !rewardId) {
     info.style.display = 'none';
@@ -2418,8 +2429,8 @@ function updateRedeemInfo() {
   
   info.className = `alert ${canRedeem ? 'alert-success' : 'alert-danger'}`;
   info.textContent = canRedeem 
-    ? `${person.name} has enough points to redeem ${reward.name}`
-    : `${person.name} needs ${reward.pointCost - personPoints} more points to redeem ${reward.name}`;
+    ? `${person.name} has enough ${currencyLabel} to redeem ${reward.name}`
+    : `${person.name} needs ${reward.pointCost - personPoints} more ${currencyLabel} to redeem ${reward.name}`;
   info.style.display = 'block';
 }
 
