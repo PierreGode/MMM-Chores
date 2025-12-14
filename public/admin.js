@@ -2235,8 +2235,8 @@ async function initApp() {
         if (settingsForm) settingsForm.classList.add('d-none');
         togglePinPrompt(true);
         if (lockedMsg) {
-          lockedMsg.textContent = LANGUAGES[currentLang].settingsEnterPin;
-          lockedMsg.classList.remove('d-none');
+          lockedMsg.textContent = '';
+          lockedMsg.classList.add('d-none');
         }
         modal.show();
         return;
