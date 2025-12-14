@@ -748,26 +748,30 @@ function ensureRecurringInstancesUpToToday() {
   let createdCount = 0;
 
   seriesMap.forEach(entry => {
-    const seriesTasks = entry.tasks.sort((a, b) => getSortableDateKey(a.date).localeCompare(getSortableDateKey(b.date)));
-    const dateSet = new Set(seriesTasks.map(t => t.date).filter(Boolean));
-    let lastTask = seriesTasks[seriesTasks.length - 1];
-    if (!lastTask || !lastTask.date) return;
+    const seriesTasks = entry.tasks
+      .filter(task => task && !task.deleted && task.date)
+      .sort((a, b) => getSortableDateKey(a.date).localeCompare(getSortableDateKey(b.date)));
+    if (!seriesTasks.length) return;
 
-    while (lastTask.date < today) {
-      const nextDate = getNextDate(lastTask.date, entry.recurrence);
-      if (!nextDate || nextDate === lastTask.date) break;
-      if (dateSet.has(nextDate)) {
-        const existing = seriesTasks.find(t => t.date === nextDate);
-        if (!existing) break;
-        lastTask = existing;
-        if (lastTask.date >= today) break;
-        continue;
-      }
-      const newTask = createRecurringInstanceFromTask(lastTask, nextDate);
-      if (!newTask) break;
-      seriesTasks.push(newTask);
-      dateSet.add(nextDate);
-      lastTask = newTask;
+    const dateSet = new Set(seriesTasks.map(t => t.date));
+    const lastTask = seriesTasks[seriesTasks.length - 1];
+    if (!lastTask || !lastTask.date) return;
+    if (lastTask.date >= today) return;
+
+    let candidateDate = lastTask.date;
+    let safety = 0;
+    while (candidateDate < today && safety < 730) {
+      const nextDate = getNextDate(candidateDate, entry.recurrence);
+      if (!nextDate || nextDate === candidateDate) break;
+      candidateDate = nextDate;
+      safety += 1;
+    }
+
+    if (candidateDate <= lastTask.date) return;
+    if (dateSet.has(candidateDate)) return;
+
+    const newTask = createRecurringInstanceFromTask(lastTask, candidateDate);
+    if (newTask) {
       createdCount += 1;
     }
   });
