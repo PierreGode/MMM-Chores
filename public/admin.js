@@ -1253,13 +1253,40 @@ function renderTasks() {
     return;
   }
 
-  const isSeriesRoot = (task) => {
-    if (!task.recurring || task.recurring === 'none') return true;
-    const seriesId = task.seriesId || task.id;
-    return seriesId === task.id;
+  // Collapse recurring families so only the most relevant task per series is displayed
+  const pickSeriesRepresentatives = (tasks) => {
+    const sequence = [];
+    const representatives = new Map();
+
+    const shouldReplace = (candidate, current) => {
+      if (!!candidate.done !== !!current.done) {
+        return !candidate.done; // prefer tasks that still need attention
+      }
+      const candidateDate = candidate.date || '';
+      const currentDate = current.date || '';
+      if (candidateDate !== currentDate) {
+        return candidateDate > currentDate; // show the most recent instance
+      }
+      return (candidate.order || 0) > (current.order || 0);
+    };
+
+    for (const task of tasks) {
+      const key = task.seriesId || task.id;
+      if (!representatives.has(key)) {
+        representatives.set(key, task);
+        sequence.push(key);
+        continue;
+      }
+      const current = representatives.get(key);
+      if (shouldReplace(task, current)) {
+        representatives.set(key, task);
+      }
+    }
+
+    return sequence.map(key => representatives.get(key));
   };
 
-  const visibleTasks = showTaskSeriesRootsOnly ? activeTasks.filter(isSeriesRoot) : activeTasks;
+  const visibleTasks = showTaskSeriesRootsOnly ? pickSeriesRepresentatives(activeTasks) : activeTasks;
 
   if (visibleTasks.length === 0) {
     const li = document.createElement("li");
