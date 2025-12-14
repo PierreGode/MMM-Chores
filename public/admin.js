@@ -422,18 +422,19 @@ function updateRewardsTabVisibility(useCoinSystem, showRewardsTab = true) {
 function updateCoinTotalsPreview() {
   const preview = document.getElementById('coinTotalsPreview');
   if (!preview) return;
+  const t = LANGUAGES[currentLang];
   
   if (peopleCache.length === 0) {
-    preview.textContent = 'No people added yet';
+    preview.textContent = t.noPeople || 'No people added yet';
     return;
   }
   
   const pointsText = peopleCache.map(person => {
     const points = person.points || 0;
-    return `${person.name}: ${points} coins`;
+    return `${person.name}: ${points} ${t.pointsLabel || 'coins'}`;
   }).join('\n');
   
-  preview.textContent = pointsText || 'Loading coin totals...';
+  preview.textContent = pointsText || t.coinTotalsLoading || t.loadingLabel || 'Loading...';
 }
 
 function openSettingsToRewardSystem() {
@@ -532,6 +533,86 @@ function setLanguage(lang) {
   if (rewardsLibraryDescription) rewardsLibraryDescription.textContent = t.rewardsLibraryDescription || 'Review every reward below and edit details as needed.';
   const addRewardFromTabBtn = document.getElementById('addRewardFromTab');
   if (addRewardFromTabBtn) addRewardFromTabBtn.innerHTML = `<i class="bi bi-plus-circle me-1"></i>${t.addRewardButton || 'Add Reward'}`;
+  const coinsDisabledTitle = document.getElementById('coinsSystemDisabledTitle');
+  if (coinsDisabledTitle) coinsDisabledTitle.textContent = t.coinsSystemDisabledTitle || 'Coins System Not Enabled';
+  const coinsDisabledDescription = document.getElementById('coinsSystemDisabledDescription');
+  if (coinsDisabledDescription) coinsDisabledDescription.textContent = t.coinsSystemDisabledDescription || "The coin-based reward system is currently disabled. You're using the traditional level system.";
+  const coinsDisabledButton = document.getElementById('coinsSystemDisabledButtonText');
+  if (coinsDisabledButton) coinsDisabledButton.textContent = t.coinsSystemDisabledButton || 'Enable Coins System in Settings';
+  const coinsDisabledHint = document.getElementById('coinsSystemDisabledHint');
+  if (coinsDisabledHint) coinsDisabledHint.textContent = t.coinsSystemDisabledHint || 'You can switch between level and coins systems anytime without losing data.';
+  const peoplePointsHeaderText = document.getElementById('peoplePointsHeaderText');
+  if (peoplePointsHeaderText) peoplePointsHeaderText.textContent = t.peoplePointsTitle || 'People & Coins';
+  const redemptionsHeaderText = document.getElementById('redemptionsHeaderText');
+  if (redemptionsHeaderText) redemptionsHeaderText.textContent = t.redemptionsTitle || 'Pending Redemptions';
+  const coinsSystemActiveText = document.getElementById('coinsSystemActiveText');
+  if (coinsSystemActiveText) coinsSystemActiveText.textContent = t.coinsSystemActiveAlert || 'Coins system is active. Manage rewards below and view balances on the Rewards tab.';
+  const currentCoinTotalsLabel = document.getElementById('currentCoinTotalsLabel');
+  if (currentCoinTotalsLabel) currentCoinTotalsLabel.textContent = t.currentCoinTotalsLabel || 'Current Coin Totals:';
+  const coinRewardsHeadingText = document.getElementById('coinRewardsHeadingText');
+  if (coinRewardsHeadingText) coinRewardsHeadingText.textContent = t.rewardsTitle || 'Rewards Management';
+  const rewardNameLabel = document.getElementById('rewardNameLabel');
+  if (rewardNameLabel) rewardNameLabel.textContent = t.rewardNameLabel || 'Reward Name';
+  const rewardNameInput = document.getElementById('rewardName');
+  if (rewardNameInput) rewardNameInput.placeholder = t.rewardName || 'Reward name…';
+  const rewardPointsLabel = document.getElementById('rewardPointsLabel');
+  if (rewardPointsLabel) rewardPointsLabel.textContent = t.rewardPoints || 'Coins';
+  const rewardPointsInput = document.getElementById('rewardPoints');
+  if (rewardPointsInput) rewardPointsInput.placeholder = t.rewardPoints || 'Coins';
+  const rewardDescriptionLabel = document.getElementById('rewardDescriptionLabel');
+  if (rewardDescriptionLabel) rewardDescriptionLabel.textContent = t.rewardDescriptionLabel || 'Description';
+  const rewardDescriptionInput = document.getElementById('rewardDescription');
+  if (rewardDescriptionInput) rewardDescriptionInput.placeholder = t.rewardDescriptionPlaceholder || 'Optional';
+  const rewardSubmitBtn = document.getElementById('rewardFormSubmitBtn');
+  if (rewardSubmitBtn) rewardSubmitBtn.innerHTML = `<i class="bi bi-plus-lg me-1"></i>${t.addRewardButton || 'Add Reward'}`;
+  const rewardCancelBtn = document.getElementById('rewardFormCancelBtn');
+  if (rewardCancelBtn) rewardCancelBtn.innerHTML = `<i class="bi bi-x-circle me-1"></i>${t.cancelButton || 'Cancel'}`;
+  const rewardEditNoticeText = document.getElementById('rewardEditNoticeText');
+  if (rewardEditNoticeText) {
+    const template = t.rewardEditNotice || 'Editing reward {name}. Save or cancel to finish editing.';
+    rewardEditNoticeText.innerHTML = template.replace('{name}', '<strong id="rewardEditTarget"></strong>');
+  }
+  const taskCoinAssignmentTitle = document.getElementById('taskCoinAssignmentTitle');
+  if (taskCoinAssignmentTitle) taskCoinAssignmentTitle.textContent = t.taskCoinAssignmentTitle || 'Task Coin Assignment';
+  const taskCoinAssignmentDescription = document.getElementById('taskCoinAssignmentDescription');
+  if (taskCoinAssignmentDescription) taskCoinAssignmentDescription.textContent = t.taskCoinAssignmentDescription || 'Assign coin values to tasks by matching their names.';
+  const taskPatternLabel = document.getElementById('taskPatternLabel');
+  if (taskPatternLabel) taskPatternLabel.textContent = t.taskPatternLabel || 'Task Name';
+  const taskPatternInput = document.getElementById('taskPatternName');
+  if (taskPatternInput) taskPatternInput.placeholder = LANGUAGES[currentLang].taskPatternSelectPlaceholder || 'Type a task name…';
+  const taskPatternPointsLabel = document.getElementById('taskPatternPointsLabel');
+  if (taskPatternPointsLabel) taskPatternPointsLabel.textContent = t.taskPatternPointsLabel || 'Coins Awarded';
+  const taskPatternPointsInput = document.getElementById('taskPatternPoints');
+  if (taskPatternPointsInput) taskPatternPointsInput.placeholder = t.taskPointsPlaceholder || 'Coins';
+  const taskPointsAddRuleText = document.getElementById('taskPointsAddRuleText');
+  if (taskPointsAddRuleText) taskPointsAddRuleText.textContent = t.taskPointsAddRule || 'Add Rule';
+  const applyTaskPointsText = document.getElementById('applyTaskPointsText');
+  if (applyTaskPointsText) applyTaskPointsText.textContent = t.taskPointsApplyButton || 'Apply Rules to Existing Tasks';
+  const giftCoinsTitle = document.getElementById('giftCoinsTitle');
+  if (giftCoinsTitle) giftCoinsTitle.textContent = t.giftCoinsTitle || 'Gift Coins to Person';
+  const giftCoinsDescription = document.getElementById('giftCoinsDescription');
+  if (giftCoinsDescription) giftCoinsDescription.textContent = t.giftCoinsDescription || 'Give bonus coins to people without completing a task.';
+  const giftPersonLabel = document.getElementById('giftPersonLabel');
+  if (giftPersonLabel) giftPersonLabel.textContent = t.giftPersonLabel || 'Person';
+  const giftPersonSelect = document.getElementById('giftPersonSelect');
+  if (giftPersonSelect) {
+    const emptyOpt = giftPersonSelect.querySelector('option[value=""]');
+    if (emptyOpt) emptyOpt.textContent = t.selectPersonLabel || 'Select person…';
+  }
+  const giftPointsAmountLabel = document.getElementById('giftPointsAmountLabel');
+  if (giftPointsAmountLabel) giftPointsAmountLabel.textContent = t.giftPointsAmountLabel || 'Coins to Gift';
+  const giftPointsAmountInput = document.getElementById('giftPointsAmount');
+  if (giftPointsAmountInput) giftPointsAmountInput.placeholder = t.taskPointsPlaceholder || 'Coins';
+  const giftPointsReasonLabel = document.getElementById('giftPointsReasonLabel');
+  if (giftPointsReasonLabel) giftPointsReasonLabel.textContent = t.giftPointsReasonLabel || 'Reason (optional)';
+  const giftPointsReasonInput = document.getElementById('giftPointsReason');
+  if (giftPointsReasonInput) giftPointsReasonInput.placeholder = t.giftPointsReasonPlaceholder || 'e.g., Bonus';
+  const giftCoinsButtonText = document.getElementById('giftCoinsButtonText');
+  if (giftCoinsButtonText) giftCoinsButtonText.textContent = t.giftCoinsButton || 'Gift Coins';
+  const rewardsTipLabel = document.getElementById('rewardsTipLabel');
+  if (rewardsTipLabel) rewardsTipLabel.textContent = t.rewardsTipLabel || 'Tip:';
+  const rewardsTipText = document.getElementById('rewardsTipText');
+  if (rewardsTipText) rewardsTipText.textContent = t.rewardsTipText || 'To add or edit rewards, go to Settings → Coins System Settings → Rewards Management';
   const textSizeLbl = document.querySelector("label[for='settingsTextSize']");
   if (textSizeLbl) textSizeLbl.textContent = t.textSizeLabel || 'Mirror text size';
   const textSizeSelect = document.getElementById('settingsTextSize');
@@ -616,6 +697,52 @@ function setLanguage(lang) {
   if (personRewardsSave) personRewardsSave.textContent = t.saveButton || 'Save';
   const personRewardsRemove = document.getElementById('personRewardsRemoveBtn');
   if (personRewardsRemove) personRewardsRemove.textContent = t.remove || 'Remove';
+  const editRewardModalLabel = document.getElementById('editRewardModalLabel');
+  if (editRewardModalLabel) editRewardModalLabel.textContent = t.editReward || 'Edit Reward';
+  const editRewardNameLabel = document.getElementById('editRewardNameLabel');
+  if (editRewardNameLabel) editRewardNameLabel.textContent = t.rewardNameLabel || 'Reward Name';
+  const editRewardPointsLabel = document.getElementById('editRewardPointsLabel');
+  if (editRewardPointsLabel) editRewardPointsLabel.textContent = t.editRewardPointsLabel || t.rewardPoints || 'Coins';
+  const editRewardDescriptionLabel = document.getElementById('editRewardDescriptionLabel');
+  if (editRewardDescriptionLabel) editRewardDescriptionLabel.textContent = t.rewardDescriptionLabel || 'Description';
+  const editRewardDescription = document.getElementById('editRewardDescription');
+  if (editRewardDescription) editRewardDescription.placeholder = t.rewardDescriptionPlaceholder || 'Optional';
+  const editRewardEmailLabel = document.getElementById('editRewardEmailLabel');
+  if (editRewardEmailLabel) editRewardEmailLabel.textContent = t.editRewardEmailLabel || 'Email Template';
+  const editRewardEmail = document.getElementById('editRewardEmail');
+  if (editRewardEmail) editRewardEmail.placeholder = t.editRewardEmailPlaceholder || 'Optional email template for when reward is redeemed';
+  const editRewardActiveLabel = document.getElementById('editRewardActiveLabel');
+  if (editRewardActiveLabel) editRewardActiveLabel.textContent = t.editRewardActiveLabel || 'Active';
+  const editRewardCancelBtn = document.getElementById('editRewardCancelBtn');
+  if (editRewardCancelBtn) editRewardCancelBtn.textContent = t.cancelButton || 'Cancel';
+  const editRewardSaveBtn = document.getElementById('editRewardSaveBtn');
+  if (editRewardSaveBtn) editRewardSaveBtn.textContent = t.saveChangesButton || 'Save Changes';
+  const editCoinsModalTitle = document.getElementById('editCoinsModalTitle');
+  if (editCoinsModalTitle) editCoinsModalTitle.textContent = t.editCoinsModalTitle || 'Edit Coins';
+  const editCoinsLabel = document.getElementById('editCoinsLabel');
+  if (editCoinsLabel) editCoinsLabel.textContent = t.editCoinsLabel || 'Current Coins';
+  const editCoinsHelper = document.getElementById('editCoinsHelper');
+  if (editCoinsHelper) editCoinsHelper.textContent = t.editCoinsHelper || 'Enter the new coin amount for this person.';
+  const editCoinsInfoText = document.getElementById('editCoinsInfoText');
+  if (editCoinsInfoText) editCoinsInfoText.textContent = t.editCoinsInfo || 'You can manually adjust coin balances here. This is useful for giving bonus coins or correcting mistakes.';
+  const editCoinsCancelBtn = document.getElementById('editCoinsCancelBtn');
+  if (editCoinsCancelBtn) editCoinsCancelBtn.textContent = t.cancelButton || 'Cancel';
+  const editCoinsSaveBtn = document.getElementById('editCoinsSaveBtn');
+  if (editCoinsSaveBtn) editCoinsSaveBtn.textContent = t.saveChangesButton || 'Save Changes';
+  const redeemRewardModalLabel = document.getElementById('redeemRewardModalLabel');
+  if (redeemRewardModalLabel) redeemRewardModalLabel.textContent = t.redeemReward || 'Redeem Reward';
+  const redeemPersonLabel = document.getElementById('redeemPersonLabel');
+  if (redeemPersonLabel) redeemPersonLabel.textContent = t.selectPersonLabel || 'Select person...';
+  const redeemPersonPlaceholder = document.getElementById('redeemPersonPlaceholder');
+  if (redeemPersonPlaceholder) redeemPersonPlaceholder.textContent = t.selectPersonLabel || 'Select person...';
+  const redeemRewardLabel = document.getElementById('redeemRewardLabel');
+  if (redeemRewardLabel) redeemRewardLabel.textContent = t.selectRewardLabel || 'Select reward...';
+  const redeemRewardPlaceholder = document.getElementById('redeemRewardPlaceholder');
+  if (redeemRewardPlaceholder) redeemRewardPlaceholder.textContent = t.selectRewardLabel || 'Select reward...';
+  const redeemRewardCancelBtn = document.getElementById('redeemRewardCancelBtn');
+  if (redeemRewardCancelBtn) redeemRewardCancelBtn.textContent = t.cancelButton || 'Cancel';
+  const redeemRewardSubmitBtn = document.getElementById('redeemRewardSubmitBtn');
+  if (redeemRewardSubmitBtn) redeemRewardSubmitBtn.textContent = t.redeemButton || 'Redeem';
 
   const peopleHeader = document.getElementById("peopleHeader");
   if (peopleHeader) peopleHeader.textContent = t.peopleTitle;
@@ -663,6 +790,17 @@ function setLanguage(lang) {
   document.querySelectorAll("select").forEach(select => {
     const unassignedOption = Array.from(select.options).find(opt => opt.value === "");
     if (unassignedOption) unassignedOption.textContent = t.unassigned;
+  });
+
+  [
+    { id: 'giftPersonSelect', text: t.selectPersonLabel || 'Select person…' },
+    { id: 'redeemPerson', text: t.selectPersonLabel || 'Select person…' },
+    { id: 'redeemReward', text: t.selectRewardLabel || 'Select reward...' }
+  ].forEach(({ id, text }) => {
+    const select = document.getElementById(id);
+    if (!select) return;
+    const emptyOption = select.querySelector('option[value=""]');
+    if (emptyOption) emptyOption.textContent = text;
   });
 
   updateBoardTitleMap();
@@ -773,8 +911,9 @@ function openEditCoinsModal(person) {
   const modal = new bootstrap.Modal(document.getElementById('editCoinsModal'));
   const titleEl = document.getElementById('editCoinsModalTitle');
   const amountInput = document.getElementById('editCoinsAmount');
+  const t = LANGUAGES[currentLang];
   
-  if (titleEl) titleEl.textContent = `Edit Coins - ${person.name}`;
+  if (titleEl) titleEl.textContent = `${t.editCoinsModalTitle || 'Edit Coins'} - ${person.name}`;
   if (amountInput) amountInput.value = person.points || 0;
   
   modal.show();
@@ -784,13 +923,14 @@ function openEditCoinsModal(person) {
 function renderTaskPointsRules() {
   const list = document.getElementById('taskPointsRulesList');
   if (!list) return;
+  const t = LANGUAGES[currentLang];
   
   list.innerHTML = '';
   
   if (taskPointsRules.length === 0) {
     const li = document.createElement('li');
     li.className = 'list-group-item text-center text-muted small';
-    li.textContent = 'No task coin rules defined';
+    li.textContent = t.taskPointsNoRules || 'No task coin rules defined';
     list.appendChild(li);
     return;
   }
@@ -801,9 +941,9 @@ function renderTaskPointsRules() {
     li.innerHTML = `
       <div>
         <strong class="small">${rule.pattern}</strong>
-        <span class="badge bg-warning text-dark ms-2">${rule.points} coins</span>
+        <span class="badge bg-warning text-dark ms-2">${rule.points} ${t.pointsLabel || 'coins'}</span>
       </div>
-      <button class="btn btn-sm btn-outline-danger" onclick="removeTaskPointsRule(${index})" title="Remove">
+      <button class="btn btn-sm btn-outline-danger" onclick="removeTaskPointsRule(${index})" title="${t.remove || 'Remove'}">
         <i class="bi bi-trash"></i>
       </button>
     `;
@@ -833,8 +973,9 @@ async function saveTaskPointsRules() {
 }
 
 async function applyTaskPointsRules() {
+  const t = LANGUAGES[currentLang];
   if (taskPointsRules.length === 0) {
-    showToast('No rules to apply', 'warning');
+    showToast(t.taskPointsApplyNone || 'No rules to apply', 'warning');
     return;
   }
   
@@ -862,7 +1003,8 @@ async function applyTaskPointsRules() {
   }
   
   await fetchTasks();
-  showToast(`Applied rules to ${updatedCount} task(s)`, 'success');
+  const successMsg = (t.taskPointsApplySuccess || 'Applied rules to {count} task(s)').replace('{count}', updatedCount);
+  showToast(successMsg, 'success');
 }
 
 function resolveTaskCoinValue(taskName) {
@@ -886,12 +1028,15 @@ function resolveTaskCoinValue(taskName) {
 function populateGiftPersonSelect() {
   const select = document.getElementById('giftPersonSelect');
   if (!select) return;
+  const t = LANGUAGES[currentLang];
+  const placeholder = t.selectPersonLabel || 'Select person…';
   
-  select.innerHTML = '<option value="">Select person…</option>';
+  select.innerHTML = `<option value="">${placeholder}</option>`;
   peopleCache.forEach(person => {
     const option = document.createElement('option');
     option.value = person.id;
-    option.textContent = `${person.name} (${person.points || 0} coins)`;
+    const points = person.points || 0;
+    option.textContent = `${person.name} (${points} ${t.pointsLabel || 'coins'})`;
     select.appendChild(option);
   });
 }
@@ -977,7 +1122,7 @@ function renderPeople() {
       const small = document.createElement("small");
       small.className = "ms-2 text-muted";
       const coins = person.points || 0;
-      small.innerHTML = `<i class="bi bi-coin text-warning"></i> ${coins} coins`;
+      small.innerHTML = `<i class="bi bi-coin text-warning"></i> ${coins} ${LANGUAGES[currentLang].pointsLabel || 'coins'}`;
       info.appendChild(small);
     } else if (levelingEnabled && person.level) {
       const small = document.createElement("small");
@@ -1132,7 +1277,7 @@ function renderTasks() {
     span.innerHTML += ` <span class="badge bg-info text-dark">${recurText}</span>`;
   }
   if (isCoinSystemActive && typeof task.points === 'number' && task.points > 0) {
-    span.innerHTML += ` <span class="badge bg-warning text-dark">${task.points} coins</span>`;
+    span.innerHTML += ` <span class="badge bg-warning text-dark">${task.points} ${LANGUAGES[currentLang].pointsLabel || 'coins'}</span>`;
   }
   if (task.done) span.classList.add("task-done");
   const person = peopleCache.find(p => p.id === task.assignedTo);
