@@ -784,7 +784,7 @@ function setLanguage(lang) {
   }
   const taskSeriesFilterLabel = document.getElementById('taskSeriesFilterLabel');
   if (taskSeriesFilterLabel) {
-    taskSeriesFilterLabel.textContent = t.taskSeriesFilterLabel || 'Show recurring roots only';
+    taskSeriesFilterLabel.textContent = t.taskSeriesFilterLabel || 'Show recurring tasks only';
   }
   const taskSeriesFilterToggle = document.getElementById('tasksSeriesFilter');
   if (taskSeriesFilterToggle) {
