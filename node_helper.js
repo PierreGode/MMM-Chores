@@ -775,6 +775,61 @@ function ensureRecurringInstancesUpToToday() {
   return createdCount;
 }
 
+function performTemporaryDataFix() {
+  const today = getLocalISO(new Date()).slice(0, 10);
+  let duplicatesRemoved = 0;
+  let archivedPast = 0;
+  let seriesTouched = 0;
+
+  const recurringSeries = new Map();
+  tasks.forEach(task => {
+    if (!task || task.deleted) return;
+    if (!task.recurring || task.recurring === "none") return;
+    ensureTaskSeriesMetadata(task);
+    const seriesId = getSeriesId(task);
+    if (!recurringSeries.has(seriesId)) {
+      recurringSeries.set(seriesId, []);
+    }
+    recurringSeries.get(seriesId).push(task);
+  });
+
+  recurringSeries.forEach(seriesTasks => {
+    if (!Array.isArray(seriesTasks) || seriesTasks.length === 0) return;
+    seriesTouched += 1;
+    seriesTasks.sort((a, b) => getSortableDateKey(a.date).localeCompare(getSortableDateKey(b.date)));
+    const seenDates = new Set();
+    seriesTasks.forEach(task => {
+      if (task.deleted || !task.date) return;
+      const key = `${getSeriesId(task)}|${task.date}`;
+      if (seenDates.has(key)) {
+        task.deleted = true;
+        duplicatesRemoved += 1;
+      } else {
+        seenDates.add(key);
+      }
+    });
+
+    const hasUpcoming = seriesTasks.some(task => !task.deleted && task.date && task.date >= today);
+    if (!hasUpcoming) {
+      return;
+    }
+
+    seriesTasks.forEach(task => {
+      if (task.deleted || task.done) return;
+      if (!task.date || task.date >= today) return;
+      task.deleted = true;
+      archivedPast += 1;
+    });
+  });
+
+  return {
+    duplicatesRemoved,
+    archivedPast,
+    seriesTouched,
+    changed: duplicatesRemoved + archivedPast
+  };
+}
+
 function getMatchingTaskRule(taskName) {
   if (!taskName || !Array.isArray(settings.taskPointsRules)) return null;
 
@@ -1482,6 +1537,15 @@ module.exports = NodeHelper.create({
       delete safeSettings.pushoverApiKey;
       delete safeSettings.pushoverUser;
       res.json({ ...safeSettings, leveling: safeSettings.leveling, settings: self.config.settings });
+    });
+    app.post("/api/datafix", requireWrite, (req, res) => {
+      const result = performTemporaryDataFix();
+      if (!result.changed) {
+        return res.json({ success: true, ...result, message: "No fixes were necessary." });
+      }
+      const ok = broadcastTasks(self);
+      const message = `Removed ${result.duplicatesRemoved} duplicate instance(s) and archived ${result.archivedPast} past task(s).`;
+      res.status(ok ? 200 : 500).json({ success: ok, ...result, message });
     });
     app.put("/api/settings", requireWrite, (req, res) => {
       const newSettings = req.body;
