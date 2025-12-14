@@ -808,6 +808,9 @@ function setLanguage(lang) {
   renderTasks();
   renderCalendar();
   renderRewards();
+  renderPeoplePoints();
+  renderRedemptions();
+  updateCoinTotalsPreview();
   populateTaskPatternSelect();
 
   Object.entries(chartInstances).forEach(([id, chart]) => {
