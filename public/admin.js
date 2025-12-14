@@ -1461,9 +1461,23 @@ async function updateTask(id, changes) {
 }
 
 async function deletePerson(id) {
-  await authFetch(`/api/people/${id}`, { method: "DELETE" });
-  await fetchPeople();
-  await fetchTasks();
+  const person = peopleCache.find(p => p.id === id);
+  const personName = person ? person.name : LANGUAGES[currentLang].unassigned;
+  const assignedTasks = tasksCache.filter(task => !task.deleted && task.assignedTo === id);
+  const confirmMsg = assignedTasks.length > 0
+    ? `${personName} still has ${assignedTasks.length} assigned task(s). Delete anyway?`
+    : `Delete ${personName}?`;
+
+  if (!confirm(confirmMsg)) return;
+
+  try {
+    await authFetch(`/api/people/${id}`, { method: "DELETE" });
+    await fetchPeople();
+    await fetchTasks();
+    showToast(LANGUAGES[currentLang].personDeleted || `${personName} deleted`, 'success');
+  } catch (e) {
+    showToast(LANGUAGES[currentLang].personDeleteFailed || 'Failed to delete person', 'danger');
+  }
 }
 
 async function deleteTask(id) {

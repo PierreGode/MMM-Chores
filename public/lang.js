@@ -139,6 +139,8 @@ const LANGUAGES = {
     userRewardsTitle: "User Reward Config",
     userRewardsDescription: "Review redeemed rewards and mark them as delivered once the user has received them.",
     redeemedRewardLabel: "redeemed",
+    personDeleted: "Person deleted",
+    personDeleteFailed: "Failed to delete person",
     taskPointsPlaceholder: "Points",
     rewardsLibraryTitle: "Rewards Library",
     rewardsLibraryDescription: "Review every reward below. Use the edit button to update names, costs, or descriptions.",
