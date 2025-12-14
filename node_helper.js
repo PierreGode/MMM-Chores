@@ -748,31 +748,131 @@ function ensureRecurringInstancesUpToToday() {
   let createdCount = 0;
 
   seriesMap.forEach(entry => {
-    const seriesTasks = entry.tasks.sort((a, b) => getSortableDateKey(a.date).localeCompare(getSortableDateKey(b.date)));
-    const dateSet = new Set(seriesTasks.map(t => t.date).filter(Boolean));
-    let lastTask = seriesTasks[seriesTasks.length - 1];
-    if (!lastTask || !lastTask.date) return;
+    const seriesTasks = entry.tasks
+      .filter(task => task && !task.deleted && task.date)
+      .sort((a, b) => getSortableDateKey(a.date).localeCompare(getSortableDateKey(b.date)));
+    if (!seriesTasks.length) return;
 
-    while (lastTask.date < today) {
-      const nextDate = getNextDate(lastTask.date, entry.recurrence);
-      if (!nextDate || nextDate === lastTask.date) break;
-      if (dateSet.has(nextDate)) {
-        const existing = seriesTasks.find(t => t.date === nextDate);
-        if (!existing) break;
-        lastTask = existing;
-        if (lastTask.date >= today) break;
-        continue;
-      }
-      const newTask = createRecurringInstanceFromTask(lastTask, nextDate);
-      if (!newTask) break;
-      seriesTasks.push(newTask);
-      dateSet.add(nextDate);
-      lastTask = newTask;
+    const dateSet = new Set(seriesTasks.map(t => t.date));
+    const lastTask = seriesTasks[seriesTasks.length - 1];
+    if (!lastTask || !lastTask.date) return;
+    if (lastTask.date >= today) return;
+
+    let candidateDate = lastTask.date;
+    let safety = 0;
+    while (candidateDate < today && safety < 730) {
+      const nextDate = getNextDate(candidateDate, entry.recurrence);
+      if (!nextDate || nextDate === candidateDate) break;
+      candidateDate = nextDate;
+      safety += 1;
+    }
+
+    if (candidateDate <= lastTask.date) return;
+    if (dateSet.has(candidateDate)) return;
+
+    const newTask = createRecurringInstanceFromTask(lastTask, candidateDate);
+    if (newTask) {
       createdCount += 1;
     }
   });
 
   return createdCount;
+}
+
+function performTemporaryDataFix() {
+  const today = getLocalISO(new Date()).slice(0, 10);
+  let duplicatesRemoved = 0;
+  let archivedPast = 0;
+  let globalDuplicatesRemoved = 0;
+  let seriesTouched = 0;
+  let completedPurged = 0;
+
+  const recurringSeries = new Map();
+  tasks.forEach(task => {
+    if (!task || task.deleted) return;
+    if (!task.recurring || task.recurring === "none") return;
+    ensureTaskSeriesMetadata(task);
+    const seriesId = getSeriesId(task);
+    if (!recurringSeries.has(seriesId)) {
+      recurringSeries.set(seriesId, []);
+    }
+    recurringSeries.get(seriesId).push(task);
+  });
+
+  recurringSeries.forEach(seriesTasks => {
+    if (!Array.isArray(seriesTasks) || seriesTasks.length === 0) return;
+    seriesTouched += 1;
+    seriesTasks.sort((a, b) => getSortableDateKey(a.date).localeCompare(getSortableDateKey(b.date)));
+    const seenDates = new Set();
+    seriesTasks.forEach(task => {
+      if (task.deleted || !task.date) return;
+      const key = `${getSeriesId(task)}|${task.date}`;
+      if (seenDates.has(key)) {
+        task.deleted = true;
+        duplicatesRemoved += 1;
+      } else {
+        seenDates.add(key);
+      }
+    });
+
+    const hasUpcoming = seriesTasks.some(task => !task.deleted && task.date && task.date >= today);
+    if (!hasUpcoming) {
+      return;
+    }
+
+    seriesTasks.forEach(task => {
+      if (task.deleted || task.done) return;
+      if (!task.date || task.date >= today) return;
+      task.deleted = true;
+      archivedPast += 1;
+    });
+  });
+
+  const globalKeyMap = new Map();
+  tasks.forEach(task => {
+    if (!task || task.deleted || task.done) return;
+    if (!task.date) return;
+    const key = [
+      (task.name || "").trim().toLowerCase(),
+      task.date,
+      task.assignedTo || "__none__"
+    ].join("|");
+    if (!globalKeyMap.has(key)) {
+      globalKeyMap.set(key, task);
+      return;
+    }
+    const kept = globalKeyMap.get(key);
+    const candidateCreated = task.created || "";
+    const keptCreated = kept.created || "";
+    const shouldReplace = candidateCreated < keptCreated;
+    if (shouldReplace) {
+      kept.deleted = true;
+      globalDuplicatesRemoved += 1;
+      globalKeyMap.set(key, task);
+    } else {
+      task.deleted = true;
+      globalDuplicatesRemoved += 1;
+    }
+  });
+
+  tasks.forEach(task => {
+    if (!task || task.deleted) return;
+    if (!task.done) return;
+    if (!task.date) return;
+    if (task.date >= today) return;
+    task.deleted = true;
+    completedPurged += 1;
+  });
+
+  return {
+    duplicatesRemoved: duplicatesRemoved + globalDuplicatesRemoved,
+    recurringDuplicatesRemoved: duplicatesRemoved,
+    globalDuplicatesRemoved,
+    archivedPast,
+    seriesTouched,
+    completedPurged,
+    changed: duplicatesRemoved + archivedPast + globalDuplicatesRemoved + completedPurged
+  };
 }
 
 function getMatchingTaskRule(taskName) {
@@ -1482,6 +1582,28 @@ module.exports = NodeHelper.create({
       delete safeSettings.pushoverApiKey;
       delete safeSettings.pushoverUser;
       res.json({ ...safeSettings, leveling: safeSettings.leveling, settings: self.config.settings });
+    });
+    app.post("/api/datafix", requireWrite, (req, res) => {
+      const result = performTemporaryDataFix();
+      if (!result.changed) {
+        return res.json({ success: true, ...result, message: "No fixes were necessary." });
+      }
+      const ok = broadcastTasks(self);
+      const parts = [];
+      if (result.recurringDuplicatesRemoved) {
+        parts.push(`cleaned ${result.recurringDuplicatesRemoved} series duplicate(s)`);
+      }
+      if (result.globalDuplicatesRemoved) {
+        parts.push(`removed ${result.globalDuplicatesRemoved} matching task duplicate(s)`);
+      }
+      if (result.archivedPast) {
+        parts.push(`archived ${result.archivedPast} overdue task(s)`);
+      }
+      if (result.completedPurged) {
+        parts.push(`purged ${result.completedPurged} completed past task(s)`);
+      }
+      const message = parts.length ? parts.join(", ") : "Temporary fix completed.";
+      res.status(ok ? 200 : 500).json({ success: ok, ...result, message });
     });
     app.put("/api/settings", requireWrite, (req, res) => {
       const newSettings = req.body;
