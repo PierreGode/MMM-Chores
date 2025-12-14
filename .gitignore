@@ -1,5 +1,5 @@
 # Ignore the generated data file
 data.json
-
+rewards.json
 # Ignore node_modules
 node_modules

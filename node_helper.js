@@ -1446,7 +1446,9 @@ module.exports = NodeHelper.create({
 
       const ok = broadcastTasks(self);
       if (!prevDone && task.done) {
-        sendPushover(self, settings, `Task completed: ${task.name}`);
+        const assignee = task.assignedTo ? people.find(p => p.id === task.assignedTo) : null;
+        const completedBy = assignee ? ` by ${assignee.name}` : "";
+        sendPushover(self, settings, `Task completed: ${task.name}${completedBy}`);
       }
       if (!ok) return res.status(500).json({ error: "Failed to save data" });
       res.json(task);
@@ -1686,6 +1688,9 @@ module.exports = NodeHelper.create({
         sendRedemptionEmail(person, reward, redemption);
       }
       
+      // Notify via Pushover that someone claimed a reward
+      sendPushover(self, settings, `${person.name} redeemed ${reward.name} for ${reward.pointCost} coins`);
+
       self.sendSocketNotification("PEOPLE_UPDATE", people);
       res.status(201).json(redemption);
     });
