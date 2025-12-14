@@ -24,13 +24,25 @@ try {
 
 const DATA_FILE     = path.join(__dirname, "data.json");
 const DATA_FILE_BAK = `${DATA_FILE}.bak`;
+const COINS_FILE    = path.join(__dirname, "rewards.json");
+const COINS_FILE_BAK = `${COINS_FILE}.bak`;
 const CERT_DIR      = path.join(__dirname, "certs");
 
 let tasks = [];
 let people = [];
 let analyticsBoards = [];
+let coinStore = {
+  settings: {
+    useCoinSystem: false,
+    taskCoinRules: []
+  },
+  rewards: [],
+  redemptions: [],
+  peopleCoins: {}
+};
 let sessions = {};
 const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
+let legacyCoinState = null;
 
 const DEFAULT_TITLES = [
   "Junior",
@@ -48,8 +60,11 @@ const DEFAULT_TITLES = [
 let settings = {};
 let autoUpdateTimer = null;
 let reminderTimer = null;
+let lastGeneratedTaskId = 0;
 
 function applyLoadedData(json, sourceLabel = "data.json") {
+  legacyCoinState = legacyCoinState || { rewards: [], redemptions: [], settings: {}, peopleCoins: {} };
+  const legacyPeopleCoins = legacyCoinState.peopleCoins || {};
   tasks = json.tasks || [];
   if (tasks.some(t => t.order !== undefined)) {
     tasks.sort((a, b) => {
@@ -67,12 +82,49 @@ function applyLoadedData(json, sourceLabel = "data.json") {
     }
   });
 
-  people          = json.people          || [];
+  initializeSeriesMetadata();
+
+  people = (json.people || []).map(person => {
+    const clone = { ...person };
+    if (clone.points !== undefined) {
+      legacyPeopleCoins[clone.id] = clone.points;
+      delete clone.points;
+    }
+    if (clone._savedPoints !== undefined) {
+      if (legacyPeopleCoins[clone.id] === undefined) {
+        legacyPeopleCoins[clone.id] = clone._savedPoints;
+      }
+      delete clone._savedPoints;
+    }
+    return clone;
+  });
+  legacyCoinState.peopleCoins = legacyPeopleCoins;
   analyticsBoards = json.analyticsBoards || [];
-  settings        = json.settings        || {};
+  if (Array.isArray(json.rewards) && json.rewards.length) {
+    legacyCoinState.rewards = json.rewards;
+  }
+  if (Array.isArray(json.redemptions) && json.redemptions.length) {
+    legacyCoinState.redemptions = json.redemptions;
+  }
+
+  settings = { ...(json.settings || {}) };
   if (settings.openaiApiKey !== undefined) delete settings.openaiApiKey;
   if (settings.pushoverApiKey !== undefined) delete settings.pushoverApiKey;
   if (settings.pushoverUser !== undefined) delete settings.pushoverUser;
+
+  if (settings.usePointSystem !== undefined) {
+    legacyCoinState.settings = legacyCoinState.settings || {};
+    legacyCoinState.settings.useCoinSystem = settings.usePointSystem;
+    delete settings.usePointSystem;
+  }
+  if (Array.isArray(settings.taskPointsRules)) {
+    legacyCoinState.settings = legacyCoinState.settings || {};
+    legacyCoinState.settings.taskCoinRules = settings.taskPointsRules;
+    delete settings.taskPointsRules;
+  }
+  if (settings.taskCoinRules) {
+    delete settings.taskCoinRules;
+  }
 
   updatePeopleLevels({});
 
@@ -108,6 +160,133 @@ function writeDataFileAtomic(filePath, contents) {
 function getLocalISO(date = new Date()) {
   const offsetMs = date.getTimezoneOffset() * 60000;
   return new Date(date.getTime() - offsetMs).toISOString().slice(0, -1);
+}
+
+function normalizeBooleanInput(value) {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === "string") {
+    const normalized = value.toLowerCase().trim();
+    if (normalized === "true" || normalized === "1") return true;
+    if (normalized === "false" || normalized === "0") return false;
+  }
+  return Boolean(value);
+}
+
+function getSeriesId(task) {
+  if (!task) return null;
+  return task.seriesId || task.id;
+}
+
+function getNextSeriesAnchorValue() {
+  let maxAnchor = -1;
+  tasks.forEach(task => {
+    if (!task || task.deleted) return;
+    const anchor = typeof task.seriesAnchor === 'number' ? task.seriesAnchor : task.order;
+    if (typeof anchor === 'number' && anchor > maxAnchor) {
+      maxAnchor = anchor;
+    }
+  });
+  return maxAnchor + 1;
+}
+
+function setSeriesAnchorForSeries(seriesId, anchor) {
+  tasks.forEach(task => {
+    if (getSeriesId(task) === seriesId) {
+      task.seriesAnchor = anchor;
+    }
+  });
+}
+
+function ensureTaskSeriesMetadata(task, fallbackAnchor) {
+  if (!task) return;
+  if (!task.seriesId) {
+    task.seriesId = task.id;
+  }
+  if (typeof task.seriesAnchor !== 'number') {
+    const anchor = typeof fallbackAnchor === 'number' ? fallbackAnchor : getNextSeriesAnchorValue();
+    task.seriesAnchor = anchor;
+  }
+}
+
+function initializeSeriesMetadata() {
+  const anchorBySeries = new Map();
+  let nextAnchor = 0;
+
+  tasks.forEach(task => {
+    if (!task) return;
+    if (!task.seriesId) {
+      task.seriesId = task.id;
+    }
+    if (task.deleted) return;
+    const seriesId = getSeriesId(task);
+    if (!anchorBySeries.has(seriesId)) {
+      if (typeof task.seriesAnchor === 'number') {
+        anchorBySeries.set(seriesId, task.seriesAnchor);
+        nextAnchor = Math.max(nextAnchor, task.seriesAnchor + 1);
+      } else {
+        anchorBySeries.set(seriesId, nextAnchor++);
+      }
+    }
+  });
+
+  tasks.forEach(task => {
+    if (!task) return;
+    if (!task.seriesId) task.seriesId = task.id;
+    const seriesId = getSeriesId(task);
+    if (anchorBySeries.has(seriesId)) {
+      task.seriesAnchor = anchorBySeries.get(seriesId);
+    }
+  });
+
+  lastGeneratedTaskId = tasks.reduce((max, task) => {
+    const numericId = Number(task?.id);
+    if (!Number.isFinite(numericId)) return max;
+    return Math.max(max, numericId);
+  }, lastGeneratedTaskId || 0);
+}
+
+function generateTaskId() {
+  const now = Date.now();
+  if (now <= lastGeneratedTaskId) {
+    lastGeneratedTaskId += 1;
+    return lastGeneratedTaskId;
+  }
+  lastGeneratedTaskId = now;
+  return now;
+}
+
+function getSortableDateKey(value) {
+  if (typeof value === 'string' && value.length >= 10) {
+    return value.slice(0, 10);
+  }
+  return '9999-12-31';
+}
+
+function compareTasksForOrdering(a, b) {
+  if (a.deleted && !b.deleted) return 1;
+  if (!a.deleted && b.deleted) return -1;
+
+  const anchorA = typeof a.seriesAnchor === 'number' ? a.seriesAnchor : (a.order || 0);
+  const anchorB = typeof b.seriesAnchor === 'number' ? b.seriesAnchor : (b.order || 0);
+  if (anchorA !== anchorB) return anchorA - anchorB;
+
+  const doneA = Boolean(a.done);
+  const doneB = Boolean(b.done);
+  if (doneA !== doneB) {
+    return doneA ? 1 : -1;
+  }
+
+  const dateA = getSortableDateKey(a.date);
+  const dateB = getSortableDateKey(b.date);
+  if (dateA !== dateB) return dateA.localeCompare(dateB);
+
+  const createdA = a.created || '';
+  const createdB = b.created || '';
+  if (createdA !== createdB) return createdA.localeCompare(createdB);
+
+  const idA = Number(a.id) || 0;
+  const idB = Number(b.id) || 0;
+  return idA - idB;
 }
 
 function scheduleAutoUpdate() {
@@ -188,31 +367,165 @@ function sendPushover(self, settings, message) {
 }
 
 function loadData() {
+  let generalLoaded = false;
   if (fs.existsSync(DATA_FILE)) {
     Log.log("loadData: reading", DATA_FILE);
     try {
       const j = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
       applyLoadedData(j);
-      return;
+      generalLoaded = true;
     } catch (e) {
       Log.error("MMM-Chores: Error reading data.json:", e);
     }
   }
 
-  if (fs.existsSync(DATA_FILE_BAK)) {
+  if (!generalLoaded && fs.existsSync(DATA_FILE_BAK)) {
     try {
       const backup = JSON.parse(fs.readFileSync(DATA_FILE_BAK, "utf8"));
       applyLoadedData(backup, "data.json.bak");
+      generalLoaded = true;
     } catch (backupErr) {
       Log.error("MMM-Chores: Failed to load backup data file:", backupErr);
     }
   }
+
+  if (!generalLoaded) {
+    applyLoadedData({}, "defaults");
+  }
+
+  loadCoinData();
+}
+
+function applyCoinStoreData(data, sourceLabel = "rewards.json") {
+  const coinSettings = data?.settings || {};
+  coinStore = {
+    settings: {
+      useCoinSystem: coinSettings.useCoinSystem ?? false,
+      taskCoinRules: Array.isArray(coinSettings.taskCoinRules) ? coinSettings.taskCoinRules : []
+    },
+    rewards: Array.isArray(data?.rewards) ? data.rewards : [],
+    redemptions: Array.isArray(data?.redemptions) ? data.redemptions : [],
+    peopleCoins: data?.peopleCoins || {}
+  };
+
+  settings.useCoinSystem = coinStore.settings.useCoinSystem ?? false;
+  settings.usePointSystem = settings.useCoinSystem;
+  settings.taskCoinRules = coinStore.settings.taskCoinRules;
+  settings.taskPointsRules = settings.taskCoinRules; // backwards compatibility for older clients
+
+  syncPeopleCoinsFromStore();
+
+  Log.log(
+    `MMM-Chores: Loaded coin data (${coinStore.rewards.length} rewards, ${coinStore.redemptions.length} redemptions) from ${sourceLabel}`
+  );
+}
+
+function syncPeopleCoinsFromStore() {
+  const coins = coinStore.peopleCoins || {};
+  people.forEach(person => {
+    const value = coins[person.id];
+    const normalized = Number.isFinite(value) ? value : parseInt(value, 10);
+    const safe = Number.isFinite(normalized) ? normalized : 0;
+    person.points = safe;
+    coins[person.id] = safe;
+  });
+  coinStore.peopleCoins = coins;
+}
+
+function updateCoinStoreFromPeople() {
+  const coins = {};
+  people.forEach(person => {
+    const normalized = Number(person.points);
+    coins[person.id] = Number.isFinite(normalized) ? normalized : 0;
+  });
+  coinStore.peopleCoins = coins;
+}
+
+function buildCoinStoreFromLegacy() {
+  const legacySettings = legacyCoinState?.settings || {};
+  const peopleCoins = { ...(legacyCoinState?.peopleCoins || {}) };
+  people.forEach(person => {
+    if (peopleCoins[person.id] === undefined) {
+      peopleCoins[person.id] = calculatePersonPoints(person.id);
+    }
+  });
+  return {
+    settings: {
+      useCoinSystem: legacySettings.useCoinSystem ?? false,
+      taskCoinRules: Array.isArray(legacySettings.taskCoinRules) ? legacySettings.taskCoinRules : []
+    },
+    rewards: legacyCoinState?.rewards || [],
+    redemptions: legacyCoinState?.redemptions || [],
+    peopleCoins
+  };
+}
+
+function loadCoinData() {
+  let loaded = false;
+  if (fs.existsSync(COINS_FILE)) {
+    try {
+      const j = JSON.parse(fs.readFileSync(COINS_FILE, "utf8"));
+      applyCoinStoreData(j);
+      loaded = true;
+    } catch (err) {
+      Log.error("MMM-Chores: Error reading rewards.json:", err);
+    }
+  }
+
+  if (!loaded && fs.existsSync(COINS_FILE_BAK)) {
+    try {
+      const backup = JSON.parse(fs.readFileSync(COINS_FILE_BAK, "utf8"));
+      applyCoinStoreData(backup, "rewards.json.bak");
+      loaded = true;
+    } catch (err) {
+      Log.error("MMM-Chores: Failed to load rewards backup:", err);
+    }
+  }
+
+  if (!loaded) {
+    const legacyCoinStore = buildCoinStoreFromLegacy();
+    applyCoinStoreData(legacyCoinStore, "legacy data");
+    persistCoinData();
+  }
+}
+
+function sanitizeGeneralSettingsForSave() {
+  const snapshot = { ...settings };
+  delete snapshot.useCoinSystem;
+  delete snapshot.usePointSystem;
+  delete snapshot.taskCoinRules;
+  delete snapshot.taskPointsRules;
+  return snapshot;
+}
+
+function buildGeneralDataSnapshot() {
+  return {
+    tasks,
+    people: people.map(({ points, ...rest }) => ({ ...rest })),
+    analyticsBoards,
+    settings: sanitizeGeneralSettingsForSave()
+  };
+}
+
+function persistCoinData() {
+  updateCoinStoreFromPeople();
+  coinStore.settings.useCoinSystem = settings.useCoinSystem ?? coinStore.settings.useCoinSystem ?? false;
+  coinStore.settings.taskCoinRules = settings.taskCoinRules || coinStore.settings.taskCoinRules || [];
+  const coinPayload = JSON.stringify(coinStore, null, 2);
+  if (fs.existsSync(COINS_FILE)) {
+    try {
+      fs.copyFileSync(COINS_FILE, COINS_FILE_BAK);
+    } catch (err) {
+      Log.error("MMM-Chores: Failed to create rewards backup:", err);
+    }
+  }
+  writeDataFileAtomic(COINS_FILE, coinPayload);
 }
 
 function saveData() {
   try {
     Log.log("saveData: writing", DATA_FILE);
-    const payload = JSON.stringify({ tasks, people, analyticsBoards, settings }, null, 2);
+    const payload = JSON.stringify(buildGeneralDataSnapshot(), null, 2);
     if (fs.existsSync(DATA_FILE)) {
       try {
         fs.copyFileSync(DATA_FILE, DATA_FILE_BAK);
@@ -221,8 +534,9 @@ function saveData() {
       }
     }
     writeDataFileAtomic(DATA_FILE, payload);
+    persistCoinData();
     Log.log(
-      `MMM-Chores: Saved ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, language: ${settings.language}`
+      `MMM-Chores: Saved ${tasks.length} tasks, ${people.length} people, ${analyticsBoards.length} analytics boards, ${coinStore.rewards.length} coin rewards, ${coinStore.redemptions.length} redemptions, language: ${settings.language}`
     );
     return true;
   } catch (e) {
@@ -310,6 +624,7 @@ function updatePeopleLevels(config) {
 
 function applyTaskOrder() {
   Log.log(`applyTaskOrder: before ${tasks.length} tasks`);
+  tasks.sort(compareTasksForOrdering);
   let idx = 0;
   tasks.forEach(t => {
     if (t.deleted) {
@@ -326,6 +641,10 @@ function broadcastTasks(helper) {
   // deleted and unfinished. Completed tasks remain even if deleted so that
   // historical analytics are consistent across the mirror and the admin page.
   Log.log(`broadcastTasks: start ${tasks.length} tasks`);
+  const autoGenerated = ensureRecurringInstancesUpToToday();
+  if (autoGenerated) {
+    Log.log(`broadcastTasks: generated ${autoGenerated} recurring task instance(s)`);
+  }
   applyTaskOrder();
   tasks.sort((a, b) => {
     if (a.deleted && !b.deleted) return 1;
@@ -355,10 +674,208 @@ function getNextDate(dateStr, recurring) {
     d.setMonth(d.getMonth() + 1);
   } else if (recurring === "yearly") {
     d.setFullYear(d.getFullYear() + 1);
+  } else if (recurring && recurring.startsWith("every_")) {
+    // Custom recurring patterns: every_X_days, every_X_weeks, first_monday_month
+    const parts = recurring.split("_");
+    if (parts[1] === "X" && parts[2] === "days") {
+      const days = parseInt(parts[3]) || 2;
+      d.setDate(d.getDate() + days);
+    } else if (parts[1] === "X" && parts[2] === "weeks") {
+      const weeks = parseInt(parts[3]) || 2;
+      d.setDate(d.getDate() + (weeks * 7));
+    } else if (recurring === "first_monday_month") {
+      // First Monday of next month
+      d.setMonth(d.getMonth() + 1);
+      d.setDate(1);
+      // Find first Monday
+      while (d.getDay() !== 1) {
+        d.setDate(d.getDate() + 1);
+      }
+    } else {
+      return null;
+    }
   } else {
     return null;
   }
   return d.toISOString().slice(0, 10);
+}
+
+function createRecurringInstanceFromTask(templateTask, date) {
+  if (!templateTask || !date) return null;
+  ensureTaskSeriesMetadata(templateTask);
+
+  const newTask = {
+    id: generateTaskId(),
+    name: templateTask.name,
+    date,
+    assignedTo: templateTask.assignedTo || null,
+    recurring: templateTask.recurring,
+    done: false,
+    created: getLocalISO(new Date()),
+    seriesId: getSeriesId(templateTask),
+    seriesAnchor: templateTask.seriesAnchor
+  };
+
+  if (templateTask.points !== undefined) {
+    newTask.points = templateTask.points;
+  }
+  if (templateTask.autoPointsRule) {
+    newTask.autoPointsRule = templateTask.autoPointsRule;
+  }
+  if (newTask.points === undefined) {
+    autoAssignTaskPoints(newTask);
+  }
+
+  tasks.push(newTask);
+  return newTask;
+}
+
+function ensureRecurringInstancesUpToToday() {
+  const today = getLocalISO(new Date()).slice(0, 10);
+  const seriesMap = new Map();
+
+  tasks.forEach(task => {
+    if (!task || task.deleted) return;
+    if (!task.recurring || task.recurring === "none") return;
+    if (!task.date) return;
+    const seriesId = getSeriesId(task);
+    if (!seriesMap.has(seriesId)) {
+      seriesMap.set(seriesId, { recurrence: task.recurring, tasks: [] });
+    }
+    seriesMap.get(seriesId).tasks.push(task);
+  });
+
+  let createdCount = 0;
+
+  seriesMap.forEach(entry => {
+    const seriesTasks = entry.tasks.sort((a, b) => getSortableDateKey(a.date).localeCompare(getSortableDateKey(b.date)));
+    const dateSet = new Set(seriesTasks.map(t => t.date).filter(Boolean));
+    let lastTask = seriesTasks[seriesTasks.length - 1];
+    if (!lastTask || !lastTask.date) return;
+
+    while (lastTask.date < today) {
+      const nextDate = getNextDate(lastTask.date, entry.recurrence);
+      if (!nextDate || nextDate === lastTask.date) break;
+      if (dateSet.has(nextDate)) {
+        const existing = seriesTasks.find(t => t.date === nextDate);
+        if (!existing) break;
+        lastTask = existing;
+        if (lastTask.date >= today) break;
+        continue;
+      }
+      const newTask = createRecurringInstanceFromTask(lastTask, nextDate);
+      if (!newTask) break;
+      seriesTasks.push(newTask);
+      dateSet.add(nextDate);
+      lastTask = newTask;
+      createdCount += 1;
+    }
+  });
+
+  return createdCount;
+}
+
+function getMatchingTaskRule(taskName) {
+  if (!taskName || !Array.isArray(settings.taskPointsRules)) return null;
+
+  const normalized = `${taskName}`.toLowerCase();
+  for (const rule of settings.taskPointsRules) {
+    if (!rule || !rule.pattern) continue;
+    const pattern = `${rule.pattern}`.toLowerCase();
+    if (!pattern || !normalized.includes(pattern)) continue;
+
+    const points = Number(rule.points);
+    if (Number.isFinite(points) && points > 0) {
+      return { pattern: rule.pattern, points };
+    }
+  }
+  return null;
+}
+
+function autoAssignTaskPoints(task, options = {}) {
+  if (!task || !task.name) return false;
+  const { force = false } = options;
+  const match = getMatchingTaskRule(task.name);
+
+  if (!match) {
+    if (force && task.autoPointsRule) {
+      delete task.autoPointsRule;
+    }
+    return false;
+  }
+
+  const hasManualPoints = task.points !== undefined && !task.autoPointsRule;
+  if (hasManualPoints && !force) return false;
+
+  const changed = task.points !== match.points || task.autoPointsRule !== match.pattern;
+  task.points = match.points;
+  task.autoPointsRule = match.pattern;
+  return changed;
+}
+
+function calculatePersonPoints(personId) {
+  return tasks
+    .filter(t => t.done && t.assignedTo === personId)
+    .reduce((total, task) => {
+      const value = Number(task.awardedPoints ?? task.points ?? 1) || 0;
+      return total + value;
+    }, 0);
+}
+
+function awardPointsForTask(task) {
+  if (!task.done || !task.assignedTo) return;
+  if (task.awardedPoints !== undefined) return;
+  
+  const person = people.find(p => p.id === task.assignedTo);
+  if (!person) return;
+  
+  if (task.points === undefined) {
+    autoAssignTaskPoints(task);
+  }
+
+  const points = Number(task.points) || 1;
+  person.points = (person.points || 0) + points;
+  task.awardedPoints = points;
+  
+  Log.log(`MMM-Chores: Awarded ${points} coins to ${person.name} for completing "${task.name}"`);
+}
+
+function revokePointsForTask(task) {
+  if (!task.assignedTo) return;
+  
+  const person = people.find(p => p.id === task.assignedTo);
+  if (!person) return;
+  
+  const points = Number(task.awardedPoints ?? task.points ?? 1) || 0;
+  if (!points) return;
+  person.points = Math.max(0, (person.points || 0) - points);
+  delete task.awardedPoints;
+  
+  Log.log(`MMM-Chores: Removed ${points} coins from ${person.name} after undoing "${task.name}"`);
+}
+
+function migrateToPointSystem() {
+  Log.log('MMM-Chores: Preparing coin system state...');
+  syncPeopleCoinsFromStore();
+  persistCoinData();
+  Log.log('MMM-Chores: Coin system ready');
+}
+
+function migrateToLevelSystem() {
+  Log.log('MMM-Chores: Switching to level display only (coins preserved)');
+  persistCoinData();
+  Log.log('MMM-Chores: Level system active with coins still accruing');
+}
+
+function sendRedemptionEmail(person, reward, redemption) {
+  // Email functionality would need to be implemented based on available email service
+  // For now, just log the email that would be sent
+  Log.log(`MMM-Chores: Would send redemption email to ${person.name} for reward "${reward.name}"`);
+  
+  // TODO: Implement actual email sending based on configured email service
+  // This could use nodemailer, sendgrid, or other email services
+  
+  redemption.emailSent = true;
 }
 
 module.exports = NodeHelper.create({
@@ -375,27 +892,45 @@ module.exports = NodeHelper.create({
     if (notification === "INIT_SERVER") {
       this.config = payload;
 
+      const previousSettings = (settings && typeof settings === "object") ? settings : {};
+      const resolvedCoinToggle =
+        previousSettings.useCoinSystem ??
+        previousSettings.usePointSystem ??
+        payload.useCoinSystem ??
+        payload.usePointSystem ??
+        false;
+
       settings = {
-        language: settings.language ?? payload.language,
-        dateFormatting: settings.dateFormatting ?? payload.dateFormatting,
-        textMirrorSize: settings.textMirrorSize ?? payload.textMirrorSize,
-        showPast: settings.showPast ?? payload.showPast,
-        showAnalyticsOnMirror: settings.showAnalyticsOnMirror ?? payload.showAnalyticsOnMirror,
-        useAI: settings.useAI ?? payload.useAI,
-        autoUpdate: settings.autoUpdate ?? payload.autoUpdate,
-          pushoverEnabled: settings.pushoverEnabled ?? payload.pushoverEnabled,
-          reminderTime: settings.reminderTime ?? payload.reminderTime,
-          background: settings.background ?? payload.background ?? 'forest.png',
-          levelingEnabled: settings.levelingEnabled ?? (payload.leveling?.enabled !== false),
-          leveling: {
-            mode: settings.leveling?.mode ?? payload.leveling?.mode ?? 'years',
-            choresToMaxLevel: settings.leveling?.choresToMaxLevel ?? payload.leveling?.choresToMaxLevel,
-            yearsToMaxLevel: settings.leveling?.yearsToMaxLevel ?? payload.leveling?.yearsToMaxLevel,
-            choresPerWeekEstimate: settings.leveling?.choresPerWeekEstimate ?? payload.leveling?.choresPerWeekEstimate
-          },
-        levelTitles: settings.levelTitles ?? payload.levelTitles,
-        customLevelTitles: settings.customLevelTitles ?? payload.customLevelTitles
+        ...previousSettings,
+        language: previousSettings.language ?? payload.language,
+        dateFormatting: previousSettings.dateFormatting ?? payload.dateFormatting,
+        textMirrorSize: previousSettings.textMirrorSize ?? payload.textMirrorSize,
+        showPast: previousSettings.showPast ?? payload.showPast,
+        showAnalyticsOnMirror: previousSettings.showAnalyticsOnMirror ?? payload.showAnalyticsOnMirror,
+        useAI: previousSettings.useAI ?? payload.useAI,
+        autoUpdate: previousSettings.autoUpdate ?? payload.autoUpdate,
+        pushoverEnabled: previousSettings.pushoverEnabled ?? payload.pushoverEnabled,
+        reminderTime: previousSettings.reminderTime ?? payload.reminderTime,
+        background: previousSettings.background ?? payload.background ?? 'forest.png',
+        levelingEnabled: previousSettings.levelingEnabled ?? (payload.leveling?.enabled !== false),
+        useCoinSystem: resolvedCoinToggle,
+        usePointSystem: resolvedCoinToggle,
+        emailEnabled: previousSettings.emailEnabled ?? payload.emailEnabled ?? false,
+        leveling: {
+          mode: previousSettings.leveling?.mode ?? payload.leveling?.mode ?? 'years',
+          choresToMaxLevel: previousSettings.leveling?.choresToMaxLevel ?? payload.leveling?.choresToMaxLevel,
+          yearsToMaxLevel: previousSettings.leveling?.yearsToMaxLevel ?? payload.leveling?.yearsToMaxLevel,
+          choresPerWeekEstimate: previousSettings.leveling?.choresPerWeekEstimate ?? payload.leveling?.choresPerWeekEstimate
+        },
+        levelTitles: previousSettings.levelTitles ?? payload.levelTitles,
+        customLevelTitles: previousSettings.customLevelTitles ?? payload.customLevelTitles
       };
+
+      if (!Array.isArray(settings.taskPointsRules)) {
+        settings.taskPointsRules = Array.isArray(previousSettings.taskPointsRules)
+          ? previousSettings.taskPointsRules
+          : [];
+      }
 
       Object.assign(this.config, settings, {
         leveling: { ...payload.leveling, ...settings.leveling, enabled: settings.levelingEnabled }
@@ -723,7 +1258,9 @@ module.exports = NodeHelper.create({
       const id = Date.now();
       const newPersonBase = { id, name };
       const info = getLevelInfo(self.config || {}, newPersonBase);
-      const newPerson = { ...newPersonBase, level: info.level, title: info.title };
+      const startingCoins = coinStore.peopleCoins?.[id] ?? 0;
+      const newPerson = { ...newPersonBase, level: info.level, title: info.title, points: startingCoins };
+      coinStore.peopleCoins = { ...coinStore.peopleCoins, [id]: startingCoins };
 
       people.push(newPerson);
       saveData();
@@ -734,6 +1271,11 @@ module.exports = NodeHelper.create({
       const id = parseInt(req.params.id, 10);
       people = people.filter(p => p.id !== id);
       tasks  = tasks.map(t => t.assignedTo === id ? { ...t, assignedTo: null } : t);
+      if (coinStore.peopleCoins && Object.prototype.hasOwnProperty.call(coinStore.peopleCoins, id)) {
+        const clone = { ...coinStore.peopleCoins };
+        delete clone[id];
+        coinStore.peopleCoins = clone;
+      }
       const success = saveData();
       self.sendSocketNotification("PEOPLE_UPDATE", people);
       broadcastTasks(self);
@@ -743,12 +1285,18 @@ module.exports = NodeHelper.create({
     // Return all tasks. Filtering of deleted items is handled client-side so
     // analytics can include completed tasks even after deletion.
     app.get("/api/tasks", (req, res) => {
+      const created = ensureRecurringInstancesUpToToday();
+      applyTaskOrder();
+      if (created) {
+        saveData();
+      }
       res.json(tasks);
     });
     app.post("/api/tasks", requireWrite, (req, res) => {
       const now = new Date();
+      const fallbackAnchor = getNextSeriesAnchorValue();
       const newTask = {
-        id: Date.now(),
+        id: generateTaskId(),
         ...req.body,
         created: getLocalISO(now),
         order: tasks.filter(t => !t.deleted).length,
@@ -756,6 +1304,21 @@ module.exports = NodeHelper.create({
         assignedTo: req.body.assignedTo ? parseInt(req.body.assignedTo, 10) : null,
         recurring: req.body.recurring || "none",
       };
+
+      if (newTask.points !== undefined) {
+        const numericPoints = Number(newTask.points);
+        if (Number.isFinite(numericPoints) && numericPoints > 0) {
+          newTask.points = numericPoints;
+        } else {
+          delete newTask.points;
+        }
+      }
+
+      ensureTaskSeriesMetadata(newTask, fallbackAnchor);
+
+      if (newTask.points === undefined) {
+        autoAssignTaskPoints(newTask);
+      }
       Log.log("POST /api/tasks", newTask);
       tasks.push(newTask);
       sendPushover(self, settings, `New task: ${newTask.name}`);
@@ -784,6 +1347,20 @@ module.exports = NodeHelper.create({
       const reordered = ids.map(id => map.get(id)).filter(Boolean);
       tasks = reordered.concat(tasks.filter(t => !idSet.has(t.id)));
 
+      const handledSeries = new Set();
+      let nextAnchor = 0;
+      const assignSeriesAnchor = (task) => {
+        if (!task || task.deleted) return;
+        ensureTaskSeriesMetadata(task);
+        const seriesId = getSeriesId(task);
+        if (handledSeries.has(seriesId)) return;
+        setSeriesAnchorForSeries(seriesId, nextAnchor++);
+        handledSeries.add(seriesId);
+      };
+
+      ids.forEach(id => assignSeriesAnchor(map.get(id)));
+      tasks.forEach(task => assignSeriesAnchor(task));
+
       // Persist order numbers immediately before broadcasting
       let order = 0;
       tasks.forEach(t => {
@@ -811,30 +1388,59 @@ module.exports = NodeHelper.create({
       if (!task) return res.status(404).json({ error: "Task not found" });
 
       const prevDone = task.done;
+      const updates = req.body || {};
+      const hasPointsUpdate = Object.prototype.hasOwnProperty.call(updates, "points");
+      const hasAutoRuleUpdate = Object.prototype.hasOwnProperty.call(updates, "autoPointsRule");
+      const hasNameUpdate = Object.prototype.hasOwnProperty.call(updates, "name");
 
-      Object.entries(req.body).forEach(([key, val]) => {
+      Object.entries(updates).forEach(([key, val]) => {
+        if (key === "points" || key === "autoPointsRule") return;
         if (val === undefined || val === null) {
           delete task[key];
+        } else if (key === "assignedTo") {
+          task[key] = val ? parseInt(val, 10) : null;
         } else {
           task[key] = val;
         }
       });
+
+      if (hasPointsUpdate) {
+        const numericPoints = Number(updates.points);
+        if (Number.isFinite(numericPoints) && numericPoints > 0) {
+          task.points = numericPoints;
+        } else {
+          delete task.points;
+        }
+        if (!hasAutoRuleUpdate) {
+          delete task.autoPointsRule;
+        }
+      }
+
+      if (hasAutoRuleUpdate) {
+        if (updates.autoPointsRule) {
+          task.autoPointsRule = updates.autoPointsRule;
+        } else {
+          delete task.autoPointsRule;
+        }
+      }
+
+      if (!hasPointsUpdate) {
+        const force = hasNameUpdate ? Boolean(task.autoPointsRule) : task.points === undefined;
+        autoAssignTaskPoints(task, { force });
+      }
       Log.log("PUT /api/tasks/" + id, req.body);
+
+      // Adjust coins when completion status changes
+      if (!prevDone && task.done) {
+        awardPointsForTask(task);
+      } else if (prevDone && !task.done) {
+        revokePointsForTask(task);
+      }
 
       if (!prevDone && task.done && task.recurring && task.recurring !== "none") {
         const nextDate = getNextDate(task.date, task.recurring);
         if (nextDate) {
-          const newTask = {
-            id: Date.now(),
-            name: task.name,
-            date: nextDate,
-            assignedTo: task.assignedTo || null,
-            recurring: task.recurring,
-            order: tasks.filter(t => !t.deleted).length,
-            done: false,
-            created: getLocalISO(new Date()),
-          };
-          tasks.push(newTask);
+          createRecurringInstanceFromTask(task, nextDate);
         }
       }
 
@@ -878,9 +1484,26 @@ module.exports = NodeHelper.create({
     app.put("/api/settings", requireWrite, (req, res) => {
       const newSettings = req.body;
       const wasAutoUpdate = settings.autoUpdate;
+      const wasCoinSystem = settings.useCoinSystem ?? settings.usePointSystem ?? false;
+      let taskPointsRulesUpdated = false;
+      
       if (typeof newSettings !== "object") {
         return res.status(400).json({ error: "Invalid settings data" });
       }
+      
+      // Handle manual coin editing
+      if (newSettings._updatePersonCoins) {
+        const { personId, points } = newSettings._updatePersonCoins;
+        const person = people.find(p => p.id === personId);
+        if (person) {
+          person.points = points;
+          saveData();
+          self.sendSocketNotification("PEOPLE_UPDATE", people);
+          return res.json({ success: true });
+        }
+        return res.status(404).json({ error: "Person not found" });
+      }
+      
       if (newSettings.pushoverEnabled && (!self.config.pushoverApiKey || !self.config.pushoverUser)) {
         return res.status(400).json({
           error: "Please set pushoverApiKey and pushoverUser in config.js to use Pushover notifications."
@@ -890,8 +1513,50 @@ module.exports = NodeHelper.create({
         settings.leveling = { ...settings.leveling, ...newSettings.leveling };
         self.config.leveling = { ...self.config.leveling, ...newSettings.leveling };
       }
+      
+      // Handle system migration
+      const rawCoinToggle =
+        newSettings.useCoinSystem ??
+        newSettings.usePointSystem;
+      const requestedCoinToggle = normalizeBooleanInput(rawCoinToggle);
+      if (requestedCoinToggle !== undefined && requestedCoinToggle !== wasCoinSystem) {
+        if (requestedCoinToggle) {
+          migrateToPointSystem();
+        } else {
+          migrateToLevelSystem();
+        }
+        settings.useCoinSystem = Boolean(requestedCoinToggle);
+        settings.usePointSystem = settings.useCoinSystem;
+        if (self.config) {
+          self.config.useCoinSystem = settings.useCoinSystem;
+          self.config.usePointSystem = settings.usePointSystem;
+        }
+      }
+      
       Object.entries(newSettings).forEach(([key, val]) => {
-        if (key === "leveling" || key === "openaiApiKey" || key === "pushoverApiKey" || key === "pushoverUser") return;
+        if (
+          key === "leveling" ||
+          key === "openaiApiKey" ||
+          key === "pushoverApiKey" ||
+          key === "pushoverUser" ||
+          key === "_updatePersonCoins" ||
+          key === "_giftReason" ||
+          key === "usePointSystem" ||
+          key === "useCoinSystem"
+        ) {
+          return;
+        }
+        if ((key === "taskPointsRules" || key === "taskCoinRules") && !Array.isArray(val)) return;
+        if (key === "taskPointsRules" || key === "taskCoinRules") {
+          taskPointsRulesUpdated = true;
+          settings.taskPointsRules = val;
+          settings.taskCoinRules = val;
+          if (self.config) {
+            self.config.taskPointsRules = val;
+            self.config.taskCoinRules = val;
+          }
+          return;
+        }
         settings[key] = val;
         if (self.config) {
           if (key === "levelingEnabled") {
@@ -902,6 +1567,21 @@ module.exports = NodeHelper.create({
           }
         }
       });
+      let tasksRecomputed = false;
+      if (taskPointsRulesUpdated) {
+        tasks.forEach(task => {
+          const force = task.autoPointsRule ? true : task.points === undefined;
+          if (force) {
+            const changed = autoAssignTaskPoints(task, { force });
+            tasksRecomputed = tasksRecomputed || changed;
+          }
+        });
+      }
+
+      if (tasksRecomputed) {
+        broadcastTasks(self);
+      }
+
       saveData();
       updatePeopleLevels(self.config);
       self.sendSocketNotification("LEVEL_INFO", getLevelInfo(self.config));
@@ -920,6 +1600,119 @@ module.exports = NodeHelper.create({
     });
 
     app.post("/api/ai-generate", requireWrite, (req, res) => self.aiGenerateTasks(req, res));
+
+    // Rewards API
+    app.get("/api/rewards", (req, res) => res.json(coinStore.rewards));
+    app.post("/api/rewards", requireWrite, (req, res) => {
+      const { name, pointCost, description, emailTemplate } = req.body;
+      if (!name || !pointCost) {
+        return res.status(400).json({ error: "Name and point cost are required" });
+      }
+      
+      const newReward = {
+        id: Date.now(),
+        name,
+        pointCost: parseInt(pointCost),
+        description: description || "",
+        emailTemplate: emailTemplate || "",
+        active: true,
+        created: getLocalISO(new Date())
+      };
+      
+      coinStore.rewards.push(newReward);
+      saveData();
+      res.status(201).json(newReward);
+    });
+    
+    app.put("/api/rewards/:id", requireWrite, (req, res) => {
+      const id = parseInt(req.params.id, 10);
+      const reward = coinStore.rewards.find(r => r.id === id);
+      if (!reward) return res.status(404).json({ error: "Reward not found" });
+      
+      Object.entries(req.body).forEach(([key, val]) => {
+        if (val !== undefined && val !== null) {
+          reward[key] = val;
+        }
+      });
+      
+      saveData();
+      res.json(reward);
+    });
+    
+    app.delete("/api/rewards/:id", requireWrite, (req, res) => {
+      const id = parseInt(req.params.id, 10);
+      coinStore.rewards = coinStore.rewards.filter(r => r.id !== id);
+      saveData();
+      res.json({ success: true });
+    });
+
+    // Redemptions API
+    app.get("/api/redemptions", (req, res) => res.json(coinStore.redemptions));
+    app.post("/api/redemptions", requireWrite, (req, res) => {
+      const { rewardId, personId } = req.body;
+      const reward = coinStore.rewards.find(r => r.id === rewardId && r.active);
+      const person = people.find(p => p.id === personId);
+      
+      if (!reward) return res.status(404).json({ error: "Reward not found" });
+      if (!person) return res.status(404).json({ error: "Person not found" });
+      if (!settings.useCoinSystem) return res.status(400).json({ error: "Coins system not enabled" });
+      
+      const personPoints = person.points || 0;
+      if (personPoints < reward.pointCost) {
+        return res.status(400).json({ error: "Insufficient points" });
+      }
+      
+      // Deduct points
+      person.points = personPoints - reward.pointCost;
+      
+      // Create redemption record
+      const redemption = {
+        id: Date.now(),
+        rewardId,
+        personId,
+        rewardName: reward.name,
+        personName: person.name,
+        pointCost: reward.pointCost,
+        redeemed: getLocalISO(new Date()),
+        used: false,
+        emailSent: false
+      };
+      
+      coinStore.redemptions.push(redemption);
+      saveData();
+      
+      // Send email if template exists
+      if (reward.emailTemplate && self.config.emailEnabled) {
+        sendRedemptionEmail(person, reward, redemption);
+      }
+      
+      self.sendSocketNotification("PEOPLE_UPDATE", people);
+      res.status(201).json(redemption);
+    });
+    
+    app.put("/api/redemptions/:id/use", requireWrite, (req, res) => {
+      const id = parseInt(req.params.id, 10);
+      const redemption = coinStore.redemptions.find(r => r.id === id);
+      if (!redemption) return res.status(404).json({ error: "Redemption not found" });
+      
+      redemption.used = true;
+      redemption.usedDate = getLocalISO(new Date());
+      saveData();
+      res.json(redemption);
+    });
+
+    // Points API
+    app.get("/api/people/:id/points", (req, res) => {
+      const id = parseInt(req.params.id, 10);
+      const person = people.find(p => p.id === id);
+      if (!person) return res.status(404).json({ error: "Person not found" });
+      
+      const coins = coinStore.peopleCoins?.[id];
+      const numericCoins = Number(coins);
+      const fallback = Number(person.points) || 0;
+      const points = Number.isFinite(numericCoins) ? numericCoins : fallback;
+      res.json({ points });
+    });
 
     this.server = app.listen(port, "0.0.0.0", () => {
       Log.log(`MMM-Chores admin (HTTP) running at http://0.0.0.0:${port}`);

@@ -12,6 +12,8 @@
   --list-hover: rgba(0,0,0,.03);
   --border: rgba(255,255,255,0.4);
   --blur: 10px;
+  --points-color: #ffc107;
+  --reward-color: #28a745;
 }
 
 [data-theme="dark"] {
@@ -26,6 +28,8 @@
   --list-hover: rgba(255,255,255,.03);
   --border: rgba(255,255,255,0.1);
   --blur: 10px;
+  --points-color: #ffc107;
+  --reward-color: #28a745;
 }
 
 /* Global */
@@ -167,6 +171,11 @@ h1, h2 {
   border-color: var(--border);
   border-radius: 0.5rem;
 }
+
+.task-name-col {
+  flex: 1 1 240px;
+  min-width: 210px;
+}
 [data-theme="dark"] .form-control,
 [data-theme="dark"] .form-select {
   color: #000;
@@ -297,4 +306,340 @@ h1, h2 {
 }
 #loginContainer .card {
   width: 320px;
+}
+
+/* Points and Rewards System */
+.badge.bg-warning.text-dark {
+  background-color: var(--points-color) !important;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
+.btn-outline-success:hover {
+  background-color: var(--reward-color) !important;
+  border-color: var(--reward-color) !important;
+}
+
+.list-group-item .badge {
+  margin-left: 0.5rem;
+}
+
+#pointSystemContent {
+  transition: all 0.3s ease;
+}
+
+#levelSystemContent {
+  transition: all 0.3s ease;
+}
+
+.reward-item {
+  border-left: 4px solid var(--reward-color);
+}
+
+.redemption-item {
+  border-left: 4px solid var(--points-color);
+}
+
+.points-display {
+  font-weight: 600;
+  color: var(--points-color);
+}
+
+.reward-description {
+  font-size: 0.9em;
+  color: var(--text);
+  opacity: 0.8;
+  margin-top: 0.25rem;
+}
+
+/* Custom recurring options styling */
+select#taskRecurring option[value^="every_"] {
+  font-style: italic;
+}
+
+select#taskRecurring option[value="first_monday_month"] {
+  font-style: italic;
+}
+
+/* Points input field */
+#taskPoints {
+  max-width: 80px;
+  text-align: center;
+}
+
+/* Reward management cards */
+.reward-card {
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.reward-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+/* Points badge in people list */
+.people-points-badge {
+  background: linear-gradient(45deg, var(--points-color), #ffcd39);
+  color: #000;
+  font-weight: 600;
+}
+
+/* New Settings Page Styles */
+.reward-system-card {
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  height: 100%;
+}
+
+.reward-system-card:hover {
+  border-color: var(--hero-start);
+  transform: translateY(-2px);
+}
+
+.reward-system-card.selected {
+  border-color: var(--hero-start);
+  background: linear-gradient(135deg, var(--hero-start)10, var(--hero-end)10);
+  color: white;
+}
+
+.reward-system-card.selected .text-muted {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.reward-system-card .form-check-input:checked {
+  background-color: var(--hero-start);
+  border-color: var(--hero-start);
+}
+
+.settings-section {
+  border-left: 4px solid var(--hero-start);
+  background: rgba(var(--hero-start), 0.05);
+}
+
+#migrationWarning {
+  border-left: 4px solid #ffc107;
+}
+
+.card-title {
+  margin-bottom: 0;
+  font-weight: 600;
+}
+
+/* Settings modal larger size */
+.modal-lg {
+  max-width: 900px;
+}
+
+/* Settings modal dark mode support */
+[data-theme="dark"] .modal-content {
+  background-color: var(--card-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(var(--blur));
+}
+
+[data-theme="dark"] .modal-header {
+  background-color: rgba(30, 30, 30, 0.8);
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+[data-theme="dark"] .modal-body {
+  background-color: var(--card-bg);
+  color: var(--text);
+}
+
+[data-theme="dark"] .modal-footer {
+  background-color: rgba(30, 30, 30, 0.8);
+  color: var(--text);
+  border-top: 1px solid var(--border);
+}
+
+[data-theme="dark"] .btn-close {
+  filter: invert(1);
+}
+
+/* Settings cards in dark mode */
+[data-theme="dark"] .card {
+  background-color: var(--card-bg);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .card-header {
+  background-color: rgba(30, 30, 30, 0.8);
+  color: var(--text);
+  border-bottom-color: var(--border);
+}
+
+[data-theme="dark"] .card-body {
+  background-color: var(--card-bg);
+  color: var(--text);
+}
+
+/* Form labels and text in dark mode */
+[data-theme="dark"] .form-label {
+  color: var(--text);
+}
+
+[data-theme="dark"] .form-check-label {
+  color: var(--text);
+}
+
+[data-theme="dark"] .alert {
+  background-color: rgba(30, 30, 30, 0.8);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .alert-info {
+  background-color: rgba(13, 110, 253, 0.2);
+  border-color: rgba(13, 110, 253, 0.4);
+  color: #9ec5fe;
+}
+
+[data-theme="dark"] .alert-warning {
+  background-color: rgba(255, 193, 7, 0.2);
+  border-color: rgba(255, 193, 7, 0.4);
+  color: #ffe69c;
+}
+
+[data-theme="dark"] .alert-success {
+  background-color: rgba(25, 135, 84, 0.2);
+  border-color: rgba(25, 135, 84, 0.4);
+  color: #a3cfbb;
+}
+
+[data-theme="dark"] .alert-danger {
+  background-color: rgba(220, 53, 69, 0.2);
+  border-color: rgba(220, 53, 69, 0.4);
+  color: #f1aeb5;
+}
+
+/* Badge colors in dark mode */
+[data-theme="dark"] .badge.bg-success {
+  background-color: var(--reward-color) !important;
+}
+
+[data-theme="dark"] .badge.bg-info {
+  background-color: #0dcaf0 !important;
+  color: #000 !important;
+}
+
+[data-theme="dark"] .badge.bg-light {
+  background-color: rgba(248, 249, 250, 0.2) !important;
+  color: var(--text) !important;
+}
+
+/* Reward system cards in dark mode */
+[data-theme="dark"] .reward-system-card {
+  background-color: var(--card-bg);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .reward-system-card.selected {
+  background: linear-gradient(135deg, rgba(52, 58, 64, 0.8), rgba(73, 80, 87, 0.8));
+  color: white;
+  border-color: var(--hero-start);
+}
+
+[data-theme="dark"] .reward-system-card:hover {
+  border-color: var(--hero-start);
+}
+
+/* Text colors in dark mode */
+[data-theme="dark"] .text-muted {
+  color: rgba(233, 236, 239, 0.6) !important;
+}
+
+[data-theme="dark"] small.text-muted {
+  color: rgba(233, 236, 239, 0.6) !important;
+}
+
+/* Settings form inputs in dark mode - keep readable */
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+  background-color: var(--field-bg);
+  color: #000;
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+  background-color: var(--field-bg);
+  color: #000;
+  border-color: var(--hero-start);
+  box-shadow: 0 0 0 0.25rem rgba(78, 116, 255, 0.25);
+}
+
+/* Task points rules and gift points sections */
+.border-top {
+  border-top: 1px solid var(--border) !important;
+}
+
+.form-control-sm,
+.form-select-sm {
+  font-size: 0.875rem;
+}
+
+#taskPointsRulesList .list-group-item,
+#rewardsList .list-group-item {
+  transition: background-color 0.2s ease;
+}
+
+#taskPointsRulesList .list-group-item:hover,
+#rewardsList .list-group-item:hover {
+  background-color: var(--list-hover);
+}
+
+
+/* Coin totals preview */
+#coinTotalsPreview {
+  max-height: 120px;
+  overflow-y: auto;
+  background: var(--field-bg);
+  border-radius: 0.375rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+}
+
+/* Disabled rewards tab styling */
+#rewardsSystemDisabled {
+  background: var(--card-bg);
+  border-radius: 1rem;
+  margin: 2rem;
+  backdrop-filter: blur(var(--blur));
+}
+
+#rewardsSystemDisabled .display-1 {
+  font-size: 4rem;
+  opacity: 0.5;
+}
+
+/* Settings cards */
+.settings-card {
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  backdrop-filter: blur(var(--blur));
+}
+
+.settings-card .card-header {
+  background: rgba(var(--hero-start), 0.1);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Form sections */
+.settings-form-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-form-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }

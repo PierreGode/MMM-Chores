@@ -4,6 +4,28 @@
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/J3J2EARPK)
 
+## ✨ New Features (October 2025)
+
+**Major Update**: Added comprehensive point-based reward system and enhanced recurring options! See [NEW_FEATURES.md](NEW_FEATURES.md) for complete details.
+
+### 🎯 Point-Based Rewards
+- **Custom Points**: Assign custom point values to each chore
+- **Flexible Rewards**: Create rewards that cost specific amounts of points
+- **Automatic Tracking**: Points are automatically awarded when tasks are completed
+- **Email Notifications**: Optional email notifications when rewards are redeemed
+
+### 🔄 Enhanced Recurring Options
+- **Every X Days**: Tasks that repeat every 2, 3, or more days
+- **Every X Weeks**: Tasks that repeat every 2, 3, or more weeks
+- **First Monday of Month**: Tasks that occur on the first Monday of each month
+
+### 🔧 System Migration
+- **Backward Compatible**: Existing level system remains as default
+- **Seamless Switch**: Toggle between level and point systems anytime
+- **Data Preservation**: All existing data is preserved during migration
+
+---
+
 It provides an admin interface where you can add, edit, and delete tasks. You can also set due dates and assign tasks to different persons. Tasks may be one-time or recur daily, weekly, monthly, or yearly. The module displays the tasks on your MagicMirror, allowing you to keep track of your household chores at a glance.
 
 The data is stored in `data.json` so it persists across restarts.

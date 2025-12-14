@@ -32,6 +32,7 @@ Module.register("MMM-Chores", {
     users: [],
     showAnalyticsOnMirror: false, // display analytics cards on the mirror
     analyticsCards: [],           // board types selected in the admin UI
+    usePointSystem: false,        // use point system instead of level system
     leveling: {
       enabled: true,
       mode: "years",
@@ -106,6 +107,9 @@ Module.register("MMM-Chores", {
       if (payload.levelingEnabled !== undefined) {
         this.config.leveling = this.config.leveling || {};
         this.config.leveling.enabled = payload.levelingEnabled;
+      }
+      if (payload.usePointSystem !== undefined) {
+        this.config.usePointSystem = payload.usePointSystem;
       }
       if (payload.showAnalyticsOnMirror && !prevAnalytics && typeof Chart === "undefined") {
         const script = document.createElement("script");
@@ -460,12 +464,20 @@ Module.register("MMM-Chores", {
         assignedEl.className = "xsmall dimmed";
         assignedEl.style.marginLeft = "6px";
         let html = ` — ${p ? p.name : ""}`;
-        const lvlEnabled = !(
-          this.config.leveling && this.config.leveling.enabled === false
-        );
-        if (lvlEnabled && p && p.level) {
-          html += ` <span class="lvl-badge">lvl${p.level}</span>`;
+        
+        // Show coins if point system is active, otherwise show level
+        if (this.config.usePointSystem && p) {
+          const coins = p.points || 0;
+          html += ` <span class="coin-badge">🪙${coins}</span>`;
+        } else {
+          const lvlEnabled = !(
+            this.config.leveling && this.config.leveling.enabled === false
+          );
+          if (lvlEnabled && p && p.level) {
+            html += ` <span class="lvl-badge">lvl${p.level}</span>`;
+          }
         }
+        
         assignedEl.innerHTML = html;
         li.appendChild(assignedEl);
       }
