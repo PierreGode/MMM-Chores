@@ -305,6 +305,8 @@ function initSettingsForm(settings) {
   const reminderTime = document.getElementById('settingsReminderTime');
   const backgroundSelect = document.getElementById('settingsBackground');
   const editRewardsBtn = document.getElementById('editRewardsBtn');
+  const runDataFixBtn = document.getElementById('runDataFixBtn');
+  const dataFixStatus = document.getElementById('dataFixStatus');
 
   if (showPast) showPast.checked = !!settings.showPast;
   if (textSize) textSize.value = settings.textMirrorSize || 'small';
@@ -346,6 +348,48 @@ function initSettingsForm(settings) {
       if (rewardsModal) {
         const modal = new bootstrap.Modal(rewardsModal);
         modal.show();
+      }
+    });
+  }
+
+  if (runDataFixBtn) {
+    const defaultLabel = runDataFixBtn.innerHTML;
+    runDataFixBtn.addEventListener('click', async () => {
+      const confirmText = (LANGUAGES[currentLang] && LANGUAGES[currentLang].dataFixConfirm) ||
+        'Archive overdue recurring tasks and remove duplicates? This cannot be undone.';
+      if (!window.confirm(confirmText)) return;
+
+      if (dataFixStatus) {
+        dataFixStatus.classList.remove('text-danger', 'text-success');
+        dataFixStatus.textContent = (LANGUAGES[currentLang] && LANGUAGES[currentLang].dataFixRunning) ||
+          'Running temporary fix...';
+      }
+
+      runDataFixBtn.disabled = true;
+      runDataFixBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Working...';
+
+      try {
+        const res = await authFetch('/api/datafix', { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || data.message || 'Failed to run temporary fix');
+        }
+        if (dataFixStatus) {
+          dataFixStatus.textContent = data.message || 'Temporary fix completed.';
+          dataFixStatus.classList.add('text-success');
+        }
+        if (typeof fetchTasks === 'function') {
+          await fetchTasks();
+        }
+      } catch (error) {
+        console.error('Temporary data fix failed:', error);
+        if (dataFixStatus) {
+          dataFixStatus.textContent = error.message;
+          dataFixStatus.classList.add('text-danger');
+        }
+      } finally {
+        runDataFixBtn.disabled = false;
+        runDataFixBtn.innerHTML = defaultLabel;
       }
     });
   }
