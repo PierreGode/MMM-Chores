@@ -26,6 +26,8 @@ let personRewardsTarget = null;
 let editCoinsPersonId = null;
 let levelTitles = [];
 let taskPointsRules = [];
+const TASK_SERIES_FILTER_KEY = 'mmm-chores-series-filter';
+let showTaskSeriesRootsOnly = localStorage.getItem(TASK_SERIES_FILTER_KEY) === '1';
 const personRewardsModalEl = document.getElementById('personRewardsModal');
 const personRewardTitlesContainer = document.getElementById('personRewardTitlesContainer');
 const personRewardTitleInputs = [];
@@ -772,6 +774,22 @@ function setLanguage(lang) {
     aiBtn.innerHTML = `<i class='bi bi-stars me-1'></i>${t.aiGenerateButton}`;
     aiBtn.title = t.aiGenerateTitle;
   }
+  const taskSeriesFilterLabel = document.getElementById('taskSeriesFilterLabel');
+  if (taskSeriesFilterLabel) {
+    taskSeriesFilterLabel.textContent = t.taskSeriesFilterLabel || 'Show recurring roots only';
+  }
+  const taskSeriesFilterToggle = document.getElementById('tasksSeriesFilter');
+  if (taskSeriesFilterToggle) {
+    taskSeriesFilterToggle.checked = showTaskSeriesRootsOnly;
+    if (!taskSeriesFilterToggle.dataset.bound) {
+      taskSeriesFilterToggle.addEventListener('change', (event) => {
+        showTaskSeriesRootsOnly = event.target.checked;
+        localStorage.setItem(TASK_SERIES_FILTER_KEY, showTaskSeriesRootsOnly ? '1' : '0');
+        renderTasks();
+      });
+      taskSeriesFilterToggle.dataset.bound = 'true';
+    }
+  }
 
   const analyticsHeader = document.getElementById("analyticsHeader");
   if (analyticsHeader) analyticsHeader.textContent = t.analyticsTitle;
@@ -1211,21 +1229,39 @@ function formatDate(dateStr) {
 }
 
 function renderTasks() {
+  const t = LANGUAGES[currentLang];
   const canWrite = userPermission === 'write';
   const list = document.getElementById("taskList");
   list.innerHTML = "";
   const useCoinSystem = document.getElementById('useCoinSystem');
   const isCoinSystemActive = useCoinSystem && useCoinSystem.checked;
+  const activeTasks = tasksCache.filter(task => !task.deleted);
 
-  if (tasksCache.length === 0) {
+  if (activeTasks.length === 0) {
     const li = document.createElement("li");
     li.className = "list-group-item text-center text-muted";
-    li.textContent = LANGUAGES[currentLang].noTasks;
+    li.textContent = t.noTasks;
     list.appendChild(li);
     return;
   }
 
-  for (const task of tasksCache.filter(t => !t.deleted)) {
+  const isSeriesRoot = (task) => {
+    if (!task.recurring || task.recurring === 'none') return true;
+    const seriesId = task.seriesId || task.id;
+    return seriesId === task.id;
+  };
+
+  const visibleTasks = showTaskSeriesRootsOnly ? activeTasks.filter(isSeriesRoot) : activeTasks;
+
+  if (visibleTasks.length === 0) {
+    const li = document.createElement("li");
+    li.className = "list-group-item text-center text-muted";
+    li.textContent = showTaskSeriesRootsOnly ? (t.taskSeriesFilterEmpty || t.noTasks) : t.noTasks;
+    list.appendChild(li);
+    return;
+  }
+
+  for (const task of visibleTasks) {
     const li = document.createElement("li");
     li.className = "list-group-item d-flex align-items-center";
     li.dataset.id = task.id;
@@ -1244,48 +1280,48 @@ function renderTasks() {
       chk.addEventListener("change", async () => {
         const updateObj = { done: chk.checked };
 
-      const now = new Date();
-      const iso = now.toISOString();
+        const now = new Date();
+        const iso = now.toISOString();
 
-      const pad = n => n.toString().padStart(2, "0");
-      const stamp = (prefix) => (
-        prefix +
-        pad(now.getMonth() + 1) +
-        pad(now.getDate()) +
-        pad(now.getHours()) +
-        pad(now.getMinutes())
-      );
+        const pad = n => n.toString().padStart(2, "0");
+        const stamp = (prefix) => (
+          prefix +
+          pad(now.getMonth() + 1) +
+          pad(now.getDate()) +
+          pad(now.getHours()) +
+          pad(now.getMinutes())
+        );
 
-      if (chk.checked) {
-        updateObj.finished = iso;
-        updateObj.finishedShort = stamp("F");
-      } else {
-        updateObj.finished = null;
-        updateObj.finishedShort = null;
-      }
-      await updateTask(task.id, updateObj);
-    });
+        if (chk.checked) {
+          updateObj.finished = iso;
+          updateObj.finishedShort = stamp("F");
+        } else {
+          updateObj.finished = null;
+          updateObj.finishedShort = null;
+        }
+        await updateTask(task.id, updateObj);
+      });
     } else {
       chk.disabled = true;
     }
 
-  const span = document.createElement("span");
-  const formatted = formatDate(task.date);
-  span.innerHTML = `<strong>${task.name}</strong>`;
-  if (formatted) {
-    span.innerHTML += ` <small class="task-date">(${formatted})</small>`;
-  }
-  if (task.recurring && task.recurring !== "none") {
-    const recurText = LANGUAGES[currentLang].taskRecurring[task.recurring] || task.recurring;
-    span.innerHTML += ` <span class="badge bg-info text-dark">${recurText}</span>`;
-  }
-  if (isCoinSystemActive && typeof task.points === 'number' && task.points > 0) {
-    span.innerHTML += ` <span class="badge bg-warning text-dark">${task.points} ${LANGUAGES[currentLang].pointsLabel || 'coins'}</span>`;
-  }
-  if (task.done) span.classList.add("task-done");
-  const person = peopleCache.find(p => p.id === task.assignedTo);
-  const personName = person ? person.name : LANGUAGES[currentLang].unassigned;
-  span.innerHTML += ` - ${personName}`;
+    const span = document.createElement("span");
+    const formatted = formatDate(task.date);
+    span.innerHTML = `<strong>${task.name}</strong>`;
+    if (formatted) {
+      span.innerHTML += ` <small class="task-date">(${formatted})</small>`;
+    }
+    if (task.recurring && task.recurring !== "none") {
+      const recurrenceLabel = (t.taskRecurring && t.taskRecurring[task.recurring]) || task.recurring;
+      span.innerHTML += ` <span class="badge bg-info text-dark">${recurrenceLabel}</span>`;
+    }
+    if (isCoinSystemActive && typeof task.points === 'number' && task.points > 0) {
+      span.innerHTML += ` <span class="badge bg-warning text-dark">${task.points} ${t.pointsLabel || 'coins'}</span>`;
+    }
+    if (task.done) span.classList.add("task-done");
+    const person = peopleCache.find(p => p.id === task.assignedTo);
+    const personName = person ? person.name : t.unassigned;
+    span.innerHTML += ` - ${personName}`;
 
     left.appendChild(chk);
     left.appendChild(span);
@@ -1293,7 +1329,7 @@ function renderTasks() {
     if (canWrite) {
       const del = document.createElement("button");
       del.className = "btn btn-sm btn-outline-danger";
-      del.title = LANGUAGES[currentLang].remove;
+      del.title = t.remove;
       del.innerHTML = '<i class="bi bi-trash"></i>';
       del.addEventListener("click", () => deleteTask(task.id));
 
@@ -1304,7 +1340,7 @@ function renderTasks() {
       if (!task.done) {
         const edit = document.createElement("button");
         edit.className = "btn btn-sm btn-outline-secondary";
-        edit.title = LANGUAGES[currentLang].edit;
+        edit.title = t.edit;
         edit.innerHTML = '<i class="bi bi-pencil"></i>';
         edit.addEventListener("click", () => openEditModal(task));
         actions.appendChild(edit);
@@ -1322,7 +1358,6 @@ function renderTasks() {
     list.appendChild(li);
   }
 
-
   if (taskSortable) {
     taskSortable.destroy();
     taskSortable = null;
@@ -1332,12 +1367,42 @@ function renderTasks() {
       handle: '.drag-handle',
       animation: 150,
       onEnd: async (evt) => {
-        const visible = tasksCache.filter(t => !t.deleted);
-        const moved = visible.splice(evt.oldIndex, 1)[0];
-        visible.splice(evt.newIndex, 0, moved);
+        const activeSnapshot = tasksCache.filter(task => !task.deleted);
+        let reordered;
+        if (showTaskSeriesRootsOnly) {
+          const displayed = visibleTasks.slice();
+          const movedRoot = displayed.splice(evt.oldIndex, 1)[0];
+          displayed.splice(evt.newIndex, 0, movedRoot);
+          const grouped = activeSnapshot.reduce((map, task) => {
+            const seriesId = task.seriesId || task.id;
+            if (!map.has(seriesId)) map.set(seriesId, []);
+            map.get(seriesId).push(task);
+            return map;
+          }, new Map());
+          const seriesOrder = displayed.map(task => task.seriesId || task.id);
+          const usedSeries = new Set();
+          reordered = [];
+          seriesOrder.forEach(seriesId => {
+            const group = grouped.get(seriesId) || [];
+            group.forEach(item => reordered.push(item));
+            usedSeries.add(seriesId);
+          });
+          activeSnapshot.forEach(task => {
+            const seriesId = task.seriesId || task.id;
+            if (!usedSeries.has(seriesId)) {
+              reordered.push(task);
+              usedSeries.add(seriesId);
+            }
+          });
+        } else {
+          reordered = activeSnapshot.slice();
+          const moved = reordered.splice(evt.oldIndex, 1)[0];
+          reordered.splice(evt.newIndex, 0, moved);
+        }
+
         let i = 0;
-        tasksCache = tasksCache.map(t => t.deleted ? t : visible[i++]);
-        const ids = tasksCache.filter(t => !t.deleted).map(t => t.id);
+        tasksCache = tasksCache.map(task => task.deleted ? task : reordered[i++]);
+        const ids = reordered.map(task => task.id);
         await authFetch('/api/tasks/reorder', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },

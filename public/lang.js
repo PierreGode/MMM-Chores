@@ -9,6 +9,8 @@ const LANGUAGES = {
     taskTitle: "Tasks",
     taskDoneLabel: "done",
     taskPendingLabel: "pending",
+    taskSeriesFilterLabel: "Show recurring roots only",
+    taskSeriesFilterEmpty: "No recurring template tasks are available",
     taskNamePlaceholder: "Task name…",
     taskRecurring: {
       none: "One time",
@@ -199,6 +201,8 @@ const LANGUAGES = {
     taskTitle: "Uppgifter",
     taskDoneLabel: "klar",
     taskPendingLabel: "pågående",
+    taskSeriesFilterLabel: "Visa bara återkommande mallar",
+    taskSeriesFilterEmpty: "Inga återkommande mallar att visa",
     taskNamePlaceholder: "Uppgiftsnamn…",
     taskRecurring: {
       none: "Engång",
@@ -388,6 +392,8 @@ const LANGUAGES = {
     taskTitle: "Tâches",
     taskDoneLabel: "fait",
     taskPendingLabel: "en attente",
+    taskSeriesFilterLabel: "Afficher uniquement les tâches récurrentes d'origine",
+    taskSeriesFilterEmpty: "Aucune tâche récurrente d'origine à afficher",
     taskNamePlaceholder: "Nom de la tâche…",
     taskRecurring: {
       none: "Unique",
@@ -572,6 +578,8 @@ const LANGUAGES = {
     taskTitle: "Tareas",
     taskDoneLabel: "completadas",
     taskPendingLabel: "pendientes",
+    taskSeriesFilterLabel: "Mostrar solo tareas recurrentes base",
+    taskSeriesFilterEmpty: "No hay tareas base recurrentes disponibles",
     taskNamePlaceholder: "Nombre de tarea…",
     taskRecurring: {
       none: "Una vez",
@@ -756,6 +764,8 @@ const LANGUAGES = {
     taskTitle: "Aufgaben",
     taskDoneLabel: "erledigt",
     taskPendingLabel: "offen",
+    taskSeriesFilterLabel: "Nur wiederkehrende Stammaufgaben anzeigen",
+    taskSeriesFilterEmpty: "Keine wiederkehrenden Stammaufgaben verfügbar",
     taskNamePlaceholder: "Aufgabenname…",
     taskRecurring: {
       none: "Einmalig",
@@ -940,6 +950,8 @@ const LANGUAGES = {
     taskTitle: "Compiti",
     taskDoneLabel: "completati",
     taskPendingLabel: "in sospeso",
+    taskSeriesFilterLabel: "Mostra solo le attività ricorrenti principali",
+    taskSeriesFilterEmpty: "Nessuna attività ricorrente principale disponibile",
     taskNamePlaceholder: "Nome del compito…",
     taskRecurring: {
       none: "Una tantum",
@@ -1124,6 +1136,8 @@ const LANGUAGES = {
     taskTitle: "Taken",
     taskDoneLabel: "klaar",
     taskPendingLabel: "in behandeling",
+    taskSeriesFilterLabel: "Toon alleen terugkerende hoofdtaken",
+    taskSeriesFilterEmpty: "Geen terugkerende hoofdtaken beschikbaar",
     taskNamePlaceholder: "Taaknaam…",
     taskRecurring: {
       none: "Eenmalig",
@@ -1308,6 +1322,8 @@ const LANGUAGES = {
     taskTitle: "Zadania",
     taskDoneLabel: "ukończone",
     taskPendingLabel: "oczekujące",
+    taskSeriesFilterLabel: "Pokaż tylko zadania bazowe serii cyklicznych",
+    taskSeriesFilterEmpty: "Brak bazowych zadań cyklicznych do wyświetlenia",
     taskNamePlaceholder: "Nazwa zadania…",
     taskRecurring: {
       none: "Jednorazowe",
@@ -1492,6 +1508,8 @@ const LANGUAGES = {
     taskTitle: "任务",
     taskDoneLabel: "已完成",
     taskPendingLabel: "待处理",
+    taskSeriesFilterLabel: "仅显示重复任务模板",
+    taskSeriesFilterEmpty: "没有可显示的重复任务模板",
     taskNamePlaceholder: "任务名称…",
     taskRecurring: {
       none: "一次性",
@@ -1676,6 +1694,8 @@ const LANGUAGES = {
     taskTitle: "المهام",
     taskDoneLabel: "منجز",
     taskPendingLabel: "قيد الانتظار",
+    taskSeriesFilterLabel: "عرض مهام التكرار الأساسية فقط",
+    taskSeriesFilterEmpty: "لا توجد مهام أساسية متكررة للعرض",
     taskNamePlaceholder: "اسم المهمة…",
     taskRecurring: {
       none: "مرة واحدة",
