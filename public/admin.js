@@ -533,8 +533,6 @@ function setLanguage(lang) {
   if (rewardsLibraryHeader) rewardsLibraryHeader.innerHTML = `<i class="bi bi-collection me-2"></i>${t.rewardsLibraryTitle || 'Rewards Library'}`;
   const rewardsLibraryDescription = document.getElementById('rewardsLibraryDescription');
   if (rewardsLibraryDescription) rewardsLibraryDescription.textContent = t.rewardsLibraryDescription || 'Review every reward below and edit details as needed.';
-  const addRewardFromTabBtn = document.getElementById('addRewardFromTab');
-  if (addRewardFromTabBtn) addRewardFromTabBtn.innerHTML = `<i class="bi bi-plus-circle me-1"></i>${t.addRewardButton || 'Add Reward'}`;
   const coinsDisabledTitle = document.getElementById('coinsSystemDisabledTitle');
   if (coinsDisabledTitle) coinsDisabledTitle.textContent = t.coinsSystemDisabledTitle || 'Coins System Not Enabled';
   const coinsDisabledDescription = document.getElementById('coinsSystemDisabledDescription');
@@ -2677,17 +2675,6 @@ async function deleteReward(rewardId) {
 
 // Event listeners for rewards system
 document.addEventListener('DOMContentLoaded', () => {
-  const addRewardFromTabBtn = document.getElementById('addRewardFromTab');
-  if (addRewardFromTabBtn) {
-    addRewardFromTabBtn.addEventListener('click', () => {
-      openSettingsToRewardSystem();
-      setTimeout(() => {
-        const rewardNameInput = document.getElementById('rewardName');
-        if (rewardNameInput) rewardNameInput.focus();
-      }, 600);
-    });
-  }
-
   // Reward form
   const rewardForm = document.getElementById('rewardForm');
   const rewardFormCancelBtn = document.getElementById('rewardFormCancelBtn');
