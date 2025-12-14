@@ -785,6 +785,7 @@ function performTemporaryDataFix() {
   let archivedPast = 0;
   let globalDuplicatesRemoved = 0;
   let seriesTouched = 0;
+  let completedPurged = 0;
 
   const recurringSeries = new Map();
   tasks.forEach(task => {
@@ -854,13 +855,23 @@ function performTemporaryDataFix() {
     }
   });
 
+  tasks.forEach(task => {
+    if (!task || task.deleted) return;
+    if (!task.done) return;
+    if (!task.date) return;
+    if (task.date >= today) return;
+    task.deleted = true;
+    completedPurged += 1;
+  });
+
   return {
     duplicatesRemoved: duplicatesRemoved + globalDuplicatesRemoved,
     recurringDuplicatesRemoved: duplicatesRemoved,
     globalDuplicatesRemoved,
     archivedPast,
     seriesTouched,
-    changed: duplicatesRemoved + archivedPast + globalDuplicatesRemoved
+    completedPurged,
+    changed: duplicatesRemoved + archivedPast + globalDuplicatesRemoved + completedPurged
   };
 }
 
@@ -1587,6 +1598,9 @@ module.exports = NodeHelper.create({
       }
       if (result.archivedPast) {
         parts.push(`archived ${result.archivedPast} overdue task(s)`);
+      }
+      if (result.completedPurged) {
+        parts.push(`purged ${result.completedPurged} completed past task(s)`);
       }
       const message = parts.length ? parts.join(", ") : "Temporary fix completed.";
       res.status(ok ? 200 : 500).json({ success: ok, ...result, message });
