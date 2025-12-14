@@ -294,6 +294,15 @@
         </div>
         <div class="modal-body">
           <div id="settingsLockedMsg" class="text-center my-3 d-none"></div>
+          <div id="settingsPinPrompt" class="d-none">
+            <label for="settingsPinInput" class="form-label text-center w-100" id="settingsPinPromptLabel">Enter your 6-digit PIN:</label>
+            <div class="d-flex flex-wrap justify-content-center align-items-center gap-2">
+              <input type="password" id="settingsPinInput" class="form-control text-center" maxlength="6" pattern="\d{6}" inputmode="numeric" autocomplete="one-time-code" aria-label="PIN" style="max-width: 220px;" />
+              <button type="button" class="btn btn-primary" id="settingsPinSubmit" aria-label="Unlock settings">
+                <i class="bi bi-unlock-fill"></i>
+              </button>
+            </div>
+          </div>
           <div id="settingsForm" class="d-none" autocomplete="off">
             
             <!-- Reward System Selection -->

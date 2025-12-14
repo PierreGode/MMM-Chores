@@ -511,6 +511,16 @@ function setLanguage(lang) {
   if (modalTitle) modalTitle.textContent = t.settingsTitle || 'Settings';
   const saveBtn = document.getElementById("settingsSaveBtn");
   if (saveBtn) saveBtn.textContent = t.saveButton || 'Save';
+  const pinPromptLabel = document.getElementById('settingsPinPromptLabel');
+  if (pinPromptLabel) pinPromptLabel.textContent = t.settingsEnterPin || 'Enter your 6-digit PIN:';
+  const pinSubmitBtn = document.getElementById('settingsPinSubmit');
+  if (pinSubmitBtn) {
+    const pinText = t.settingsEnterPin || 'Enter your 6-digit PIN:';
+    pinSubmitBtn.setAttribute('title', pinText);
+    pinSubmitBtn.setAttribute('aria-label', pinText);
+  }
+  const pinInputField = document.getElementById('settingsPinInput');
+  if (pinInputField) pinInputField.placeholder = '000000';
   const editRewardsBtn = document.getElementById('editRewardsBtn');
   if (editRewardsBtn) editRewardsBtn.textContent = t.editRewardsButton || 'Edit Rewards';
   const rewardsTitle = document.getElementById('rewardsModalLabel');
@@ -2153,12 +2163,68 @@ async function initApp() {
   const settingsModalEl = document.getElementById("settingsModal");
   const settingsForm = document.getElementById("settingsForm");
   const lockedMsg = document.getElementById("settingsLockedMsg");
+  const settingsPinPrompt = document.getElementById('settingsPinPrompt');
+  const settingsPinInput = document.getElementById('settingsPinInput');
+  const settingsPinSubmit = document.getElementById('settingsPinSubmit');
   const modal = settingsModalEl ? new bootstrap.Modal(settingsModalEl) : null;
+
+  const togglePinPrompt = (visible) => {
+    if (!settingsPinPrompt) return;
+    settingsPinPrompt.classList.toggle('d-none', !visible);
+    if (visible && settingsPinInput) {
+      settingsPinInput.value = '';
+      setTimeout(() => settingsPinInput.focus(), 50);
+    }
+  };
+
+  const attemptSettingsUnlock = () => {
+    if (!settingsPinInput) return;
+    const candidate = (settingsPinInput.value || '').trim();
+    if (!/^\d{6}$/.test(candidate)) {
+      if (lockedMsg) {
+        lockedMsg.textContent = LANGUAGES[currentLang].settingsEnterPin;
+        lockedMsg.classList.remove('d-none');
+      }
+      settingsPinInput.focus();
+      return;
+    }
+    if (candidate === settingsMode) {
+      settingsMode = 'unlocked';
+      togglePinPrompt(false);
+      if (lockedMsg) lockedMsg.classList.add('d-none');
+      if (settingsForm) settingsForm.classList.remove('d-none');
+    } else {
+      if (lockedMsg) {
+        lockedMsg.textContent = LANGUAGES[currentLang].settingsWrongPin;
+        lockedMsg.classList.remove('d-none');
+      }
+      settingsPinInput.value = '';
+      settingsPinInput.focus();
+    }
+  };
+
+  if (settingsPinSubmit) {
+    settingsPinSubmit.addEventListener('click', attemptSettingsUnlock);
+  }
+  if (settingsPinInput) {
+    settingsPinInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        attemptSettingsUnlock();
+      }
+    });
+    settingsPinInput.addEventListener('input', () => {
+      const digitsOnly = settingsPinInput.value.replace(/\D/g, '').slice(0, 6);
+      settingsPinInput.value = digitsOnly;
+    });
+  }
+
   if (settingsBtn && modal) {
     settingsBtn.addEventListener('click', () => {
       settingsChanged = false;
       settingsSaved = false;
       if (settingsMode === 'unlocked') {
+        togglePinPrompt(false);
         if (lockedMsg) lockedMsg.classList.add('d-none');
         if (settingsForm) settingsForm.classList.remove('d-none');
         modal.show();
@@ -2166,22 +2232,17 @@ async function initApp() {
       }
 
       if (/^\d{6}$/.test(settingsMode)) {
-        const pin = prompt(LANGUAGES[currentLang].settingsEnterPin);
-        if (pin === settingsMode) {
-          settingsMode = 'unlocked';
-          if (lockedMsg) lockedMsg.classList.add('d-none');
-          if (settingsForm) settingsForm.classList.remove('d-none');
-        } else {
-          if (lockedMsg) {
-            lockedMsg.textContent = LANGUAGES[currentLang].settingsWrongPin;
-            lockedMsg.classList.remove('d-none');
-          }
-          if (settingsForm) settingsForm.classList.add('d-none');
+        if (settingsForm) settingsForm.classList.add('d-none');
+        togglePinPrompt(true);
+        if (lockedMsg) {
+          lockedMsg.textContent = LANGUAGES[currentLang].settingsEnterPin;
+          lockedMsg.classList.remove('d-none');
         }
         modal.show();
         return;
       }
 
+      togglePinPrompt(false);
       if (lockedMsg) {
         lockedMsg.textContent = LANGUAGES[currentLang].settingsLocked;
         lockedMsg.classList.remove('d-none');
