@@ -1686,6 +1686,9 @@ module.exports = NodeHelper.create({
         sendRedemptionEmail(person, reward, redemption);
       }
       
+      // Notify via Pushover that someone claimed a reward
+      sendPushover(self, settings, `${person.name} redeemed ${reward.name} for ${reward.pointCost} coins`);
+
       self.sendSocketNotification("PEOPLE_UPDATE", people);
       res.status(201).json(redemption);
     });
