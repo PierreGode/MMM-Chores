@@ -779,6 +779,7 @@ function performTemporaryDataFix() {
   const today = getLocalISO(new Date()).slice(0, 10);
   let duplicatesRemoved = 0;
   let archivedPast = 0;
+  let globalDuplicatesRemoved = 0;
   let seriesTouched = 0;
 
   const recurringSeries = new Map();
@@ -822,11 +823,40 @@ function performTemporaryDataFix() {
     });
   });
 
+  const globalKeyMap = new Map();
+  tasks.forEach(task => {
+    if (!task || task.deleted || task.done) return;
+    if (!task.date) return;
+    const key = [
+      (task.name || "").trim().toLowerCase(),
+      task.date,
+      task.assignedTo || "__none__"
+    ].join("|");
+    if (!globalKeyMap.has(key)) {
+      globalKeyMap.set(key, task);
+      return;
+    }
+    const kept = globalKeyMap.get(key);
+    const candidateCreated = task.created || "";
+    const keptCreated = kept.created || "";
+    const shouldReplace = candidateCreated < keptCreated;
+    if (shouldReplace) {
+      kept.deleted = true;
+      globalDuplicatesRemoved += 1;
+      globalKeyMap.set(key, task);
+    } else {
+      task.deleted = true;
+      globalDuplicatesRemoved += 1;
+    }
+  });
+
   return {
-    duplicatesRemoved,
+    duplicatesRemoved: duplicatesRemoved + globalDuplicatesRemoved,
+    recurringDuplicatesRemoved: duplicatesRemoved,
+    globalDuplicatesRemoved,
     archivedPast,
     seriesTouched,
-    changed: duplicatesRemoved + archivedPast
+    changed: duplicatesRemoved + archivedPast + globalDuplicatesRemoved
   };
 }
 
@@ -1544,7 +1574,17 @@ module.exports = NodeHelper.create({
         return res.json({ success: true, ...result, message: "No fixes were necessary." });
       }
       const ok = broadcastTasks(self);
-      const message = `Removed ${result.duplicatesRemoved} duplicate instance(s) and archived ${result.archivedPast} past task(s).`;
+      const parts = [];
+      if (result.recurringDuplicatesRemoved) {
+        parts.push(`cleaned ${result.recurringDuplicatesRemoved} series duplicate(s)`);
+      }
+      if (result.globalDuplicatesRemoved) {
+        parts.push(`removed ${result.globalDuplicatesRemoved} matching task duplicate(s)`);
+      }
+      if (result.archivedPast) {
+        parts.push(`archived ${result.archivedPast} overdue task(s)`);
+      }
+      const message = parts.length ? parts.join(", ") : "Temporary fix completed.";
       res.status(ok ? 200 : 500).json({ success: ok, ...result, message });
     });
     app.put("/api/settings", requireWrite, (req, res) => {
