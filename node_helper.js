@@ -270,6 +270,12 @@ function compareTasksForOrdering(a, b) {
   const anchorB = typeof b.seriesAnchor === 'number' ? b.seriesAnchor : (b.order || 0);
   if (anchorA !== anchorB) return anchorA - anchorB;
 
+  const doneA = Boolean(a.done);
+  const doneB = Boolean(b.done);
+  if (doneA !== doneB) {
+    return doneA ? 1 : -1;
+  }
+
   const dateA = getSortableDateKey(a.date);
   const dateB = getSortableDateKey(b.date);
   if (dateA !== dateB) return dateA.localeCompare(dateB);
