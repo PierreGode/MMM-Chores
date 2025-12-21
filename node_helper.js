@@ -704,16 +704,20 @@ function getNextDate(dateStr, recurring) {
   
   if (recurring === "daily") {
     d.setDate(d.getDate() + 1);
-  } else if (recurring === "daily-weekdays") {
-    // Jump to the next day, and keep jumping if it's a weekend
-    do {
-      d.setDate(d.getDate() + 1);
-    } while (d.getDay() === 0 || d.getDay() === 6); // 0=Sun, 6=Sat
-  } else if (recurring === "daily-weekends") {
-    // Jump to the next day, and keep jumping if it's a weekday
-    do {
-      d.setDate(d.getDate() + 1);
-    } while (d.getDay() >= 1 && d.getDay() <= 5); // 1-5 = Mon-Fri
+} else if (recurring === "daily-weekdays") {
+  // Always start by looking at the next day
+  d.setDate(d.getDate() + 1);
+  // If that day is Sat (6) or Sun (0), keep jumping until it's Monday
+  while (d.getDay() === 0 || d.getDay() === 6) {
+    d.setDate(d.getDate() + 1);
+  }
+} else if (recurring === "daily-weekends") {
+  // Always start by looking at the next day
+  d.setDate(d.getDate() + 1);
+  // If that day is Mon-Fri (1-5), keep jumping until it's Saturday
+  while (d.getDay() >= 1 && d.getDay() <= 5) {
+    d.setDate(d.getDate() + 1);
+  }
   } else if (recurring === "weekly") {
     d.setDate(d.getDate() + 7);
   } else if (recurring === "monthly") {
