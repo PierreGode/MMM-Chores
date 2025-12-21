@@ -701,20 +701,22 @@ function broadcastTasks(helper) {
 //}
 function getNextDate(dateStr, recurring) {
   const d = new Date(dateStr);
-  
+
   if (recurring === "daily") {
     d.setDate(d.getDate() + 1);
   } else if (recurring === "daily-weekdays") {
-    // If the module already advanced us to a weekday (Mon-Fri), we stay there.
-    // If we are on a weekend (Sat/Sun), we walk forward until we hit Monday.
-    while (d.getDay() === 0 || d.getDay() === 6) {
+    d.setDate(d.getDate() + 1);
+    // Saturday (6) -> Monday (+2) | Sunday (0) -> Monday (+1)
+    if (d.getDay() === 6) {
+      d.setDate(d.getDate() + 2);
+    } else if (d.getDay() === 0) {
       d.setDate(d.getDate() + 1);
     }
   } else if (recurring === "daily-weekends") {
-    // If the module already advanced us to a weekend (Sat/Sun), we stay there.
-    // If we are on a weekday (Mon-Fri), we walk forward until we hit Saturday.
-    while (d.getDay() >= 1 && d.getDay() <= 5) {
-      d.setDate(d.getDate() + 1);
+    d.setDate(d.getDate() + 1);
+    // If Mon-Fri (1-5), skip to the next Saturday
+    if (d.getDay() >= 1 && d.getDay() <= 5) {
+      d.setDate(d.getDate() + (6 - d.getDay()));
     }
   } else if (recurring === "weekly") {
     d.setDate(d.getDate() + 7);
@@ -742,6 +744,7 @@ function getNextDate(dateStr, recurring) {
   } else {
     return null;
   }
+  
   return d.toISOString().slice(0, 10);
 }
 
