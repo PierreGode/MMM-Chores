@@ -16,6 +16,8 @@ const LANGUAGES = {
       none: "One time",
       daily: "Daily",
       weekly: "Weekly",
+      "daily-weekdays": "Weekdays (Mon–Fri)",
+      "daily-weekends": "Weekends (Sat-Sun)",
       monthly: "Monthly",
       yearly: "Yearly",
       "every_X_days_2": "Every 2 Days",
@@ -208,6 +210,8 @@ const LANGUAGES = {
       none: "Engång",
       daily: "Dagligen",
       weekly: "Veckovis",
+      "daily-weekdays": "Vardagar (mån–fre)",
+      "daily-weekends": "Helger (lör-sön)",
       monthly: "Månadsvis",
       yearly: "Årligen",
       "every_X_days_2": "Varannan dag",
@@ -399,6 +403,8 @@ const LANGUAGES = {
       none: "Unique",
       daily: "Quotidien",
       weekly: "Hebdomadaire",
+      "daily-weekdays": "En semaine (du lundi au vendredi)",
+      "daily-weekends": "Week-ends (sam.-dim.)",
       monthly: "Mensuel",
       yearly: "Annuel"
     },
@@ -585,6 +591,8 @@ const LANGUAGES = {
       none: "Una vez",
       daily: "Diario",
       weekly: "Semanal",
+      "daily-weekdays": "Días laborables (lunes a viernes)",
+      "daily-weekends": "Fines de semana (sábado-domingo)",
       monthly: "Mensual",
       yearly: "Anual"
     },
@@ -771,6 +779,8 @@ const LANGUAGES = {
       none: "Einmalig",
       daily: "Täglich",
       weekly: "Wöchentlich",
+      "daily-weekdays": "Wochentage (Mo–Fr)",
+      "daily-weekends": "Wochenenden (Sa-So)",
       monthly: "Monatlich",
       yearly: "Jährlich"
     },
@@ -957,6 +967,8 @@ const LANGUAGES = {
       none: "Una tantum",
       daily: "Giornaliero",
       weekly: "Settimanale",
+      "daily-weekdays": "Giorni feriali (lun-ven)",
+      "daily-weekends": "Fine settimana (sabato-domenica)",   
       monthly: "Mensile",
       yearly: "Annuale"
     },
@@ -1143,6 +1155,8 @@ const LANGUAGES = {
       none: "Eenmalig",
       daily: "Dagelijks",
       weekly: "Wekelijks",
+      "daily-weekdays": "Weekdagen (ma-vr)",
+      "daily-weekends": "Weekends (za-zo)",
       monthly: "Maandelijks",
       yearly: "Jaarlijks"
     },
@@ -1329,6 +1343,8 @@ const LANGUAGES = {
       none: "Jednorazowe",
       daily: "Codziennie",
       weekly: "Tygodniowo",
+      "daily-weekdays": "Dni powszednie (pon.–pt.)",
+      "daily-weekends": "Weekendy (sob.-niedz.)",
       monthly: "Miesięcznie",
       yearly: "Rocznie"
     },
@@ -1515,6 +1531,8 @@ const LANGUAGES = {
       none: "一次性",
       daily: "每日",
       weekly: "每周",
+      "daily-weekdays": "工作日（周一至周五",
+      "daily-weekends": "周末（周六至周日)",
       monthly: "每月",
       yearly: "每年"
     },
@@ -1701,6 +1719,8 @@ const LANGUAGES = {
       none: "مرة واحدة",
       daily: "يومي",
       weekly: "أسبوعي",
+      "daily-weekdays": "أيام الأسبوع (من الإثنين إلى الجمعة)",
+      "daily-weekends": "عطلة نهاية الأسبوع (السبت والأحد)",
       monthly: "شهري",
       yearly: "سنوي"
     },

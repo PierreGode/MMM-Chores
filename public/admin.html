@@ -1,871 +1,1245 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" data-theme="light">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>MMM-Chores Admin</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MMM-Chores Admin</title>
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
-  <link href="admin.css" rel="stylesheet" />
-</head>
-<body>
-  <div id="loginContainer" class="login-overlay" style="display:none;">
-    <div class="card card-shadow p-4">
-      <form id="loginForm">
-        <h2 class="text-center mb-4">Login</h2>
-        <div class="mb-3">
-          <label for="loginUser" class="form-label">Username</label>
-          <input type="text" id="loginUser" class="form-control" placeholder="Username" />
-        </div>
-        <div class="mb-3">
-          <label for="loginPass" class="form-label">Password</label>
-          <input type="password" id="loginPass" class="form-control" placeholder="Password" />
-        </div>
-        <button type="submit" id="loginBtn" class="btn btn-primary w-100">Login</button>
-        <div id="loginError" class="text-danger mt-2"></div>
-      </form>
-    </div>
-  </div>
-  <div id="app" style="display:none;">
-    <div class="container py-4 flex-grow-1 position-relative">
-
-    <div class="top-controls">
-      <div class="theme-switch">
-        <button class="btn btn-outline-secondary btn-icon" id="themeToggle" title="Toggle theme">
-          <i class="bi" id="themeIcon"></i>
-        </button>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+    <link href="admin.css" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="loginContainer" class="login-overlay" style="display: none">
+      <div class="card card-shadow p-4">
+        <form id="loginForm">
+          <h2 class="text-center mb-4">Login</h2>
+          <div class="mb-3">
+            <label for="loginUser" class="form-label">Username</label>
+            <input type="text" id="loginUser" class="form-control" placeholder="Username" />
+          </div>
+          <div class="mb-3">
+            <label for="loginPass" class="form-label">Password</label>
+            <input type="password" id="loginPass" class="form-control" placeholder="Password" />
+          </div>
+          <button type="submit" id="loginBtn" class="btn btn-primary w-100">Login</button>
+          <div id="loginError" class="text-danger mt-2"></div>
+        </form>
       </div>
-      <!-- language selector inserted via JS -->
-      <button class="btn btn-outline-secondary btn-icon" id="settingsBtn" title="Settings">
-        <i class="bi bi-gear-fill"></i>
-      </button>
-      <button class="btn btn-outline-secondary btn-icon" id="logoutBtn" title="Logout">
-        <i class="bi bi-box-arrow-right"></i>
-      </button>
     </div>
+    <div id="app" style="display: none">
+      <div class="container py-4 flex-grow-1 position-relative">
+        <div class="top-controls">
+          <div class="theme-switch">
+            <button
+              class="btn btn-outline-secondary btn-icon"
+              id="themeToggle"
+              title="Toggle theme"
+            >
+              <i class="bi" id="themeIcon"></i>
+            </button>
+          </div>
+          <!-- language selector inserted via JS -->
+          <button class="btn btn-outline-secondary btn-icon" id="settingsBtn" title="Settings">
+            <i class="bi bi-gear-fill"></i>
+          </button>
+          <button class="btn btn-outline-secondary btn-icon" id="logoutBtn" title="Logout">
+            <i class="bi bi-box-arrow-right"></i>
+          </button>
+        </div>
 
-    <div class="hero mb-4">
-      <h1 class="mb-0" id="titleHeader">MMM-Chores Admin</h1>
-      <small class="opacity-75" id="subtitleHeader">Manage tasks, people & analytics</small>
-    </div>
+        <div class="hero mb-4">
+          <h1 class="mb-0" id="titleHeader">MMM-Chores Admin</h1>
+          <small class="opacity-75" id="subtitleHeader">Manage tasks, people & analytics</small>
+        </div>
 
-    <ul class="nav nav-tabs mb-3" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" id="tabDashboard">Dashboard</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#analytics" type="button" id="tabAnalytics">Analytics</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#rewards" type="button" id="tabRewards">Rewards</button>
-      </li>
-    </ul>
+        <ul class="nav nav-tabs mb-3" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button
+              class="nav-link active"
+              data-bs-toggle="tab"
+              data-bs-target="#dashboard"
+              type="button"
+              id="tabDashboard"
+            >
+              Dashboard
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button
+              class="nav-link"
+              data-bs-toggle="tab"
+              data-bs-target="#analytics"
+              type="button"
+              id="tabAnalytics"
+            >
+              Analytics
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button
+              class="nav-link"
+              data-bs-toggle="tab"
+              data-bs-target="#rewards"
+              type="button"
+              id="tabRewards"
+            >
+              Rewards
+            </button>
+          </li>
+        </ul>
 
-    <div class="tab-content">
-      <!-- Dashboard Tab -->
-      <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
-        <div class="row g-4">
-          <div class="col-lg-4">
-            <div class="card card-shadow h-100">
-              <div class="card-header" id="peopleHeader">People</div>
-              <div class="card-body">
-                <form id="personForm" class="input-group mb-3">
-                  <input type="text" id="personName" class="form-control" placeholder="New person…" required />
-                  <button class="btn btn-outline-secondary btn-icon" type="submit" title="Add" id="btnAddPerson">
-                    <i class="bi bi-person-plus-fill"></i>
-                  </button>
-                </form>
-                <ul id="peopleList" class="list-group"></ul>
+        <div class="tab-content">
+          <!-- Dashboard Tab -->
+          <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
+            <div class="row g-4">
+              <div class="col-lg-4">
+                <div class="card card-shadow h-100">
+                  <div class="card-header" id="peopleHeader">People</div>
+                  <div class="card-body">
+                    <form id="personForm" class="input-group mb-3">
+                      <input
+                        type="text"
+                        id="personName"
+                        class="form-control"
+                        placeholder="New person…"
+                        required
+                      />
+                      <button
+                        class="btn btn-outline-secondary btn-icon"
+                        type="submit"
+                        title="Add"
+                        id="btnAddPerson"
+                      >
+                        <i class="bi bi-person-plus-fill"></i>
+                      </button>
+                    </form>
+                    <ul id="peopleList" class="list-group"></ul>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-8">
+                <div class="card card-shadow h-100">
+                  <div
+                    class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2"
+                  >
+                    <span id="tasksHeader">Tasks</span>
+                    <div class="d-flex flex-wrap align-items-center gap-3">
+                      <div class="form-check form-switch m-0" id="taskSeriesFilterWrapper">
+                        <input
+                          class="form-check-input"
+                          type="checkbox"
+                          role="switch"
+                          id="tasksSeriesFilter"
+                        />
+                        <label
+                          class="form-check-label small text-muted"
+                          for="tasksSeriesFilter"
+                          id="taskSeriesFilterLabel"
+                          >Show recurring roots only</label
+                        >
+                      </div>
+                      <span class="badge bg-light text-dark fw-normal">
+                        <i class="bi bi-check2-square text-success me-1"></i
+                        ><span id="doneLabel"> done</span>&nbsp;&nbsp;
+                        <i class="bi bi-square text-muted me-1"></i
+                        ><span id="pendingLabel"> pending</span>
+                      </span>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <div class="d-flex justify-content-end mb-2">
+                      <button
+                        class="btn btn-outline-secondary"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#calendarCollapse"
+                      >
+                        <i class="bi bi-calendar3"></i>
+                      </button>
+                    </div>
+                    <div id="calendarCollapse" class="collapse mb-3">
+                      <div id="taskCalendar"></div>
+                    </div>
+                    <form id="taskForm" class="row gy-2 gx-2 align-items-center mb-3" novalidate>
+                      <div class="col-sm-auto task-name-col">
+                        <input
+                          type="text"
+                          id="taskName"
+                          class="form-control"
+                          placeholder="Task name…"
+                          required
+                        />
+                      </div>
+                      <div class="col-sm-auto">
+                        <input type="date" id="taskDate" class="form-control" />
+                      </div>
+                      <div class="col-sm-auto">
+                        <select id="taskPerson" class="form-select">
+                          <option value="">Unassigned</option>
+                        </select>
+                      </div>
+                      <div class="col-sm-auto">
+                        <select id="taskRecurring" class="form-select">
+                          <option value="">One time</option>
+                          <option value="daily">Daily</option>
+                          <option value="weekly">Weekly</option>
+                          <option value="daily-weekdays">Daily (Weekdays Only)</option>
+                          <option value="daily-weekends">Daily (Weekends Only)</option>
+                          <option value="monthly">Monthly</option>
+                          <option value="yearly">Yearly</option>
+                          <option value="every_X_days_2">Every 2 Days</option>
+                          <option value="every_X_days_3">Every 3 Days</option>
+                          <option value="every_X_weeks_2">Every 2 Weeks</option>
+                          <option value="every_X_weeks_3">Every 3 Weeks</option>
+                          <option value="first_monday_month">First Monday of Month</option>
+                        </select>
+                      </div>
+                      <div class="col-sm-auto d-flex gap-2">
+                        <button class="btn btn-primary" type="submit" id="btnAddTask">
+                          <i class="bi bi-plus-lg me-1"></i>Add
+                        </button>
+                        <button
+                          class="btn btn-success"
+                          type="button"
+                          id="btnAiGenerate"
+                          title="Generate tasks with AI"
+                        >
+                          <i class="bi bi-robot"></i> AI Generate
+                        </button>
+                      </div>
+                    </form>
+                    <ul id="taskList" class="list-group"></ul>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-          <div class="col-lg-8">
-            <div class="card card-shadow h-100">
-              <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-                <span id="tasksHeader">Tasks</span>
-                <div class="d-flex flex-wrap align-items-center gap-3">
-                  <div class="form-check form-switch m-0" id="taskSeriesFilterWrapper">
-                    <input class="form-check-input" type="checkbox" role="switch" id="tasksSeriesFilter">
-                    <label class="form-check-label small text-muted" for="tasksSeriesFilter" id="taskSeriesFilterLabel">Show recurring roots only</label>
+
+          <!-- Analytics Tab -->
+          <div class="tab-pane fade" id="analytics" role="tabpanel">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <h5 class="mb-0" id="analyticsHeader">Analytics</h5>
+              <select id="addChartSelect" class="form-select w-auto">
+                <option value="">Add Chart...</option>
+                <option value="weekly">Tasks Completed Per Week</option>
+                <option value="weekdays">Busiest Weekdays</option>
+                <option value="perPerson">Chores Per Person</option>
+                <option value="perPersonFinished">Chores Per Person (Finished)</option>
+                <option value="perPersonFinishedWeek">
+                  Chores Per Person (Finished This Week)
+                </option>
+                <option value="perPersonUnfinished">Chores Per Person (Unfinished)</option>
+                <option value="perPersonUnfinishedWeek">
+                  Chores Per Person (Unfinished This Week)
+                </option>
+                <option value="taskmaster">Taskmaster This Month</option>
+                <option value="lazyLegends">Lazy Legends</option>
+                <option value="speedDemons">Speed Demons</option>
+                <option value="weekendWarriors">Weekend Warriors</option>
+                <option value="slacker9000">Slacker Detector 9000</option>
+              </select>
+            </div>
+            <div id="analyticsContainer" class="row g-3"></div>
+          </div>
+
+          <!-- Rewards Tab -->
+          <div class="tab-pane fade" id="rewards" role="tabpanel">
+            <div id="rewardsSystemDisabled" class="text-center py-5">
+              <i class="bi bi-coin text-muted display-1"></i>
+              <h4 class="text-muted mt-3" id="coinsSystemDisabledTitle">
+                Coins System Not Enabled
+              </h4>
+              <p class="text-muted" id="coinsSystemDisabledDescription">
+                The coin-based reward system is currently disabled. You're using the traditional
+                level system.
+              </p>
+              <button
+                class="btn btn-primary"
+                onclick="openSettingsToRewardSystem()"
+                id="coinsSystemDisabledButton"
+              >
+                <i class="bi bi-gear me-2"></i
+                ><span id="coinsSystemDisabledButtonText">Enable Coins System in Settings</span>
+              </button>
+              <div class="mt-3">
+                <small class="text-muted">
+                  <i class="bi bi-info-circle me-1"></i>
+                  <span id="coinsSystemDisabledHint"
+                    >You can switch between level and coins systems anytime without losing
+                    data.</span
+                  >
+                </small>
+              </div>
+            </div>
+
+            <div id="rewardsSystemEnabled" class="d-none">
+              <div class="row g-4">
+                <div class="col-lg-6">
+                  <div class="card card-shadow h-100">
+                    <div class="card-header">
+                      <span id="peoplePointsHeader">
+                        <i class="bi bi-people me-2"></i
+                        ><span id="peoplePointsHeaderText">People & Coins</span>
+                      </span>
+                    </div>
+                    <div class="card-body">
+                      <ul id="peoplePointsList" class="list-group"></ul>
+                    </div>
                   </div>
-                  <span class="badge bg-light text-dark fw-normal">
-                    <i class="bi bi-check2-square text-success me-1"></i><span id="doneLabel"> done</span>&nbsp;&nbsp;
-                    <i class="bi bi-square text-muted me-1"></i><span id="pendingLabel"> pending</span>
-                  </span>
+                </div>
+                <div class="col-lg-6">
+                  <div class="card card-shadow h-100">
+                    <div class="card-header">
+                      <span id="redemptionsHeader">
+                        <i class="bi bi-clock-history me-2"></i
+                        ><span id="redemptionsHeaderText">Pending Redemptions</span>
+                      </span>
+                    </div>
+                    <div class="card-body">
+                      <ul id="redemptionsList" class="list-group"></ul>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div class="card-body">
-                <div class="d-flex justify-content-end mb-2">
-                  <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#calendarCollapse">
-                    <i class="bi bi-calendar3"></i>
-                  </button>
-                </div>
-                <div id="calendarCollapse" class="collapse mb-3">
-                  <div id="taskCalendar"></div>
-                </div>
-                <form id="taskForm" class="row gy-2 gx-2 align-items-center mb-3" novalidate>
-                  <div class="col-sm-auto task-name-col">
-                    <input type="text" id="taskName" class="form-control" placeholder="Task name…" required />
+
+              <div class="row g-4 mt-2">
+                <div class="col-12">
+                  <div class="card card-shadow h-100">
+                    <div
+                      class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2"
+                    >
+                      <span id="rewardsLibraryHeader">
+                        <i class="bi bi-collection me-2"></i>Rewards Library
+                      </span>
+                    </div>
+                    <div class="card-body">
+                      <p class="small text-muted" id="rewardsLibraryDescription">
+                        Review every reward below. Use the edit button to update names, costs, or
+                        descriptions.
+                      </p>
+                      <ul id="rewardsManageList" class="list-group"></ul>
+                    </div>
                   </div>
-                  <div class="col-sm-auto">
-                    <input type="date" id="taskDate" class="form-control" />
+                </div>
+              </div>
+
+              <div class="row g-4 mt-2">
+                <div class="col-12">
+                  <div class="alert alert-info" id="rewardsTip">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong id="rewardsTipLabel">Tip:</strong>
+                    <span id="rewardsTipText"
+                      >To add or edit rewards, go to Settings → Coins System Settings → Rewards
+                      Management</span
+                    >
                   </div>
-                  <div class="col-sm-auto">
-                    <select id="taskPerson" class="form-select">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Edit Task Modal -->
+        <div class="modal fade" id="editTaskModal" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content card-shadow">
+              <form id="editTaskForm">
+                <div class="modal-header">
+                  <h5 class="modal-title">Edit Task</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label for="editTaskName" class="form-label">Task Name</label>
+                    <input type="text" id="editTaskName" class="form-control" required />
+                  </div>
+                  <div class="mb-3">
+                    <label for="editTaskPerson" class="form-label">Person</label>
+                    <select id="editTaskPerson" class="form-select">
                       <option value="">Unassigned</option>
                     </select>
                   </div>
-                  <div class="col-sm-auto">
-                    <select id="taskRecurring" class="form-select">
-                      <option value="">One time</option>
-                      <option value="daily">Daily</option>
-                      <option value="weekly">Weekly</option>
-                      <option value="monthly">Monthly</option>
-                      <option value="yearly">Yearly</option>
-                      <option value="every_X_days_2">Every 2 Days</option>
-                      <option value="every_X_days_3">Every 3 Days</option>
-                      <option value="every_X_weeks_2">Every 2 Weeks</option>
-                      <option value="every_X_weeks_3">Every 3 Weeks</option>
-                      <option value="first_monday_month">First Monday of Month</option>
-                    </select>
-                  </div>
-                  <div class="col-sm-auto d-flex gap-2">
-                    <button class="btn btn-primary" type="submit" id="btnAddTask">
-                      <i class="bi bi-plus-lg me-1"></i>Add
-                    </button>
-                    <button class="btn btn-success" type="button" id="btnAiGenerate" title="Generate tasks with AI">
-                      <i class="bi bi-robot"></i> AI Generate
-                    </button>
-                  </div>
-                </form>
-                <ul id="taskList" class="list-group"></ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Analytics Tab -->
-      <div class="tab-pane fade" id="analytics" role="tabpanel">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <h5 class="mb-0" id="analyticsHeader">Analytics</h5>
-          <select id="addChartSelect" class="form-select w-auto">
-            <option value="">Add Chart...</option>
-            <option value="weekly">Tasks Completed Per Week</option>
-            <option value="weekdays">Busiest Weekdays</option>
-            <option value="perPerson">Chores Per Person</option>
-            <option value="perPersonFinished">Chores Per Person (Finished)</option>
-            <option value="perPersonFinishedWeek">Chores Per Person (Finished This Week)</option>
-            <option value="perPersonUnfinished">Chores Per Person (Unfinished)</option>
-            <option value="perPersonUnfinishedWeek">Chores Per Person (Unfinished This Week)</option>
-            <option value="taskmaster">Taskmaster This Month</option>
-            <option value="lazyLegends">Lazy Legends</option>
-            <option value="speedDemons">Speed Demons</option>
-            <option value="weekendWarriors">Weekend Warriors</option>
-            <option value="slacker9000">Slacker Detector 9000</option>
-          </select>
-        </div>
-        <div id="analyticsContainer" class="row g-3"></div>
-      </div>
-
-      <!-- Rewards Tab -->
-      <div class="tab-pane fade" id="rewards" role="tabpanel">
-        <div id="rewardsSystemDisabled" class="text-center py-5">
-          <i class="bi bi-coin text-muted display-1"></i>
-          <h4 class="text-muted mt-3" id="coinsSystemDisabledTitle">Coins System Not Enabled</h4>
-          <p class="text-muted" id="coinsSystemDisabledDescription">
-            The coin-based reward system is currently disabled. You're using the traditional level system.
-          </p>
-          <button class="btn btn-primary" onclick="openSettingsToRewardSystem()" id="coinsSystemDisabledButton">
-            <i class="bi bi-gear me-2"></i><span id="coinsSystemDisabledButtonText">Enable Coins System in Settings</span>
-          </button>
-          <div class="mt-3">
-            <small class="text-muted">
-              <i class="bi bi-info-circle me-1"></i>
-              <span id="coinsSystemDisabledHint">You can switch between level and coins systems anytime without losing data.</span>
-            </small>
-          </div>
-        </div>
-
-        <div id="rewardsSystemEnabled" class="d-none">
-          <div class="row g-4">
-            <div class="col-lg-6">
-              <div class="card card-shadow h-100">
-                <div class="card-header">
-                  <span id="peoplePointsHeader">
-                    <i class="bi bi-people me-2"></i><span id="peoplePointsHeaderText">People & Coins</span>
-                  </span>
-                </div>
-                <div class="card-body">
-                  <ul id="peoplePointsList" class="list-group"></ul>
-                </div>
-              </div>
-            </div>
-            <div class="col-lg-6">
-              <div class="card card-shadow h-100">
-                <div class="card-header">
-                  <span id="redemptionsHeader">
-                    <i class="bi bi-clock-history me-2"></i><span id="redemptionsHeaderText">Pending Redemptions</span>
-                  </span>
-                </div>
-                <div class="card-body">
-                  <ul id="redemptionsList" class="list-group"></ul>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="row g-4 mt-2">
-            <div class="col-12">
-              <div class="card card-shadow h-100">
-                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                  <span id="rewardsLibraryHeader">
-                    <i class="bi bi-collection me-2"></i>Rewards Library
-                  </span>
-                </div>
-                <div class="card-body">
-                  <p class="small text-muted" id="rewardsLibraryDescription">
-                    Review every reward below. Use the edit button to update names, costs, or descriptions.
-                  </p>
-                  <ul id="rewardsManageList" class="list-group"></ul>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div class="row g-4 mt-2">
-            <div class="col-12">
-              <div class="alert alert-info" id="rewardsTip">
-                <i class="bi bi-info-circle me-2"></i>
-                <strong id="rewardsTipLabel">Tip:</strong>
-                <span id="rewardsTipText">To add or edit rewards, go to Settings → Coins System Settings → Rewards Management</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- Edit Task Modal -->
-    <div class="modal fade" id="editTaskModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content card-shadow">
-          <form id="editTaskForm">
-            <div class="modal-header">
-              <h5 class="modal-title">Edit Task</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <div class="mb-3">
-                <label for="editTaskName" class="form-label">Task Name</label>
-                <input type="text" id="editTaskName" class="form-control" required />
-              </div>
-              <div class="mb-3">
-                <label for="editTaskPerson" class="form-label">Person</label>
-                <select id="editTaskPerson" class="form-select">
-                  <option value="">Unassigned</option>
-                </select>
-              </div>
-              <div class="mb-3">
-                <label for="editTaskDate" class="form-label">Date</label>
-                <input type="date" id="editTaskDate" class="form-control" />
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="submit" class="btn btn-primary" id="editTaskApply">Apply</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- Settings Modal -->
-    <div class="modal fade" id="settingsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content card-shadow">
-        <div class="modal-header">
-          <h5 class="modal-title" id="settingsModalLabel">Settings</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <div id="settingsLockedMsg" class="text-center my-3 d-none"></div>
-          <div id="settingsPinPrompt" class="d-none">
-            <label for="settingsPinInput" class="form-label text-center w-100" id="settingsPinPromptLabel">Enter your 6-digit PIN:</label>
-            <div class="d-flex flex-wrap justify-content-center align-items-center gap-2">
-              <input type="password" id="settingsPinInput" class="form-control text-center" maxlength="6" pattern="\d{6}" inputmode="numeric" autocomplete="one-time-code" aria-label="PIN" style="max-width: 220px;" />
-              <button type="button" class="btn btn-primary" id="settingsPinSubmit" aria-label="Unlock settings">
-                <i class="bi bi-unlock-fill"></i>
-              </button>
-            </div>
-          </div>
-          <div id="settingsForm" class="d-none" autocomplete="off">
-            
-            <!-- Reward System Selection -->
-            <div class="card mb-4">
-              <div class="card-header">
-                <h6 class="card-title mb-0">
-                  <i class="bi bi-trophy me-2"></i>Reward System
-                </h6>
-              </div>
-              <div class="card-body">
-                <div class="alert alert-info">
-                  <i class="bi bi-info-circle me-2"></i>
-                  Choose how rewards and progress are calculated. You can switch between systems at any time.
-                </div>
-                
-                <div class="row">
-                  <div class="col-md-6">
-                    <div class="card reward-system-card" id="levelSystemCard">
-                      <div class="card-body text-center">
-                        <div class="form-check">
-                          <input class="form-check-input" type="radio" name="rewardSystem" id="useLevelSystem" value="level" checked />
-                          <label class="form-check-label fw-bold" for="useLevelSystem">
-                            Level System (Default)
-                          </label>
-                        </div>
-                        <div class="mt-2">
-                          <i class="bi bi-star text-warning display-6"></i>
-                          <p class="small text-muted mt-2">
-                            Traditional level-based progression with titles like "Junior", "Expert", "Master" based on completed tasks.
-                          </p>
-                          <span class="badge bg-success">Recommended</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div class="col-md-6">
-                    <div class="card reward-system-card" id="coinSystemCard">
-                      <div class="card-body text-center">
-                        <div class="form-check">
-                          <input class="form-check-input" type="radio" name="rewardSystem" id="useCoinSystem" value="coins" />
-                          <label class="form-check-label fw-bold" for="useCoinSystem">
-                            Coins System (Advanced)
-                          </label>
-                        </div>
-                        <div class="mt-2">
-                          <i class="bi bi-coin text-warning display-6"></i>
-                          <p class="small text-muted mt-2">
-                            Earn coins for tasks and spend them on custom rewards. More flexible and customizable.
-                          </p>
-                          <span class="badge bg-info">New Feature</span>
-                        </div>
-                      </div>
-                    </div>
+                  <div class="mb-3">
+                    <label for="editTaskDate" class="form-label">Date</label>
+                    <input type="date" id="editTaskDate" class="form-control" />
                   </div>
                 </div>
-                
-                <div id="migrationWarning" class="alert alert-warning d-none mt-3">
-                  <i class="bi bi-exclamation-triangle me-2"></i>
-                  <strong>Migration Notice:</strong> Switching to the coins system will recalculate balances based on your completed tasks. 
-                  You can switch back to the level system anytime without losing data.
-                </div>
-              </div>
-            </div>
-
-            <!-- Display Settings -->
-            <div class="card mb-4">
-              <div class="card-header">
-                <h6 class="card-title mb-0">
-                  <i class="bi bi-display me-2"></i>Display Settings
-                </h6>
-              </div>
-              <div class="card-body">
-                <div class="row gy-3">
-                  <div class="col-12 col-sm-6">
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="settingsShowPast" />
-                      <label class="form-check-label" for="settingsShowPast">Show past tasks</label>
-                    </div>
-                  </div>
-                  <div class="col-12 col-sm-6">
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="settingsShowAnalytics" />
-                      <label class="form-check-label" for="settingsShowAnalytics">Analytics on mirror</label>
-                    </div>
-                  </div>
-                  <div class="col-12 col-sm-6" id="settingsShowRewardsTabContainer">
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="settingsShowRewardsTab" />
-                      <label class="form-check-label" for="settingsShowRewardsTab">Show Rewards tab</label>
-                    </div>
-                  </div>
-                  <div class="col-12 col-sm-6" id="settingsShowCoinsOnMirrorContainer">
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="settingsShowCoinsOnMirror" />
-                      <label class="form-check-label" for="settingsShowCoinsOnMirror">Show coins on mirror</label>
-                    </div>
-                  </div>
-                  <div class="col-12 col-sm-6">
-                    <label class="form-label" for="settingsTextSize">Mirror text size</label>
-                    <select id="settingsTextSize" class="form-select">
-                      <option value="small">Small</option>
-                      <option value="medium">Medium</option>
-                      <option value="large">Large</option>
-                    </select>
-                  </div>
-                  <div class="col-12 col-sm-6">
-                    <label class="form-label" for="settingsDateFmt">Date format</label>
-                    <select id="settingsDateFmt" class="form-select">
-                      <option value="">Do not show date</option>
-                      <option value="yyyy-mm-dd">yyyy-mm-dd</option>
-                      <option value="mm-dd">mm-dd</option>
-                      <option value="mm-dd-yyyy">mm-dd-yyyy</option>
-                      <option value="dd">dd</option>
-                    </select>
-                  </div>
-                  <div class="col-12 col-sm-6">
-                    <label class="form-label" for="settingsBackground">Background</label>
-                    <select id="settingsBackground" class="form-select">
-                      <option value="">No background</option>
-                      <option value="forest.png">Autumn</option>
-                      <option value="winter.png">Winter</option>
-                      <option value="summer.png">Summer</option>
-                      <option value="spring.png">Spring</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Maintenance Tools -->
-            <div class="card mb-4" id="maintenanceToolsCard">
-              <div class="card-header">
-                <h6 class="card-title mb-0">
-                  <i class="bi bi-wrench-adjustable-circle me-2"></i>Maintenance Tools
-                </h6>
-              </div>
-              <div class="card-body">
-                <p class="small text-muted mb-3" id="maintenanceToolsDescription">
-                  Recurring chores stuck in the past? Run this temporary fixer to archive overdue duplicates and keep only upcoming tasks.
-                </p>
-                <button class="btn btn-warning" type="button" id="runDataFixBtn">
-                  <i class="bi bi-tools me-2"></i>Run Temporary Data Fix
-                </button>
-                <div id="dataFixStatus" class="form-text mt-2"></div>
-              </div>
-            </div>
-
-            <!-- Level System Settings (visible when level system is selected) -->
-            <div class="card mb-4" id="levelSettings">
-              <div class="card-header">
-                <h6 class="card-title mb-0">
-                  <i class="bi bi-star me-2"></i>Level System Settings
-                </h6>
-              </div>
-              <div class="card-body">
-                <div class="row gy-3">
-
-                  <div class="col-12">
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="settingsLevelEnable" />
-                      <label class="form-check-label" for="settingsLevelEnable">Enable leveling</label>
-                    </div>
-                  </div>
-                  <div class="col-12">
-                    <button class="btn btn-outline-secondary" type="button" id="editRewardsBtn">
-                      <i class="bi bi-gear me-2"></i>Configure Level Titles & Rewards
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Coins System Settings (visible when coins system is selected) -->
-            <div class="card mb-4 d-none" id="coinSettings">
-              <div class="card-header">
-                <h6 class="card-title mb-0">
-                  <i class="bi bi-coin me-2"></i>Coins System Settings
-                </h6>
-              </div>
-              <div class="card-body">
-                <div class="alert alert-success" id="coinsSystemActiveAlert">
-                  <i class="bi bi-check-circle me-2"></i>
-                  <span id="coinsSystemActiveText">Coins system is active. Manage rewards below and view balances on the Rewards tab.</span>
-                </div>
-                <div class="row gy-3 mb-4">
-                  <div class="col-12">
-                    <label class="form-label" id="currentCoinTotalsLabel">Current Coin Totals:</label>
-                    <div id="coinTotalsPreview" class="small text-body">
-                      Loading...
-                    </div>
-                  </div>
-                </div>
-
-                <div class="border-top pt-3 mb-4">
-                  <h6 class="mb-2">
-                    <i class="bi bi-clipboard-check me-2"></i><span id="userRewardsHeader">User Reward Config</span>
-                  </h6>
-                  <p class="small text-muted mb-3" id="userRewardsDescription">
-                    Track redeemed rewards and mark them as delivered once the user has received them.
-                  </p>
-                  <div style="max-height: 280px; overflow-y: auto;">
-                    <ul id="userRewardList" class="list-group"></ul>
-                  </div>
-                </div>
-                
-                <!-- Rewards Management -->
-                <div class="border-top pt-3">
-                  <h6 class="mb-3">
-                    <i class="bi bi-gift me-2"></i><span id="coinRewardsHeadingText">Rewards Management</span>
-                  </h6>
-                  <form id="rewardForm" class="row gy-2 gx-2 align-items-end mb-3">
-                    <div class="col-sm-4">
-                      <label class="form-label small" for="rewardName" id="rewardNameLabel">Reward Name</label>
-                      <input type="text" id="rewardName" class="form-control form-control-sm" placeholder="Reward name…" required />
-                    </div>
-                    <div class="col-sm-2">
-                      <label class="form-label small" for="rewardPoints" id="rewardPointsLabel">Coins</label>
-                      <input type="number" id="rewardPoints" class="form-control form-control-sm" placeholder="Coins" min="1" required />
-                    </div>
-                    <div class="col-sm-4">
-                      <label class="form-label small" for="rewardDescription" id="rewardDescriptionLabel">Description</label>
-                      <input type="text" id="rewardDescription" class="form-control form-control-sm" placeholder="Optional" />
-                    </div>
-                    <div class="col-sm-2">
-                      <div class="d-flex flex-column gap-2">
-                        <button class="btn btn-primary btn-sm w-100" type="submit" id="rewardFormSubmitBtn">
-                          <i class="bi bi-plus-lg me-1"></i>Add
-                        </button>
-                        <button class="btn btn-outline-secondary btn-sm w-100 d-none" type="button" id="rewardFormCancelBtn">
-                          <i class="bi bi-x-circle me-1"></i>Cancel
-                        </button>
-                      </div>
-                    </div>
-                    <div class="col-12 d-none" id="rewardEditNotice">
-                      <div class="alert alert-warning py-2 px-3 small mb-0">
-                        <i class="bi bi-pencil-square me-1"></i>
-                        <span id="rewardEditNoticeText">Editing reward <strong id="rewardEditTarget"></strong>. Save or cancel to finish editing.</span>
-                      </div>
-                    </div>
-                  </form>
-                  <div style="max-height: 300px; overflow-y: auto;">
-                    <ul id="rewardsList" class="list-group"></ul>
-                  </div>
-                </div>
-                
-                <!-- Task Coin Assignment -->
-                <div class="border-top pt-3 mt-3">
-                  <h6 class="mb-3">
-                    <i class="bi bi-list-task me-2"></i><span id="taskCoinAssignmentTitle">Task Coin Assignment</span>
-                  </h6>
-                  <p class="small text-muted" id="taskCoinAssignmentDescription">Assign coin values to tasks by matching their names. Tasks matching these rules will automatically award the specified coins when completed.</p>
-                  <form id="taskPointsForm" class="row gy-2 gx-2 align-items-end mb-3">
-                    <div class="col-sm-6">
-                      <label class="form-label small" for="taskPatternName" id="taskPatternLabel">Task Name (any chore, even deleted)</label>
-                      <input type="text" id="taskPatternName" class="form-control form-control-sm w-100" list="taskPatternSuggestions" placeholder="Type a task name..." style="min-width: 250px;" required />
-                      <datalist id="taskPatternSuggestions"></datalist>
-                    </div>
-                    <div class="col-sm-3">
-                      <label class="form-label small" for="taskPatternPoints" id="taskPatternPointsLabel">Coins Awarded</label>
-                      <input type="number" id="taskPatternPoints" class="form-control form-control-sm" placeholder="Coins" min="1" required />
-                    </div>
-                    <div class="col-sm-3">
-                      <button class="btn btn-primary btn-sm w-100" type="submit" id="taskPointsAddRuleBtn">
-                        <i class="bi bi-plus-lg me-1"></i><span id="taskPointsAddRuleText">Add Rule</span>
-                      </button>
-                    </div>
-                  </form>
-                  <div style="max-height: 200px; overflow-y: auto;">
-                    <ul id="taskPointsRulesList" class="list-group"></ul>
-                  </div>
-                  <button class="btn btn-success btn-sm mt-2" type="button" id="applyTaskPointsBtn">
-                    <i class="bi bi-check-circle me-1"></i><span id="applyTaskPointsText">Apply Rules to Existing Tasks</span>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancel
                   </button>
+                  <button type="submit" class="btn btn-primary" id="editTaskApply">Apply</button>
                 </div>
-                
-                <!-- Gift Coins -->
-                <div class="border-top pt-3 mt-3">
-                  <h6 class="mb-3">
-                    <i class="bi bi-gift-fill me-2"></i><span id="giftCoinsTitle">Gift Coins to Person</span>
-                  </h6>
-                  <p class="small text-muted" id="giftCoinsDescription">Give bonus coins to people without completing a task.</p>
-                  <form id="giftPointsForm" class="row gy-2 gx-2 align-items-end mb-3">
-                    <div class="col-sm-5">
-                      <label class="form-label small" for="giftPersonSelect" id="giftPersonLabel">Person</label>
-                      <select id="giftPersonSelect" class="form-select form-select-sm" required>
-                        <option value="">Select person…</option>
-                      </select>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div class="modal fade" id="settingsModal" tabindex="-1">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content card-shadow">
+              <div class="modal-header">
+                <h5 class="modal-title" id="settingsModalLabel">Settings</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <div id="settingsLockedMsg" class="text-center my-3 d-none"></div>
+                <div id="settingsPinPrompt" class="d-none">
+                  <label
+                    for="settingsPinInput"
+                    class="form-label text-center w-100"
+                    id="settingsPinPromptLabel"
+                    >Enter your 6-digit PIN:</label
+                  >
+                  <div class="d-flex flex-wrap justify-content-center align-items-center gap-2">
+                    <input
+                      type="password"
+                      id="settingsPinInput"
+                      class="form-control text-center"
+                      maxlength="6"
+                      pattern="\d{6}"
+                      inputmode="numeric"
+                      autocomplete="one-time-code"
+                      aria-label="PIN"
+                      style="max-width: 220px"
+                    />
+                    <button
+                      type="button"
+                      class="btn btn-primary"
+                      id="settingsPinSubmit"
+                      aria-label="Unlock settings"
+                    >
+                      <i class="bi bi-unlock-fill"></i>
+                    </button>
+                  </div>
+                </div>
+                <div id="settingsForm" class="d-none" autocomplete="off">
+                  <!-- Reward System Selection -->
+                  <div class="card mb-4">
+                    <div class="card-header">
+                      <h6 class="card-title mb-0">
+                        <i class="bi bi-trophy me-2"></i>Reward System
+                      </h6>
                     </div>
-                    <div class="col-sm-3">
-                      <label class="form-label small" for="giftPointsAmount" id="giftPointsAmountLabel">Coins to Gift</label>
-                      <input type="number" id="giftPointsAmount" class="form-control form-control-sm" placeholder="Coins" min="1" required />
+                    <div class="card-body">
+                      <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Choose how rewards and progress are calculated. You can switch between
+                        systems at any time.
+                      </div>
+
+                      <div class="row">
+                        <div class="col-md-6">
+                          <div class="card reward-system-card" id="levelSystemCard">
+                            <div class="card-body text-center">
+                              <div class="form-check">
+                                <input
+                                  class="form-check-input"
+                                  type="radio"
+                                  name="rewardSystem"
+                                  id="useLevelSystem"
+                                  value="level"
+                                  checked
+                                />
+                                <label class="form-check-label fw-bold" for="useLevelSystem">
+                                  Level System (Default)
+                                </label>
+                              </div>
+                              <div class="mt-2">
+                                <i class="bi bi-star text-warning display-6"></i>
+                                <p class="small text-muted mt-2">
+                                  Traditional level-based progression with titles like "Junior",
+                                  "Expert", "Master" based on completed tasks.
+                                </p>
+                                <span class="badge bg-success">Recommended</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="col-md-6">
+                          <div class="card reward-system-card" id="coinSystemCard">
+                            <div class="card-body text-center">
+                              <div class="form-check">
+                                <input
+                                  class="form-check-input"
+                                  type="radio"
+                                  name="rewardSystem"
+                                  id="useCoinSystem"
+                                  value="coins"
+                                />
+                                <label class="form-check-label fw-bold" for="useCoinSystem">
+                                  Coins System (Advanced)
+                                </label>
+                              </div>
+                              <div class="mt-2">
+                                <i class="bi bi-coin text-warning display-6"></i>
+                                <p class="small text-muted mt-2">
+                                  Earn coins for tasks and spend them on custom rewards. More
+                                  flexible and customizable.
+                                </p>
+                                <span class="badge bg-info">New Feature</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div id="migrationWarning" class="alert alert-warning d-none mt-3">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        <strong>Migration Notice:</strong> Switching to the coins system will
+                        recalculate balances based on your completed tasks. You can switch back to
+                        the level system anytime without losing data.
+                      </div>
                     </div>
-                    <div class="col-sm-4">
-                      <label class="form-label small" for="giftPointsReason" id="giftPointsReasonLabel">Reason (optional)</label>
-                      <input type="text" id="giftPointsReason" class="form-control form-control-sm" placeholder="e.g., Bonus" />
+                  </div>
+
+                  <!-- Display Settings -->
+                  <div class="card mb-4">
+                    <div class="card-header">
+                      <h6 class="card-title mb-0">
+                        <i class="bi bi-display me-2"></i>Display Settings
+                      </h6>
                     </div>
-                    <div class="col-sm-12">
-                      <button class="btn btn-success btn-sm" type="submit" id="giftCoinsButton">
-                        <i class="bi bi-gift-fill me-1"></i><span id="giftCoinsButtonText">Gift Coins</span>
+                    <div class="card-body">
+                      <div class="row gy-3">
+                        <div class="col-12 col-sm-6">
+                          <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="settingsShowPast" />
+                            <label class="form-check-label" for="settingsShowPast"
+                              >Show past tasks</label
+                            >
+                          </div>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                          <div class="form-check form-switch">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              id="settingsShowAnalytics"
+                            />
+                            <label class="form-check-label" for="settingsShowAnalytics"
+                              >Analytics on mirror</label
+                            >
+                          </div>
+                        </div>
+                        <div class="col-12 col-sm-6" id="settingsShowRewardsTabContainer">
+                          <div class="form-check form-switch">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              id="settingsShowRewardsTab"
+                            />
+                            <label class="form-check-label" for="settingsShowRewardsTab"
+                              >Show Rewards tab</label
+                            >
+                          </div>
+                        </div>
+                        <div class="col-12 col-sm-6" id="settingsShowCoinsOnMirrorContainer">
+                          <div class="form-check form-switch">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              id="settingsShowCoinsOnMirror"
+                            />
+                            <label class="form-check-label" for="settingsShowCoinsOnMirror"
+                              >Show coins on mirror</label
+                            >
+                          </div>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                          <label class="form-label" for="settingsTextSize">Mirror text size</label>
+                          <select id="settingsTextSize" class="form-select">
+                            <option value="small">Small</option>
+                            <option value="medium">Medium</option>
+                            <option value="large">Large</option>
+                          </select>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                          <label class="form-label" for="settingsDateFmt">Date format</label>
+                          <select id="settingsDateFmt" class="form-select">
+                            <option value="">Do not show date</option>
+                            <option value="yyyy-mm-dd">yyyy-mm-dd</option>
+                            <option value="mm-dd">mm-dd</option>
+                            <option value="mm-dd-yyyy">mm-dd-yyyy</option>
+                            <option value="dd">dd</option>
+                          </select>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                          <label class="form-label" for="settingsBackground">Background</label>
+                          <select id="settingsBackground" class="form-select">
+                            <option value="">No background</option>
+                            <option value="forest.png">Autumn</option>
+                            <option value="winter.png">Winter</option>
+                            <option value="summer.png">Summer</option>
+                            <option value="spring.png">Spring</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Maintenance Tools -->
+                  <div class="card mb-4" id="maintenanceToolsCard">
+                    <div class="card-header">
+                      <h6 class="card-title mb-0">
+                        <i class="bi bi-wrench-adjustable-circle me-2"></i>Maintenance Tools
+                      </h6>
+                    </div>
+                    <div class="card-body">
+                      <p class="small text-muted mb-3" id="maintenanceToolsDescription">
+                        Recurring chores stuck in the past? Run this temporary fixer to archive
+                        overdue duplicates and keep only upcoming tasks.
+                      </p>
+                      <button class="btn btn-warning" type="button" id="runDataFixBtn">
+                        <i class="bi bi-tools me-2"></i>Run Temporary Data Fix
                       </button>
+                      <div id="dataFixStatus" class="form-text mt-2"></div>
                     </div>
-                  </form>
+                  </div>
+
+                  <!-- Level System Settings (visible when level system is selected) -->
+                  <div class="card mb-4" id="levelSettings">
+                    <div class="card-header">
+                      <h6 class="card-title mb-0">
+                        <i class="bi bi-star me-2"></i>Level System Settings
+                      </h6>
+                    </div>
+                    <div class="card-body">
+                      <div class="row gy-3">
+                        <div class="col-12">
+                          <div class="form-check form-switch">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              id="settingsLevelEnable"
+                            />
+                            <label class="form-check-label" for="settingsLevelEnable"
+                              >Enable leveling</label
+                            >
+                          </div>
+                        </div>
+                        <div class="col-12">
+                          <button
+                            class="btn btn-outline-secondary"
+                            type="button"
+                            id="editRewardsBtn"
+                          >
+                            <i class="bi bi-gear me-2"></i>Configure Level Titles & Rewards
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Coins System Settings (visible when coins system is selected) -->
+                  <div class="card mb-4 d-none" id="coinSettings">
+                    <div class="card-header">
+                      <h6 class="card-title mb-0">
+                        <i class="bi bi-coin me-2"></i>Coins System Settings
+                      </h6>
+                    </div>
+                    <div class="card-body">
+                      <div class="alert alert-success" id="coinsSystemActiveAlert">
+                        <i class="bi bi-check-circle me-2"></i>
+                        <span id="coinsSystemActiveText"
+                          >Coins system is active. Manage rewards below and view balances on the
+                          Rewards tab.</span
+                        >
+                      </div>
+                      <div class="row gy-3 mb-4">
+                        <div class="col-12">
+                          <label class="form-label" id="currentCoinTotalsLabel"
+                            >Current Coin Totals:</label
+                          >
+                          <div id="coinTotalsPreview" class="small text-body">Loading...</div>
+                        </div>
+                      </div>
+
+                      <div class="border-top pt-3 mb-4">
+                        <h6 class="mb-2">
+                          <i class="bi bi-clipboard-check me-2"></i
+                          ><span id="userRewardsHeader">User Reward Config</span>
+                        </h6>
+                        <p class="small text-muted mb-3" id="userRewardsDescription">
+                          Track redeemed rewards and mark them as delivered once the user has
+                          received them.
+                        </p>
+                        <div style="max-height: 280px; overflow-y: auto">
+                          <ul id="userRewardList" class="list-group"></ul>
+                        </div>
+                      </div>
+
+                      <!-- Rewards Management -->
+                      <div class="border-top pt-3">
+                        <h6 class="mb-3">
+                          <i class="bi bi-gift me-2"></i
+                          ><span id="coinRewardsHeadingText">Rewards Management</span>
+                        </h6>
+                        <form id="rewardForm" class="row gy-2 gx-2 align-items-end mb-3">
+                          <div class="col-sm-4">
+                            <label class="form-label small" for="rewardName" id="rewardNameLabel"
+                              >Reward Name</label
+                            >
+                            <input
+                              type="text"
+                              id="rewardName"
+                              class="form-control form-control-sm"
+                              placeholder="Reward name…"
+                              required
+                            />
+                          </div>
+                          <div class="col-sm-2">
+                            <label
+                              class="form-label small"
+                              for="rewardPoints"
+                              id="rewardPointsLabel"
+                              >Coins</label
+                            >
+                            <input
+                              type="number"
+                              id="rewardPoints"
+                              class="form-control form-control-sm"
+                              placeholder="Coins"
+                              min="1"
+                              required
+                            />
+                          </div>
+                          <div class="col-sm-4">
+                            <label
+                              class="form-label small"
+                              for="rewardDescription"
+                              id="rewardDescriptionLabel"
+                              >Description</label
+                            >
+                            <input
+                              type="text"
+                              id="rewardDescription"
+                              class="form-control form-control-sm"
+                              placeholder="Optional"
+                            />
+                          </div>
+                          <div class="col-sm-2">
+                            <div class="d-flex flex-column gap-2">
+                              <button
+                                class="btn btn-primary btn-sm w-100"
+                                type="submit"
+                                id="rewardFormSubmitBtn"
+                              >
+                                <i class="bi bi-plus-lg me-1"></i>Add
+                              </button>
+                              <button
+                                class="btn btn-outline-secondary btn-sm w-100 d-none"
+                                type="button"
+                                id="rewardFormCancelBtn"
+                              >
+                                <i class="bi bi-x-circle me-1"></i>Cancel
+                              </button>
+                            </div>
+                          </div>
+                          <div class="col-12 d-none" id="rewardEditNotice">
+                            <div class="alert alert-warning py-2 px-3 small mb-0">
+                              <i class="bi bi-pencil-square me-1"></i>
+                              <span id="rewardEditNoticeText"
+                                >Editing reward <strong id="rewardEditTarget"></strong>. Save or
+                                cancel to finish editing.</span
+                              >
+                            </div>
+                          </div>
+                        </form>
+                        <div style="max-height: 300px; overflow-y: auto">
+                          <ul id="rewardsList" class="list-group"></ul>
+                        </div>
+                      </div>
+
+                      <!-- Task Coin Assignment -->
+                      <div class="border-top pt-3 mt-3">
+                        <h6 class="mb-3">
+                          <i class="bi bi-list-task me-2"></i
+                          ><span id="taskCoinAssignmentTitle">Task Coin Assignment</span>
+                        </h6>
+                        <p class="small text-muted" id="taskCoinAssignmentDescription">
+                          Assign coin values to tasks by matching their names. Tasks matching these
+                          rules will automatically award the specified coins when completed.
+                        </p>
+                        <form id="taskPointsForm" class="row gy-2 gx-2 align-items-end mb-3">
+                          <div class="col-sm-6">
+                            <label
+                              class="form-label small"
+                              for="taskPatternName"
+                              id="taskPatternLabel"
+                              >Task Name (any chore, even deleted)</label
+                            >
+                            <input
+                              type="text"
+                              id="taskPatternName"
+                              class="form-control form-control-sm w-100"
+                              list="taskPatternSuggestions"
+                              placeholder="Type a task name..."
+                              style="min-width: 250px"
+                              required
+                            />
+                            <datalist id="taskPatternSuggestions"></datalist>
+                          </div>
+                          <div class="col-sm-3">
+                            <label
+                              class="form-label small"
+                              for="taskPatternPoints"
+                              id="taskPatternPointsLabel"
+                              >Coins Awarded</label
+                            >
+                            <input
+                              type="number"
+                              id="taskPatternPoints"
+                              class="form-control form-control-sm"
+                              placeholder="Coins"
+                              min="1"
+                              required
+                            />
+                          </div>
+                          <div class="col-sm-3">
+                            <button
+                              class="btn btn-primary btn-sm w-100"
+                              type="submit"
+                              id="taskPointsAddRuleBtn"
+                            >
+                              <i class="bi bi-plus-lg me-1"></i
+                              ><span id="taskPointsAddRuleText">Add Rule</span>
+                            </button>
+                          </div>
+                        </form>
+                        <div style="max-height: 200px; overflow-y: auto">
+                          <ul id="taskPointsRulesList" class="list-group"></ul>
+                        </div>
+                        <button
+                          class="btn btn-success btn-sm mt-2"
+                          type="button"
+                          id="applyTaskPointsBtn"
+                        >
+                          <i class="bi bi-check-circle me-1"></i
+                          ><span id="applyTaskPointsText">Apply Rules to Existing Tasks</span>
+                        </button>
+                      </div>
+
+                      <!-- Gift Coins -->
+                      <div class="border-top pt-3 mt-3">
+                        <h6 class="mb-3">
+                          <i class="bi bi-gift-fill me-2"></i
+                          ><span id="giftCoinsTitle">Gift Coins to Person</span>
+                        </h6>
+                        <p class="small text-muted" id="giftCoinsDescription">
+                          Give bonus coins to people without completing a task.
+                        </p>
+                        <form id="giftPointsForm" class="row gy-2 gx-2 align-items-end mb-3">
+                          <div class="col-sm-5">
+                            <label
+                              class="form-label small"
+                              for="giftPersonSelect"
+                              id="giftPersonLabel"
+                              >Person</label
+                            >
+                            <select
+                              id="giftPersonSelect"
+                              class="form-select form-select-sm"
+                              required
+                            >
+                              <option value="">Select person…</option>
+                            </select>
+                          </div>
+                          <div class="col-sm-3">
+                            <label
+                              class="form-label small"
+                              for="giftPointsAmount"
+                              id="giftPointsAmountLabel"
+                              >Coins to Gift</label
+                            >
+                            <input
+                              type="number"
+                              id="giftPointsAmount"
+                              class="form-control form-control-sm"
+                              placeholder="Coins"
+                              min="1"
+                              required
+                            />
+                          </div>
+                          <div class="col-sm-4">
+                            <label
+                              class="form-label small"
+                              for="giftPointsReason"
+                              id="giftPointsReasonLabel"
+                              >Reason (optional)</label
+                            >
+                            <input
+                              type="text"
+                              id="giftPointsReason"
+                              class="form-control form-control-sm"
+                              placeholder="e.g., Bonus"
+                            />
+                          </div>
+                          <div class="col-sm-12">
+                            <button
+                              class="btn btn-success btn-sm"
+                              type="submit"
+                              id="giftCoinsButton"
+                            >
+                              <i class="bi bi-gift-fill me-1"></i
+                              ><span id="giftCoinsButtonText">Gift Coins</span>
+                            </button>
+                          </div>
+                        </form>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Advanced Features -->
+                  <div class="card mb-4">
+                    <div class="card-header">
+                      <h6 class="card-title mb-0">
+                        <i class="bi bi-gear-wide-connected me-2"></i>Advanced Features
+                      </h6>
+                    </div>
+                    <div class="card-body">
+                      <div class="row gy-3">
+                        <div class="col-12 col-sm-6">
+                          <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="settingsUseAI" />
+                            <label class="form-check-label" for="settingsUseAI"
+                              >Use AI features</label
+                            >
+                          </div>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                          <div class="form-check form-switch">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              id="settingsAutoUpdate"
+                            />
+                            <label class="form-check-label" for="settingsAutoUpdate"
+                              >Enable autoupdate</label
+                            >
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Notifications -->
+                  <div class="card mb-4">
+                    <div class="card-header">
+                      <h6 class="card-title mb-0"><i class="bi bi-bell me-2"></i>Notifications</h6>
+                    </div>
+                    <div class="card-body">
+                      <div class="row gy-3">
+                        <div class="col-12 col-sm-6">
+                          <div class="form-check form-switch">
+                            <input
+                              class="form-check-input"
+                              type="checkbox"
+                              id="settingsPushoverEnable"
+                            />
+                            <label class="form-check-label" for="settingsPushoverEnable"
+                              >Enable Pushover</label
+                            >
+                          </div>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                          <label class="form-label" for="settingsReminderTime">Reminder time</label>
+                          <input type="time" id="settingsReminderTime" class="form-control" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                      Cancel
+                    </button>
+                    <button class="btn btn-primary" type="button" id="settingsSaveBtn">
+                      <i class="bi bi-check-lg me-2"></i>Save Settings
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-
-            <!-- Advanced Features -->
-            <div class="card mb-4">
-              <div class="card-header">
-                <h6 class="card-title mb-0">
-                  <i class="bi bi-gear-wide-connected me-2"></i>Advanced Features
-                </h6>
-              </div>
-              <div class="card-body">
-                <div class="row gy-3">
-                  <div class="col-12 col-sm-6">
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="settingsUseAI" />
-                      <label class="form-check-label" for="settingsUseAI">Use AI features</label>
-                    </div>
-                  </div>
-                  <div class="col-12 col-sm-6">
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="settingsAutoUpdate" />
-                      <label class="form-check-label" for="settingsAutoUpdate">Enable autoupdate</label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Notifications -->
-            <div class="card mb-4">
-              <div class="card-header">
-                <h6 class="card-title mb-0">
-                  <i class="bi bi-bell me-2"></i>Notifications
-                </h6>
-              </div>
-              <div class="card-body">
-                <div class="row gy-3">
-                  <div class="col-12 col-sm-6">
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="settingsPushoverEnable" />
-                      <label class="form-check-label" for="settingsPushoverEnable">Enable Pushover</label>
-                    </div>
-                  </div>
-                  <div class="col-12 col-sm-6">
-                    <label class="form-label" for="settingsReminderTime">Reminder time</label>
-                    <input type="time" id="settingsReminderTime" class="form-control" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="d-flex justify-content-end gap-2">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button class="btn btn-primary" type="button" id="settingsSaveBtn">
-                <i class="bi bi-check-lg me-2"></i>Save Settings
-              </button>
             </div>
           </div>
         </div>
       </div>
-    </div>
-    </div>
-    </div>
-    <!-- Rewards Modal -->
-    <div class="modal fade" id="rewardsModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content card-shadow">
-          <form id="rewardsForm">
-            <div class="modal-header">
-              <h5 class="modal-title" id="rewardsModalLabel">Edit Rewards</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <div class="mb-3">
-                <label class="form-label" for="rewardsLevelMode">Leveling based on</label>
-                <select id="rewardsLevelMode" class="form-select">
-                  <option value="years">Years</option>
-                  <option value="chores">Number of chores</option>
-                </select>
+      <!-- Rewards Modal -->
+      <div class="modal fade" id="rewardsModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content card-shadow">
+            <form id="rewardsForm">
+              <div class="modal-header">
+                <h5 class="modal-title" id="rewardsModalLabel">Edit Rewards</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
               </div>
-              <div class="mb-3 level-mode-chores d-none">
-                <label class="form-label" for="rewardsChoresToMax">Chores to max level</label>
-                <input type="number" id="rewardsChoresToMax" class="form-control" />
+              <div class="modal-body">
+                <div class="mb-3">
+                  <label class="form-label" for="rewardsLevelMode">Leveling based on</label>
+                  <select id="rewardsLevelMode" class="form-select">
+                    <option value="years">Years</option>
+                    <option value="chores">Number of chores</option>
+                  </select>
+                </div>
+                <div class="mb-3 level-mode-chores d-none">
+                  <label class="form-label" for="rewardsChoresToMax">Chores to max level</label>
+                  <input type="number" id="rewardsChoresToMax" class="form-control" />
+                </div>
+                <div class="mb-3 level-mode-years">
+                  <label class="form-label" for="rewardsYears">Years to max level</label>
+                  <input type="number" id="rewardsYears" class="form-control" />
+                </div>
+                <div class="mb-3 level-mode-years">
+                  <label class="form-label" for="rewardsPerWeek">Chores per week estimate</label>
+                  <input type="number" id="rewardsPerWeek" class="form-control" />
+                </div>
+                <div class="mb-3">
+                  <label class="form-label" id="rewardTitlesLabel">Reward titles</label>
+                  <div id="rewardTitlesContainer" class="vstack gap-2"></div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label" id="personRewardsListLabel"
+                    >Custom rewards per person</label
+                  >
+                  <ul id="personRewardsList" class="list-group"></ul>
+                </div>
               </div>
-              <div class="mb-3 level-mode-years">
-                <label class="form-label" for="rewardsYears">Years to max level</label>
-                <input type="number" id="rewardsYears" class="form-control" />
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                  Close
+                </button>
+                <button type="submit" class="btn btn-primary" id="rewardsSaveBtn">Save</button>
               </div>
-              <div class="mb-3 level-mode-years">
-                <label class="form-label" for="rewardsPerWeek">Chores per week estimate</label>
-                <input type="number" id="rewardsPerWeek" class="form-control" />
-              </div>
-              <div class="mb-3">
-                <label class="form-label" id="rewardTitlesLabel">Reward titles</label>
-                <div id="rewardTitlesContainer" class="vstack gap-2"></div>
-              </div>
-              <div class="mb-3">
-                <label class="form-label" id="personRewardsListLabel">Custom rewards per person</label>
-                <ul id="personRewardsList" class="list-group"></ul>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              <button type="submit" class="btn btn-primary" id="rewardsSaveBtn">Save</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- Person Rewards Modal -->
-    <div class="modal fade" id="personRewardsModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content card-shadow">
-          <form id="personRewardsForm">
-            <div class="modal-header">
-              <h5 class="modal-title" id="personRewardsModalLabel">Edit Rewards</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <div class="mb-3">
-                <label class="form-label" id="personRewardTitlesLabel">Reward titles</label>
-                <div id="personRewardTitlesContainer" class="vstack gap-2"></div>
-              </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-danger" id="personRewardsRemoveBtn">Remove</button>
-              <button type="submit" class="btn btn-primary" id="personRewardsSaveBtn">Save</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- View Rewards Modal -->
-    <div class="modal fade" id="viewRewardsModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content card-shadow">
-          <div class="modal-header">
-            <h5 class="modal-title" id="viewRewardsModalLabel">Rewards</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <ul id="viewRewardsList" class="list-group"></ul>
+            </form>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Edit Reward Modal -->
-    <div class="modal fade" id="editRewardModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content card-shadow">
-          <form id="editRewardForm">
+      <!-- Person Rewards Modal -->
+      <div class="modal fade" id="personRewardsModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content card-shadow">
+            <form id="personRewardsForm">
+              <div class="modal-header">
+                <h5 class="modal-title" id="personRewardsModalLabel">Edit Rewards</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <div class="mb-3">
+                  <label class="form-label" id="personRewardTitlesLabel">Reward titles</label>
+                  <div id="personRewardTitlesContainer" class="vstack gap-2"></div>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="personRewardsRemoveBtn">
+                  Remove
+                </button>
+                <button type="submit" class="btn btn-primary" id="personRewardsSaveBtn">
+                  Save
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- View Rewards Modal -->
+      <div class="modal fade" id="viewRewardsModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content card-shadow">
             <div class="modal-header">
-              <h5 class="modal-title" id="editRewardModalLabel">Edit Reward</h5>
+              <h5 class="modal-title" id="viewRewardsModalLabel">Rewards</h5>
               <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-              <div class="mb-3">
-                <label for="editRewardName" class="form-label" id="editRewardNameLabel">Reward Name</label>
-                <input type="text" id="editRewardName" class="form-control" required />
-              </div>
-              <div class="mb-3">
-                <label for="editRewardPoints" class="form-label" id="editRewardPointsLabel">Coin Cost</label>
-                <input type="number" id="editRewardPoints" class="form-control" min="1" required />
-              </div>
-              <div class="mb-3">
-                <label for="editRewardDescription" class="form-label" id="editRewardDescriptionLabel">Description</label>
-                <textarea id="editRewardDescription" class="form-control" rows="2"></textarea>
-              </div>
-              <div class="mb-3">
-                <label for="editRewardEmail" class="form-label" id="editRewardEmailLabel">Email Template</label>
-                <textarea id="editRewardEmail" class="form-control" rows="3" placeholder="Optional email template for when reward is redeemed"></textarea>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" id="editRewardActive" />
-                <label class="form-check-label" for="editRewardActive" id="editRewardActiveLabel">Active</label>
-              </div>
+              <ul id="viewRewardsList" class="list-group"></ul>
             </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="editRewardCancelBtn">Cancel</button>
-              <button type="submit" class="btn btn-primary" id="editRewardSaveBtn">Save Changes</button>
-            </div>
-          </form>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Edit Coins Modal -->
-    <div class="modal fade" id="editCoinsModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content card-shadow">
-          <form id="editCoinsForm">
-            <div class="modal-header">
-              <h5 class="modal-title" id="editCoinsModalTitle">Edit Coins</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <div class="mb-3">
-                <label for="editCoinsAmount" class="form-label" id="editCoinsLabel">Current Coins</label>
-                <input type="number" id="editCoinsAmount" class="form-control" min="0" required />
-                <small class="text-muted" id="editCoinsHelper">Enter the new coin amount for this person.</small>
+      <!-- Edit Reward Modal -->
+      <div class="modal fade" id="editRewardModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content card-shadow">
+            <form id="editRewardForm">
+              <div class="modal-header">
+                <h5 class="modal-title" id="editRewardModalLabel">Edit Reward</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
               </div>
-              <div class="alert alert-info" id="editCoinsInfo">
-                <i class="bi bi-info-circle me-2"></i>
-                <span id="editCoinsInfoText">You can manually adjust coin balances here. This is useful for giving bonus coins or correcting mistakes.</span>
+              <div class="modal-body">
+                <div class="mb-3">
+                  <label for="editRewardName" class="form-label" id="editRewardNameLabel"
+                    >Reward Name</label
+                  >
+                  <input type="text" id="editRewardName" class="form-control" required />
+                </div>
+                <div class="mb-3">
+                  <label for="editRewardPoints" class="form-label" id="editRewardPointsLabel"
+                    >Coin Cost</label
+                  >
+                  <input
+                    type="number"
+                    id="editRewardPoints"
+                    class="form-control"
+                    min="1"
+                    required
+                  />
+                </div>
+                <div class="mb-3">
+                  <label
+                    for="editRewardDescription"
+                    class="form-label"
+                    id="editRewardDescriptionLabel"
+                    >Description</label
+                  >
+                  <textarea id="editRewardDescription" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="mb-3">
+                  <label for="editRewardEmail" class="form-label" id="editRewardEmailLabel"
+                    >Email Template</label
+                  >
+                  <textarea
+                    id="editRewardEmail"
+                    class="form-control"
+                    rows="3"
+                    placeholder="Optional email template for when reward is redeemed"
+                  ></textarea>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" id="editRewardActive" />
+                  <label class="form-check-label" for="editRewardActive" id="editRewardActiveLabel"
+                    >Active</label
+                  >
+                </div>
               </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="editCoinsCancelBtn">Cancel</button>
-              <button type="submit" class="btn btn-primary" id="editCoinsSaveBtn">Save Changes</button>
-            </div>
-          </form>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  data-bs-dismiss="modal"
+                  id="editRewardCancelBtn"
+                >
+                  Cancel
+                </button>
+                <button type="submit" class="btn btn-primary" id="editRewardSaveBtn">
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Redeem Reward Modal -->
-    <div class="modal fade" id="redeemRewardModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content card-shadow">
-          <form id="redeemRewardForm">
-            <div class="modal-header">
-              <h5 class="modal-title" id="redeemRewardModalLabel">Redeem Reward</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-              <div class="mb-3">
-                <label for="redeemPerson" class="form-label" id="redeemPersonLabel">Person</label>
-                <select id="redeemPerson" class="form-select" required>
-                  <option value="" id="redeemPersonPlaceholder">Select person...</option>
-                </select>
+      <!-- Edit Coins Modal -->
+      <div class="modal fade" id="editCoinsModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content card-shadow">
+            <form id="editCoinsForm">
+              <div class="modal-header">
+                <h5 class="modal-title" id="editCoinsModalTitle">Edit Coins</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
               </div>
-              <div class="mb-3">
-                <label for="redeemReward" class="form-label" id="redeemRewardLabel">Reward</label>
-                <select id="redeemReward" class="form-select" required>
-                  <option value="" id="redeemRewardPlaceholder">Select reward...</option>
-                </select>
+              <div class="modal-body">
+                <div class="mb-3">
+                  <label for="editCoinsAmount" class="form-label" id="editCoinsLabel"
+                    >Current Coins</label
+                  >
+                  <input type="number" id="editCoinsAmount" class="form-control" min="0" required />
+                  <small class="text-muted" id="editCoinsHelper"
+                    >Enter the new coin amount for this person.</small
+                  >
+                </div>
+                <div class="alert alert-info" id="editCoinsInfo">
+                  <i class="bi bi-info-circle me-2"></i>
+                  <span id="editCoinsInfoText"
+                    >You can manually adjust coin balances here. This is useful for giving bonus
+                    coins or correcting mistakes.</span
+                  >
+                </div>
               </div>
-              <div id="redeemInfo" class="alert alert-info" style="display: none;"></div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="redeemRewardCancelBtn">Cancel</button>
-              <button type="submit" class="btn btn-success" id="redeemRewardSubmitBtn">Redeem</button>
-            </div>
-          </form>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  data-bs-dismiss="modal"
+                  id="editCoinsCancelBtn"
+                >
+                  Cancel
+                </button>
+                <button type="submit" class="btn btn-primary" id="editCoinsSaveBtn">
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
+
+      <!-- Redeem Reward Modal -->
+      <div class="modal fade" id="redeemRewardModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content card-shadow">
+            <form id="redeemRewardForm">
+              <div class="modal-header">
+                <h5 class="modal-title" id="redeemRewardModalLabel">Redeem Reward</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <div class="mb-3">
+                  <label for="redeemPerson" class="form-label" id="redeemPersonLabel">Person</label>
+                  <select id="redeemPerson" class="form-select" required>
+                    <option value="" id="redeemPersonPlaceholder">Select person...</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="redeemReward" class="form-label" id="redeemRewardLabel">Reward</label>
+                  <select id="redeemReward" class="form-select" required>
+                    <option value="" id="redeemRewardPlaceholder">Select reward...</option>
+                  </select>
+                </div>
+                <div id="redeemInfo" class="alert alert-info" style="display: none"></div>
+              </div>
+              <div class="modal-footer">
+                <button
+                  type="button"
+                  class="btn btn-secondary"
+                  data-bs-dismiss="modal"
+                  id="redeemRewardCancelBtn"
+                >
+                  Cancel
+                </button>
+                <button type="submit" class="btn btn-success" id="redeemRewardSubmitBtn">
+                  Redeem
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <footer class="text-center py-3 small text-muted" id="footerText">
+        Built with Bootstrap & Chart.js • MMM-Chores by Pierre Gode
+      </footer>
     </div>
 
-    <footer class="text-center py-3 small text-muted" id="footerText">
-      Built with Bootstrap & Chart.js • MMM-Chores by Pierre Gode
-    </footer>
-  </div>
-
-  <script src="lang.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-  <script src="admin.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+    <script src="lang.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="admin.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
 </html>

@@ -664,10 +664,56 @@ function broadcastTasks(helper) {
   return ok;
 }
 
+//function getNextDate(dateStr, recurring) {
+//  const d = new Date(dateStr);
+//  if (recurring === "daily") {
+//   d.setDate(d.getDate() + 1);
+//  } else if (recurring === "weekly") {
+//    d.setDate(d.getDate() + 7);
+//  } else if (recurring === "monthly") {
+//    d.setMonth(d.getMonth() + 1);
+//  } else if (recurring === "yearly") {
+//    d.setFullYear(d.getFullYear() + 1);
+//  } else if (recurring && recurring.startsWith("every_")) {
+//    // Custom recurring patterns: every_X_days, every_X_weeks, first_monday_month
+//    const parts = recurring.split("_");
+//    if (parts[1] === "X" && parts[2] === "days") {
+//      const days = parseInt(parts[3]) || 2;
+//      d.setDate(d.getDate() + days);
+//   } else if (parts[1] === "X" && parts[2] === "weeks") {
+//      const weeks = parseInt(parts[3]) || 2;
+//      d.setDate(d.getDate() + (weeks * 7));
+//    } else if (recurring === "first_monday_month") {
+//      // First Monday of next month
+//      d.setMonth(d.getMonth() + 1);
+//      d.setDate(1);
+//      // Find first Monday
+//      while (d.getDay() !== 1) {
+//        d.setDate(d.getDate() + 1);
+//      }
+//    } else {
+//      return null;
+//    }
+//  } else {
+//    return null;
+//  }
+//  return d.toISOString().slice(0, 10);
+//}
 function getNextDate(dateStr, recurring) {
   const d = new Date(dateStr);
+  
   if (recurring === "daily") {
     d.setDate(d.getDate() + 1);
+  } else if (recurring === "daily-weekdays") {
+    // Jump to the next day, and keep jumping if it's a weekend
+    do {
+      d.setDate(d.getDate() + 1);
+    } while (d.getDay() === 0 || d.getDay() === 6); // 0=Sun, 6=Sat
+  } else if (recurring === "daily-weekends") {
+    // Jump to the next day, and keep jumping if it's a weekday
+    do {
+      d.setDate(d.getDate() + 1);
+    } while (d.getDay() >= 1 && d.getDay() <= 5); // 1-5 = Mon-Fri
   } else if (recurring === "weekly") {
     d.setDate(d.getDate() + 7);
   } else if (recurring === "monthly") {
@@ -675,7 +721,6 @@ function getNextDate(dateStr, recurring) {
   } else if (recurring === "yearly") {
     d.setFullYear(d.getFullYear() + 1);
   } else if (recurring && recurring.startsWith("every_")) {
-    // Custom recurring patterns: every_X_days, every_X_weeks, first_monday_month
     const parts = recurring.split("_");
     if (parts[1] === "X" && parts[2] === "days") {
       const days = parseInt(parts[3]) || 2;
@@ -684,10 +729,8 @@ function getNextDate(dateStr, recurring) {
       const weeks = parseInt(parts[3]) || 2;
       d.setDate(d.getDate() + (weeks * 7));
     } else if (recurring === "first_monday_month") {
-      // First Monday of next month
       d.setMonth(d.getMonth() + 1);
       d.setDate(1);
-      // Find first Monday
       while (d.getDay() !== 1) {
         d.setDate(d.getDate() + 1);
       }
