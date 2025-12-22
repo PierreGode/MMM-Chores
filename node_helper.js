@@ -685,7 +685,8 @@ function normalizeRecurringStartDate(dateStr, recurring) {
 }
 
 function getNextDate(dateStr, recurring) {
-  const d = new Date(dateStr);
+  const normalized = normalizeRecurringStartDate(dateStr, recurring) || dateStr;
+  const d = new Date(normalized);
   if (Number.isNaN(d.getTime())) return null;
 
   const addDays = days => d.setDate(d.getDate() + days);
