@@ -10,7 +10,8 @@
   --field-bg: #fff;
   --shadow: 0 10px 25px rgba(0,0,0,.1);
   --list-hover: rgba(0,0,0,.03);
-  --border: rgba(255,255,255,0.4);
+  --border: rgba(0,0,0,0.08);
+  --control-border: #d0d5dd;
   --blur: 10px;
   --points-color: #ffc107;
   --reward-color: #28a745;
@@ -26,7 +27,8 @@
   --field-bg: #c4c4c4;
   --shadow: 0 10px 25px rgba(0,0,0,.4);
   --list-hover: rgba(255,255,255,.03);
-  --border: rgba(255,255,255,0.1);
+  --border: rgba(255,255,255,0.12);
+  --control-border: rgba(255,255,255,0.25);
   --blur: 10px;
   --points-color: #ffc107;
   --reward-color: #28a745;
@@ -168,8 +170,14 @@ h1, h2 {
 .form-select {
   background: var(--field-bg);
   color: #000;
-  border-color: var(--border);
+  border: 1px solid var(--control-border);
   border-radius: 0.5rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #7aa2ff;
+  box-shadow: 0 0 0 3px rgba(122, 162, 255, 0.25);
 }
 
 .task-name-col {
