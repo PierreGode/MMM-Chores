@@ -412,11 +412,22 @@ Module.register("MMM-Chores", {
 
   getRedeemedLabel() {
     const lang = (this.config.language || "en").toLowerCase();
-    if (lang.startsWith("sv")) return "loste in"; // Swedish
-    if (lang.startsWith("es")) return "canjeo"; // Spanish
-    if (lang.startsWith("fr")) return "a utilise"; // French
-    if (lang.startsWith("de")) return "eingeloest"; // German
-    return "redeemed";
+    const labels = {
+      en: "redeemed",
+      sv: "löste in",
+      es: "canjeó",
+      fr: "a utilisé",
+      de: "eingelöst",
+      it: "ha riscattato",
+      nl: "verzilverd",
+      pl: "zrealizował",
+      zh: "兑换了",
+      ar: "استبدل"
+    };
+
+    // Match exact or locale-prefixed codes, default to English
+    const entry = Object.entries(labels).find(([code]) => lang === code || lang.startsWith(`${code}-`));
+    return entry ? entry[1] : labels.en;
   },
 
   getDom() {
@@ -469,12 +480,19 @@ Module.register("MMM-Chores", {
 
         const labelEl = document.createElement("span");
         labelEl.className = "dimmed";
-        labelEl.textContent = ` ${redeemedLabel} `;
+        labelEl.textContent = redeemedLabel;
 
         const rewardEl = document.createElement("strong");
         rewardEl.textContent = red.rewardName || "";
 
-        li.append(nameEl, labelEl, rewardEl);
+        // explicit text nodes to enforce spacing between parts
+        li.append(
+          nameEl,
+          document.createTextNode(" "),
+          labelEl,
+          document.createTextNode(" "),
+          rewardEl
+        );
         list.appendChild(li);
       });
 
