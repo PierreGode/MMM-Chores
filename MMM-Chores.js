@@ -413,16 +413,16 @@ Module.register("MMM-Chores", {
   getRedeemedLabel() {
     const lang = (this.config.language || "en").toLowerCase();
     const labels = {
-      en: "redeemed",
-      sv: "löste in",
-      es: "canjeó",
-      fr: "a utilisé",
-      de: "eingelöst",
-      it: "ha riscattato",
-      nl: "verzilverd",
-      pl: "zrealizował",
-      zh: "兑换了",
-      ar: "استبدل"
+      en: " redeemed ",
+      sv: " löste in ",
+      es: " canjeó ",
+      fr: " a utilisé ",
+      de: " eingelöst ",
+      it: " ha riscattato ",
+      nl: " verzilverd ",
+      pl: " zrealizował ",
+      zh: " 兑换了 ",
+      ar: " استبدل "
     };
 
     // Match exact or locale-prefixed codes, default to English
