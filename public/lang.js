@@ -71,6 +71,7 @@ const LANGUAGES = {
     viewRewardsButton: "Rewards",
     showPastLabel: "Show past tasks",
     analyticsOnMirrorLabel: "Analytics on mirror",
+    showRedeemedRewardsLabel: "Show redeemed rewards on mirror",
     useAiLabel: "Use AI features",
     textSizeLabel: "Mirror text size",
     textSizeOptions: {
@@ -265,6 +266,7 @@ const LANGUAGES = {
     viewRewardsButton: "Belöningar",
     showPastLabel: "Visa tidigare uppgifter",
     analyticsOnMirrorLabel: "Analys på spegeln",
+    showRedeemedRewardsLabel: "Visa inlösta belöningar på spegeln",
     useAiLabel: "Använd AI-funktioner",
     textSizeLabel: "Textstorlek i spegeln",
     textSizeOptions: {

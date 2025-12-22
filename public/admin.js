@@ -299,6 +299,8 @@ function initSettingsForm(settings) {
   const showRewardsTabContainer = document.getElementById('settingsShowRewardsTabContainer');
   const showCoinsOnMirror = document.getElementById('settingsShowCoinsOnMirror');
   const showCoinsOnMirrorContainer = document.getElementById('settingsShowCoinsOnMirrorContainer');
+  const showRedeemedRewards = document.getElementById('settingsShowRedeemedRewards');
+  const showRedeemedRewardsContainer = document.getElementById('settingsShowRedeemedRewardsContainer');
   const levelEnable = document.getElementById('settingsLevelEnable');
   const autoUpdate = document.getElementById('settingsAutoUpdate');
   const pushoverEnable = document.getElementById('settingsPushoverEnable');
@@ -309,6 +311,7 @@ function initSettingsForm(settings) {
   const dataFixStatus = document.getElementById('dataFixStatus');
 
   if (showPast) showPast.checked = !!settings.showPast;
+  if (showRedeemedRewards) showRedeemedRewards.checked = settings.showRedeemedRewards !== false;
   if (textSize) textSize.value = settings.textMirrorSize || 'small';
   if (dateFmt) dateFmt.value = settings.dateFormatting || '';
   if (useAI) useAI.checked = settings.useAI !== false;
@@ -335,6 +338,14 @@ function initSettingsForm(settings) {
       showCoinsOnMirrorContainer.style.display = '';
     } else {
       showCoinsOnMirrorContainer.style.display = 'none';
+    }
+  }
+
+  if (showRedeemedRewardsContainer) {
+    if (currentSystem === 'coins') {
+      showRedeemedRewardsContainer.style.display = '';
+    } else {
+      showRedeemedRewardsContainer.style.display = 'none';
     }
   }
 
@@ -406,6 +417,7 @@ function initSettingsForm(settings) {
       showAnalyticsOnMirror: showAnalytics ? showAnalytics.checked : false,
       showRewardsTab: showRewardsTab ? showRewardsTab.checked : true,
       showCoinsOnMirror: showCoinsOnMirror ? showCoinsOnMirror.checked : true,
+      showRedeemedRewards: showRedeemedRewards ? showRedeemedRewards.checked : true,
       levelingEnabled: levelEnable ? levelEnable.checked : false,
       autoUpdate: autoUpdate ? autoUpdate.checked : false,
       pushoverEnabled: pushoverEnable ? pushoverEnable.checked : false,
@@ -600,6 +612,8 @@ function setLanguage(lang) {
   if (showPastLbl) showPastLbl.textContent = t.showPastLabel || 'Show past tasks';
   const showAnalyticsLbl = document.querySelector("label[for='settingsShowAnalytics']");
   if (showAnalyticsLbl) showAnalyticsLbl.textContent = t.analyticsOnMirrorLabel || 'Analytics on mirror';
+  const showRedeemedRewardsLbl = document.querySelector("label[for='settingsShowRedeemedRewards']");
+  if (showRedeemedRewardsLbl) showRedeemedRewardsLbl.textContent = t.showRedeemedRewardsLabel || 'Show redeemed rewards on mirror';
   const useAiLbl = document.querySelector("label[for='settingsUseAI']");
   if (useAiLbl) useAiLbl.textContent = t.useAiLabel || 'Use AI features';
   const userRewardsHeader = document.getElementById('userRewardsHeader');
