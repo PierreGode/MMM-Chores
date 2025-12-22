@@ -61,6 +61,7 @@ Module.register("MMM-Chores", {
     this.tasks = [];
     this.allTasks = [];
     this.people = [];
+    this.redemptions = [];
     this.levelInfo = null;
     this.chartInstances = {};
     this.sendSocketNotification("INIT_SERVER", this.config);
@@ -97,6 +98,10 @@ Module.register("MMM-Chores", {
     }
     if (notification === "CHORES_DATA") {
       this.tasks = payload;
+      this.updateDom();
+    }
+    if (notification === "REDEMPTIONS_UPDATE") {
+      this.redemptions = Array.isArray(payload) ? payload : [];
       this.updateDom();
     }
     if (notification === "PEOPLE_UPDATE") {
@@ -418,6 +423,11 @@ Module.register("MMM-Chores", {
       wrapper.appendChild(note);
     }
 
+    const showRedeemed = this.config.usePointSystem && this.config.showRedeemedRewards !== false;
+    const pendingRedemptions = showRedeemed
+      ? (this.redemptions || []).filter(r => !r.used).sort((a, b) => new Date(b.redeemed) - new Date(a.redeemed))
+      : [];
+
     // Filter out all deleted tasks completely from the mirror
     const visible = this.tasks
       .filter(t => !t.deleted && this.shouldShowTask(t))
@@ -431,11 +441,38 @@ Module.register("MMM-Chores", {
         return (a.order || 0) - (b.order || 0);
       });
 
+    // Show pending redemptions above tasks when enabled
+    if (pendingRedemptions.length) {
+      const redemptionsWrap = document.createElement("div");
+      redemptionsWrap.className = "redemptions-block";
+
+      const header = document.createElement("div");
+      header.className = `${this.config.textMirrorSize} bright`;
+      header.textContent = "Redeemed rewards";
+      redemptionsWrap.appendChild(header);
+
+      const list = document.createElement("ul");
+      list.className = "normal";
+
+      pendingRedemptions.forEach(red => {
+        const li = document.createElement("li");
+        li.className = `${this.config.textMirrorSize}`;
+        const when = red.redeemed ? new Date(red.redeemed).toLocaleString() : "";
+        li.innerHTML = `<strong>${red.personName}</strong> redeemed <strong>${red.rewardName}</strong><br><span class="xsmall dimmed">${when}</span>`;
+        list.appendChild(li);
+      });
+
+      redemptionsWrap.appendChild(list);
+      wrapper.appendChild(redemptionsWrap);
+    }
+
     if (visible.length === 0) {
       const emptyEl = document.createElement("div");
       emptyEl.className = `${this.config.textMirrorSize} dimmed`;
-      emptyEl.innerHTML = "No tasks to show 🎉";
-      wrapper.appendChild(emptyEl);
+      emptyEl.innerHTML = pendingRedemptions.length ? "" : "No tasks to show 🎉";
+      if (!pendingRedemptions.length) {
+        wrapper.appendChild(emptyEl);
+      }
       return wrapper;
     }
 

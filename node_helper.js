@@ -659,6 +659,7 @@ function broadcastTasks(helper) {
   helper.sendSocketNotification("CHORES_DATA", analyticsData);
   helper.sendSocketNotification("LEVEL_INFO", getLevelInfo(helper.config || {}));
   helper.sendSocketNotification("PEOPLE_UPDATE", people);
+  helper.sendSocketNotification("REDEMPTIONS_UPDATE", coinStore.redemptions || []);
   const ok = saveData();
   Log.log(`broadcastTasks: saveData returned ${ok}`);
   return ok;
@@ -1853,6 +1854,7 @@ module.exports = NodeHelper.create({
       sendPushover(self, settings, `${person.name} redeemed ${reward.name} for ${reward.pointCost} coins`);
 
       self.sendSocketNotification("PEOPLE_UPDATE", people);
+      self.sendSocketNotification("REDEMPTIONS_UPDATE", coinStore.redemptions);
       res.status(201).json(redemption);
     });
     
@@ -1864,6 +1866,7 @@ module.exports = NodeHelper.create({
       redemption.used = true;
       redemption.usedDate = getLocalISO(new Date());
       saveData();
+      self.sendSocketNotification("REDEMPTIONS_UPDATE", coinStore.redemptions);
       res.json(redemption);
     });
 
@@ -1886,6 +1889,7 @@ module.exports = NodeHelper.create({
       self.sendSocketNotification("PEOPLE_UPDATE", people);
       self.sendSocketNotification("ANALYTICS_UPDATE", analyticsBoards);
       self.sendSocketNotification("SETTINGS_UPDATE", settings);
+        self.sendSocketNotification("REDEMPTIONS_UPDATE", coinStore.redemptions || []);
     });
 
     const httpsPort = port + 1;
