@@ -501,6 +501,13 @@ Module.register("MMM-Chores", {
       wrapper.appendChild(redemptionsWrap);
     }
 
+    if (pendingRedemptions.length && visible.length) {
+      const divider = document.createElement("hr");
+      divider.className = "redemptions-divider";
+      divider.style.margin = "8px 0";
+      wrapper.appendChild(divider);
+    }
+
     if (visible.length === 0) {
       const emptyEl = document.createElement("div");
       emptyEl.className = `${this.config.textMirrorSize} dimmed`;
