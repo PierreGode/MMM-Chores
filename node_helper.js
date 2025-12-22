@@ -664,12 +664,43 @@ function broadcastTasks(helper) {
   return ok;
 }
 
+function normalizeRecurringStartDate(dateStr, recurring) {
+  if (!dateStr || !recurring || recurring === "none") return dateStr;
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return dateStr;
+
+  const isWeekend = day => day === 0 || day === 6;
+
+  if (recurring === "weekdays") {
+    while (isWeekend(d.getDay())) {
+      d.setDate(d.getDate() + 1);
+    }
+  } else if (recurring === "weekends") {
+    while (!isWeekend(d.getDay())) {
+      d.setDate(d.getDate() + 1);
+    }
+  }
+
+  return d.toISOString().slice(0, 10);
+}
+
 function getNextDate(dateStr, recurring) {
   const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return null;
+
+  const addDays = days => d.setDate(d.getDate() + days);
+  const isWeekend = day => day === 0 || day === 6;
+
   if (recurring === "daily") {
-    d.setDate(d.getDate() + 1);
+    addDays(1);
   } else if (recurring === "weekly") {
-    d.setDate(d.getDate() + 7);
+    addDays(7);
+  } else if (recurring === "weekdays") {
+    addDays(1);
+    while (isWeekend(d.getDay())) addDays(1);
+  } else if (recurring === "weekends") {
+    addDays(1);
+    while (!isWeekend(d.getDay())) addDays(1);
   } else if (recurring === "monthly") {
     d.setMonth(d.getMonth() + 1);
   } else if (recurring === "yearly") {
@@ -679,17 +710,17 @@ function getNextDate(dateStr, recurring) {
     const parts = recurring.split("_");
     if (parts[1] === "X" && parts[2] === "days") {
       const days = parseInt(parts[3]) || 2;
-      d.setDate(d.getDate() + days);
+      addDays(days);
     } else if (parts[1] === "X" && parts[2] === "weeks") {
       const weeks = parseInt(parts[3]) || 2;
-      d.setDate(d.getDate() + (weeks * 7));
+      addDays(weeks * 7);
     } else if (recurring === "first_monday_month") {
       // First Monday of next month
       d.setMonth(d.getMonth() + 1);
       d.setDate(1);
       // Find first Monday
       while (d.getDay() !== 1) {
-        d.setDate(d.getDate() + 1);
+        addDays(1);
       }
     } else {
       return null;
@@ -1404,6 +1435,10 @@ module.exports = NodeHelper.create({
         assignedTo: req.body.assignedTo ? parseInt(req.body.assignedTo, 10) : null,
         recurring: req.body.recurring || "none",
       };
+
+      if (newTask.date) {
+        newTask.date = normalizeRecurringStartDate(newTask.date, newTask.recurring);
+      }
 
       if (newTask.points !== undefined) {
         const numericPoints = Number(newTask.points);

@@ -16,6 +16,8 @@ const LANGUAGES = {
       none: "One time",
       daily: "Daily",
       weekly: "Weekly",
+      weekdays: "Weekdays (Mon-Fri)",
+      weekends: "Weekends (Sat-Sun)",
       monthly: "Monthly",
       yearly: "Yearly",
       "every_X_days_2": "Every 2 Days",
@@ -208,6 +210,8 @@ const LANGUAGES = {
       none: "Engång",
       daily: "Dagligen",
       weekly: "Veckovis",
+      weekdays: "Vardagar (mån-fre)",
+      weekends: "Helg (lör-sön)",
       monthly: "Månadsvis",
       yearly: "Årligen",
       "every_X_days_2": "Varannan dag",
@@ -399,6 +403,8 @@ const LANGUAGES = {
       none: "Unique",
       daily: "Quotidien",
       weekly: "Hebdomadaire",
+      weekdays: "Jours de semaine (lun-ven)",
+      weekends: "Week-end (sam-dim)",
       monthly: "Mensuel",
       yearly: "Annuel"
     },
@@ -585,6 +591,8 @@ const LANGUAGES = {
       none: "Una vez",
       daily: "Diario",
       weekly: "Semanal",
+      weekdays: "Días laborables (lun-vie)",
+      weekends: "Fines de semana (sáb-dom)",
       monthly: "Mensual",
       yearly: "Anual"
     },
@@ -771,6 +779,8 @@ const LANGUAGES = {
       none: "Einmalig",
       daily: "Täglich",
       weekly: "Wöchentlich",
+      weekdays: "Wochentage (Mo-Fr)",
+      weekends: "Wochenenden (Sa-So)",
       monthly: "Monatlich",
       yearly: "Jährlich"
     },
@@ -957,6 +967,8 @@ const LANGUAGES = {
       none: "Una tantum",
       daily: "Giornaliero",
       weekly: "Settimanale",
+      weekdays: "Giorni feriali (lun-ven)",
+      weekends: "Weekend (sab-dom)",
       monthly: "Mensile",
       yearly: "Annuale"
     },
@@ -1143,6 +1155,8 @@ const LANGUAGES = {
       none: "Eenmalig",
       daily: "Dagelijks",
       weekly: "Wekelijks",
+      weekdays: "Doordeweeks (ma-vr)",
+      weekends: "Weekenden (za-zo)",
       monthly: "Maandelijks",
       yearly: "Jaarlijks"
     },
@@ -1329,6 +1343,8 @@ const LANGUAGES = {
       none: "Jednorazowe",
       daily: "Codziennie",
       weekly: "Tygodniowo",
+      weekdays: "Dni robocze (pon-pt)",
+      weekends: "Weekend (sob-nd)",
       monthly: "Miesięcznie",
       yearly: "Rocznie"
     },
@@ -1515,6 +1531,8 @@ const LANGUAGES = {
       none: "一次性",
       daily: "每日",
       weekly: "每周",
+      weekdays: "工作日（周一-周五）",
+      weekends: "周末（周六-周日）",
       monthly: "每月",
       yearly: "每年"
     },
@@ -1701,6 +1719,8 @@ const LANGUAGES = {
       none: "مرة واحدة",
       daily: "يومي",
       weekly: "أسبوعي",
+      weekdays: "أيام الأسبوع (الإثنين-الجمعة)",
+      weekends: "عطلة نهاية الأسبوع (السبت-الأحد)",
       monthly: "شهري",
       yearly: "سنوي"
     },
