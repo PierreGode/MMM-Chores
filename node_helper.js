@@ -7,6 +7,15 @@ const fs         = require("fs");
 const https      = require("https");
 const { exec }   = require("child_process");
 
+let LANGUAGES = {};
+try {
+  // Reuse the same translations as the admin UI when running in Node.
+  LANGUAGES = require(path.join(__dirname, "public", "lang.js"));
+} catch (err) {
+  Log.warn("MMM-Chores: Failed to load translations for backend notifications", err);
+  LANGUAGES = {};
+}
+
 // Use built-in fetch if available (Node 18+) otherwise fall back to node-fetch
 let fetchFn = global.fetch;
 if (!fetchFn) {
@@ -56,6 +65,23 @@ const DEFAULT_TITLES = [
   "Legend",
   "Mythic"
 ];
+
+function getLanguageStrings(langCode) {
+  const fallback = LANGUAGES.en || {};
+  if (!langCode || typeof langCode !== "string") return fallback;
+  const normalized = langCode.split("-")[0];
+  return LANGUAGES[normalized] || fallback;
+}
+
+function formatTemplate(template, values = {}) {
+  if (typeof template !== "string") return "";
+  return template.replace(/\{(\w+)\}/g, (_, key) => {
+    const value = values[key];
+    return value === undefined || value === null ? "" : String(value);
+  });
+}
+
+const DEFAULT_PUSHOVER_CONFIG_ERROR = "Please set pushoverApiKey and pushoverUser in config.js to use Pushover notifications.";
 
 let settings = {};
 let autoUpdateTimer = null;
@@ -312,12 +338,11 @@ function scheduleReminder(self) {
     reminderTimer = null;
   }
   if (!settings.reminderTime || !settings.pushoverEnabled) return;
+  const t = getLanguageStrings(settings.language);
+  const configError = t.pushoverConfigError || DEFAULT_PUSHOVER_CONFIG_ERROR;
   if (!self.config || !self.config.pushoverApiKey || !self.config.pushoverUser) {
     Log.error("MMM-Chores: pushoverApiKey and pushoverUser must be set in config.js when Pushover is enabled");
-    self.sendSocketNotification(
-      "PUSHOVER_CONFIG_ERROR",
-      "Please set pushoverApiKey and pushoverUser in config.js to use Pushover notifications."
-    );
+    self.sendSocketNotification("PUSHOVER_CONFIG_ERROR", configError);
     return;
   }
   const [h, m] = settings.reminderTime.split(":").map(n => parseInt(n, 10));
@@ -338,7 +363,8 @@ function scheduleReminder(self) {
     );
     if (unfinished.length) {
       const list = unfinished.map(t => `• ${t.name}`).join("\n");
-      sendPushover(self, settings, `Uncompleted tasks:\n${list}`);
+      const header = t.pushoverUnfinishedTitle || "Uncompleted tasks:";
+      sendPushover(self, settings, `${header}\n${list}`);
     }
     scheduleReminder(self);
   }, delay);
@@ -347,12 +373,11 @@ function scheduleReminder(self) {
 function sendPushover(self, settings, message) {
   const config = self.config || {};
   if (!settings.pushoverEnabled) return;
+  const t = getLanguageStrings(settings.language);
+  const configError = t.pushoverConfigError || DEFAULT_PUSHOVER_CONFIG_ERROR;
   if (!config.pushoverApiKey || !config.pushoverUser) {
     Log.error("MMM-Chores: pushoverApiKey and pushoverUser must be set in config.js when Pushover is enabled");
-    self.sendSocketNotification(
-      "PUSHOVER_CONFIG_ERROR",
-      "Please set pushoverApiKey and pushoverUser in config.js to use Pushover notifications."
-    );
+    self.sendSocketNotification("PUSHOVER_CONFIG_ERROR", configError);
     return;
   }
   const params = new URLSearchParams({
@@ -1461,7 +1486,9 @@ module.exports = NodeHelper.create({
       }
       Log.log("POST /api/tasks", newTask);
       tasks.push(newTask);
-      sendPushover(self, settings, `New task: ${newTask.name}`);
+      const t = getLanguageStrings(settings.language);
+      const newTaskMsg = formatTemplate(t.pushoverNewTask || "New task: {task}", { task: newTask.name });
+      sendPushover(self, settings, newTaskMsg);
       const ok = broadcastTasks(self);
       res.status(ok ? 201 : 500).json(ok ? newTask : { error: "Failed to save data" });
     });
@@ -1587,8 +1614,13 @@ module.exports = NodeHelper.create({
       const ok = broadcastTasks(self);
       if (!prevDone && task.done) {
         const assignee = task.assignedTo ? people.find(p => p.id === task.assignedTo) : null;
-        const completedBy = assignee ? ` by ${assignee.name}` : "";
-        sendPushover(self, settings, `Task completed: ${task.name}${completedBy}`);
+        const t = getLanguageStrings(settings.language);
+        const byText = assignee ? formatTemplate(t.pushoverTaskBy || " by {name}", { name: assignee.name }) : "";
+        const completedMsg = formatTemplate(t.pushoverTaskCompleted || "Task completed: {task}{by}", {
+          task: task.name,
+          by: byText
+        });
+        sendPushover(self, settings, completedMsg);
       }
       if (!ok) return res.status(500).json({ error: "Failed to save data" });
       res.json(task);
@@ -1851,7 +1883,15 @@ module.exports = NodeHelper.create({
       }
       
       // Notify via Pushover that someone claimed a reward
-      sendPushover(self, settings, `${person.name} redeemed ${reward.name} for ${reward.pointCost} coins`);
+      const t = getLanguageStrings(settings.language);
+      const coinWord = t.pointsLabel || "coins";
+      const redeemMsg = formatTemplate(t.pushoverRewardRedeemed || "{person} redeemed {reward} for {cost} {coins}", {
+        person: person.name,
+        reward: reward.name,
+        cost: reward.pointCost,
+        coins: coinWord
+      });
+      sendPushover(self, settings, redeemMsg);
 
       self.sendSocketNotification("PEOPLE_UPDATE", people);
       self.sendSocketNotification("REDEMPTIONS_UPDATE", coinStore.redemptions);
