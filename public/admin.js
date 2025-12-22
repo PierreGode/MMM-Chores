@@ -723,6 +723,8 @@ function setLanguage(lang) {
   if (levelEnableLbl) levelEnableLbl.textContent = t.levelingEnabledLabel;
   const autoUpdateLbl = document.querySelector("label[for='settingsAutoUpdate']");
   if (autoUpdateLbl) autoUpdateLbl.textContent = t.autoUpdateLabel || 'Enable autoupdate';
+  const notificationsTitle = document.getElementById('notificationsTitle');
+  if (notificationsTitle) notificationsTitle.textContent = t.notificationsTitle || 'Notifications';
   const pushoverEnableLbl = document.querySelector("label[for='settingsPushoverEnable']");
   if (pushoverEnableLbl) pushoverEnableLbl.textContent = t.pushoverEnabledLabel || 'Enable Pushover';
   const reminderTimeLbl = document.querySelector("label[for='settingsReminderTime']");

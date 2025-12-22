@@ -72,6 +72,7 @@ const LANGUAGES = {
     showPastLabel: "Show past tasks",
     analyticsOnMirrorLabel: "Analytics on mirror",
     showRedeemedRewardsLabel: "Show redeemed rewards on mirror",
+    notificationsTitle: "Notifications",
     useAiLabel: "Use AI features",
     textSizeLabel: "Mirror text size",
     textSizeOptions: {
@@ -267,6 +268,7 @@ const LANGUAGES = {
     showPastLabel: "Visa tidigare uppgifter",
     analyticsOnMirrorLabel: "Analys på spegeln",
     showRedeemedRewardsLabel: "Visa inlösta belöningar på spegeln",
+    notificationsTitle: "Aviseringar",
     useAiLabel: "Använd AI-funktioner",
     textSizeLabel: "Textstorlek i spegeln",
     textSizeOptions: {
@@ -455,6 +457,7 @@ const LANGUAGES = {
     viewRewardsButton: "Récompenses",
     showPastLabel: "Afficher les tâches passées",
     analyticsOnMirrorLabel: "Analytique sur le miroir",
+    notificationsTitle: "Notifications",
     useAiLabel: "Utiliser les fonctions IA",
     textSizeLabel: "Taille du texte sur le miroir",
     textSizeOptions: {
@@ -643,6 +646,7 @@ const LANGUAGES = {
     viewRewardsButton: "Recompensas",
     showPastLabel: "Mostrar tareas anteriores",
     analyticsOnMirrorLabel: "Analítica en el espejo",
+    notificationsTitle: "Notificaciones",
     useAiLabel: "Usar funciones de IA",
     textSizeLabel: "Tamaño del texto en el espejo",
     textSizeOptions: {
@@ -831,6 +835,7 @@ const LANGUAGES = {
     viewRewardsButton: "Belohnungen",
     showPastLabel: "Vergangene Aufgaben anzeigen",
     analyticsOnMirrorLabel: "Analytik auf dem Spiegel",
+    notificationsTitle: "Benachrichtigungen",
     useAiLabel: "KI-Funktionen verwenden",
     textSizeLabel: "Textgröße im Spiegel",
     textSizeOptions: {
@@ -1019,6 +1024,7 @@ const LANGUAGES = {
     viewRewardsButton: "Ricompense",
     showPastLabel: "Mostra compiti passati",
     analyticsOnMirrorLabel: "Analisi sullo specchio",
+    notificationsTitle: "Notifiche",
     useAiLabel: "Usa funzioni IA",
     textSizeLabel: "Dimensione testo nello specchio",
     textSizeOptions: {
@@ -1207,6 +1213,7 @@ const LANGUAGES = {
     viewRewardsButton: "Beloningen",
     showPastLabel: "Toon eerdere taken",
     analyticsOnMirrorLabel: "Analyse op spiegel",
+    notificationsTitle: "Meldingen",
     useAiLabel: "Gebruik AI-functies",
     textSizeLabel: "Tekstgrootte op spiegel",
     textSizeOptions: {
@@ -1395,6 +1402,7 @@ const LANGUAGES = {
     viewRewardsButton: "Nagrody",
     showPastLabel: "Pokaż wcześniejsze zadania",
     analyticsOnMirrorLabel: "Analiza na lustrze",
+    notificationsTitle: "Powiadomienia",
     useAiLabel: "Użyj funkcji AI",
     textSizeLabel: "Rozmiar tekstu na lustrze",
     textSizeOptions: {
@@ -1584,6 +1592,7 @@ const LANGUAGES = {
     showPastLabel: "显示过去的任务",
     analyticsOnMirrorLabel: "镜面分析",
     useAiLabel: "使用 AI 功能",
+    notificationsTitle: "通知",
     textSizeLabel: "镜面文字大小",
     textSizeOptions: {
       small: "小",
@@ -1771,6 +1780,7 @@ const LANGUAGES = {
     viewRewardsButton: "المكافآت",
     showPastLabel: "عرض المهام السابقة",
     analyticsOnMirrorLabel: "التحليلات على المرآة",
+    notificationsTitle: "الإشعارات",
     useAiLabel: "استخدام ميزات الذكاء الاصطناعي",
     textSizeLabel: "حجم النص على المرآة",
     textSizeOptions: {
