@@ -2,6 +2,26 @@
 
 **MMM-Chores** es un módulo para [MagicMirror²](https://github.com/MagicMirrorOrg/MagicMirror) que te permite gestionar las tareas del hogar.
 
+## ✨ Nuevas funciones (octubre 2025)
+
+**Actualización importante**: se añadió un sistema completo de recompensas basado en puntos y opciones recurrentes mejoradas. Consulta NEW_FEATURES.md para ver todos los detalles.
+
+### 🎯 Recompensas basadas en puntos
+- **Puntos personalizados**: asigna valores de puntos a cada tarea.
+- **Recompensas flexibles**: crea recompensas con costes específicos en puntos.
+- **Seguimiento automático**: los puntos se asignan automáticamente al completar tareas.
+- **Notificaciones por correo**: opción de enviar un correo al canjear una recompensa.
+
+### 🔄 Opciones recurrentes mejoradas
+- **Cada X días**: tareas que se repiten cada 2, 3 o más días.
+- **Cada X semanas**: tareas que se repiten cada 2, 3 o más semanas.
+- **Primer lunes del mes**: tareas que ocurren el primer lunes de cada mes.
+
+### 🔧 Migración de sistema
+- **Compatibilidad hacia atrás**: el sistema de niveles sigue siendo el predeterminado.
+- **Cambio sin fricciones**: alterna entre niveles y puntos en cualquier momento.
+- **Conservación de datos**: toda la información existente se mantiene durante la migración.
+
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/J3J2EARPK)
 
 Proporciona una interfaz de administración donde puedes añadir, editar y eliminar tareas. También puedes establecer fechas límite y asignar tareas a diferentes personas. Las tareas pueden ser únicas o repetirse diariamente, semanalmente, mensualmente o anualmente. El módulo muestra las tareas en tu MagicMirror, permitiéndote llevar un seguimiento de las tareas domésticas de un vistazo.
@@ -14,6 +34,7 @@ sobrevive a refrescos de página y reinicios.
 La configuración **Mostrar tareas pasadas** te permite alternar si las tareas vencidas que aún no se han completado deben seguir siendo visibles en el espejo. Las tareas pasadas completadas siempre están ocultas.
 
 *Actualización 2025-08-04: la mayoría de las configuraciones se trasladaron a la página de administración*
+*Actualización 2025-08-20: se añadió el login opcional con usuarios de sólo lectura o escritura, recordatorios Pushover y fondos de 4 estaciones*
 
 ## Capturas de pantalla
 
@@ -163,7 +184,7 @@ insignia `lvlX`.
 
 Ve a http://yourmirrorIP:5003/ #la página será accesible dentro de la misma red.
 > [!CAUTION]
-> NO expongas la aplicación mediante reenvío de puertos
+> NO expongas la aplicación mediante reenvío de puertos. El login opcional no te protege de Internet; un pez dorado entrenado podría romperlo.
 
 ## Notificaciones Push
 
