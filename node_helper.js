@@ -685,8 +685,7 @@ function normalizeRecurringStartDate(dateStr, recurring) {
 }
 
 function getNextDate(dateStr, recurring) {
-  const normalized = normalizeRecurringStartDate(dateStr, recurring) || dateStr;
-  const d = new Date(normalized);
+  const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return null;
 
   const addDays = days => d.setDate(d.getDate() + days);
@@ -697,11 +696,15 @@ function getNextDate(dateStr, recurring) {
   } else if (recurring === "weekly") {
     addDays(7);
   } else if (recurring === "weekdays") {
-    addDays(1);
-    while (isWeekend(d.getDay())) addDays(1);
+    // Advance to next weekday
+    do {
+      addDays(1);
+    } while (isWeekend(d.getDay()));
   } else if (recurring === "weekends") {
-    addDays(1);
-    while (!isWeekend(d.getDay())) addDays(1);
+    // Advance to next weekend day
+    do {
+      addDays(1);
+    } while (!isWeekend(d.getDay()));
   } else if (recurring === "monthly") {
     d.setMonth(d.getMonth() + 1);
   } else if (recurring === "yearly") {
