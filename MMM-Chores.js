@@ -410,6 +410,15 @@ Module.register("MMM-Chores", {
     });
   },
 
+  getRedeemedLabel() {
+    const lang = (this.config.language || "en").toLowerCase();
+    if (lang.startsWith("sv")) return "loste in"; // Swedish
+    if (lang.startsWith("es")) return "canjeo"; // Spanish
+    if (lang.startsWith("fr")) return "a utilise"; // French
+    if (lang.startsWith("de")) return "eingeloest"; // German
+    return "redeemed";
+  },
+
   getDom() {
     const wrapper = document.createElement("div");
 
@@ -441,24 +450,31 @@ Module.register("MMM-Chores", {
         return (a.order || 0) - (b.order || 0);
       });
 
-    // Show pending redemptions above tasks when enabled
+    // Show pending redemptions above tasks when enabled (no header, no date)
     if (pendingRedemptions.length) {
       const redemptionsWrap = document.createElement("div");
       redemptionsWrap.className = "redemptions-block";
 
-      const header = document.createElement("div");
-      header.className = `${this.config.textMirrorSize} bright`;
-      header.textContent = "Redeemed rewards";
-      redemptionsWrap.appendChild(header);
-
       const list = document.createElement("ul");
       list.className = "normal";
+
+      const redeemedLabel = this.getRedeemedLabel();
 
       pendingRedemptions.forEach(red => {
         const li = document.createElement("li");
         li.className = `${this.config.textMirrorSize}`;
-        const when = red.redeemed ? new Date(red.redeemed).toLocaleString() : "";
-        li.innerHTML = `<strong>${red.personName}</strong> redeemed <strong>${red.rewardName}</strong><br><span class="xsmall dimmed">${when}</span>`;
+
+        const nameEl = document.createElement("strong");
+        nameEl.textContent = red.personName || "";
+
+        const labelEl = document.createElement("span");
+        labelEl.className = "dimmed";
+        labelEl.textContent = ` ${redeemedLabel} `;
+
+        const rewardEl = document.createElement("strong");
+        rewardEl.textContent = red.rewardName || "";
+
+        li.append(nameEl, labelEl, rewardEl);
         list.appendChild(li);
       });
 
