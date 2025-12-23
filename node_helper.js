@@ -2024,6 +2024,8 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
         }
         if (typeof content === "object") {
           if (typeof content.text?.value === "string") return content.text.value.trim();
+          if (typeof content.text === "string") return content.text.trim();
+          if (Array.isArray(content.text)) return extractChatContent(content.text);
           if (typeof content.value === "string") return content.value.trim();
           if (typeof content.content === "string") return content.content.trim();
           if (Array.isArray(content.content)) return extractChatContent(content.content);
@@ -2035,11 +2037,13 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
         const client = new OpenAI({ apiKey: self.config.openaiApiKey });
         const messages = [{ role: "system", content: systemPrompt }, ...safeHistory, { role: "user", content: prompt }];
         const completion = await client.chat.completions.create({
-          model: "gpt-5-nano",
+          model: "gpt-4o-mini",
           messages,
-          max_completion_tokens: 300
+          max_tokens: 512,
+          temperature: 0.7
         });
         const raw = completion.choices?.[0]?.message?.content;
+        Log.log("MMM-Chores: AI chat raw content type:", typeof raw, "structure:", JSON.stringify(raw).slice(0, 200));
         const reply = extractChatContent(raw);
         if (!reply) {
           Log.error("MMM-Chores: AI chat returned empty response", completion);
