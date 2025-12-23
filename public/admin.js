@@ -309,20 +309,9 @@ function initSettingsForm(settings) {
   const showRedeemedRewardsContainer = document.getElementById('settingsShowRedeemedRewardsContainer');
   const levelEnable = document.getElementById('settingsLevelEnable');
   const autoUpdate = document.getElementById('settingsAutoUpdate');
-  const useAI = document.getElementById('settingsUseAI');
-  const aiSettingsContainer = document.getElementById('aiSettingsContainer');
   const chatbotEnabledToggle = document.getElementById('settingsChatbotEnabled');
   const chatbotVoiceSelect = document.getElementById('settingsChatbotVoice');
   const chatbotVoiceContainer = document.getElementById('chatbotVoiceContainer');
-  
-  // Show/hide AI settings based on Use AI features toggle
-  if (useAI && aiSettingsContainer) {
-    const updateAiSettingsVisibility = () => {
-      aiSettingsContainer.style.display = useAI.checked ? '' : 'none';
-    };
-    useAI.addEventListener('change', updateAiSettingsVisibility);
-    updateAiSettingsVisibility();
-  }
   
   // Show/hide voice selector based on chatbot enabled state
   if (chatbotEnabledToggle && chatbotVoiceContainer) {
@@ -343,12 +332,7 @@ function initSettingsForm(settings) {
   if (showRedeemedRewards) showRedeemedRewards.checked = settings.showRedeemedRewards !== false;
   if (textSize) textSize.value = settings.textMirrorSize || 'small';
   if (dateFmt) dateFmt.value = settings.dateFormatting || '';
-  if (useAI) {
-    useAI.checked = settings.useAI !== false;
-    if (aiSettingsContainer) {
-      aiSettingsContainer.style.display = settings.useAI !== false ? '' : 'none';
-    }
-  }
+  if (useAI) useAI.checked = settings.useAI !== false;
   if (showAnalytics) showAnalytics.checked = !!settings.showAnalyticsOnMirror;
   if (showRewardsTab) showRewardsTab.checked = settings.showRewardsTab !== false;
   if (showCoinsOnMirror) showCoinsOnMirror.checked = settings.showCoinsOnMirror !== false;
