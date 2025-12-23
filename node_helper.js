@@ -1362,7 +1362,7 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
           { role: "user", content: prompt }
         ],
 
-        max_tokens: 5000,
+        max_completion_tokens: 5000,
         temperature: 0.1
       });
 
@@ -2020,7 +2020,7 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
           model: "gpt-5-nano",
           messages,
           temperature: 0.4,
-          max_tokens: 300
+          max_completion_tokens: 300
         });
         const reply = completion.choices?.[0]?.message?.content?.trim();
         res.json({ reply });
