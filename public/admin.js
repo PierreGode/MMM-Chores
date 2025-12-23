@@ -766,8 +766,18 @@ function fallbackToWebSpeech(text) {
   }
 }
 
+function unlockAudio() {
+  // Play a short silent sound to unlock audio autoplay
+  const audio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==");
+  audio.play().catch(e => console.log("Audio unlock failed", e));
+}
+
 function toggleAiChatListening() {
   if (!aiChatEnabled) return;
+  
+  // Unlock audio context immediately on user interaction
+  unlockAudio();
+
   if (!aiChatRecognizer) {
     initAiChatSpeechRecognition();
   }
@@ -792,6 +802,10 @@ function toggleAiChatListening() {
 
 async function sendAiChatMessage() {
   if (!aiChatEnabled) return;
+  
+  // Unlock audio context immediately on user interaction
+  unlockAudio();
+
   const { input, send, mic } = getAiChatNodes();
   const prompt = (input && input.value ? input.value.trim() : '');
   if (!prompt) return;
