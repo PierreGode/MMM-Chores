@@ -679,9 +679,17 @@ function updateAiMicState(listening) {
 }
 
 function initAiChatSpeechRecognition() {
-  if (aiChatRecognizer || typeof window === 'undefined') return;
+  if (typeof window === 'undefined') return;
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!Recognition) return;
+
+  // Always clean up old instance if it exists
+  if (aiChatRecognizer) {
+    try {
+      aiChatRecognizer.abort();
+    } catch (e) {}
+    aiChatRecognizer = null;
+  }
 
   aiChatRecognizer = new Recognition();
   aiChatRecognizer.continuous = false;
@@ -778,9 +786,14 @@ function toggleAiChatListening() {
   aiResponseAudio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==";
   aiResponseAudio.play().catch(e => console.log("Audio unlock failed", e));
 
-  if (!aiChatRecognizer) {
-    initAiChatSpeechRecognition();
+  if (aiChatListening) {
+    if (aiChatRecognizer) aiChatRecognizer.stop();
+    return;
   }
+
+  // Always re-init for a fresh session to avoid stale state
+  initAiChatSpeechRecognition();
+
   const t = LANGUAGES[currentLang] || {};
   const { mic } = getAiChatNodes();
   if (!aiChatRecognizer) {
@@ -788,10 +801,7 @@ function toggleAiChatListening() {
     setAiChatStatus(t.aiChatNoSpeech || 'Speech recognition not supported in this browser.', 'error');
     return;
   }
-  if (aiChatListening) {
-    aiChatRecognizer.stop();
-    return;
-  }
+
   try {
     aiChatRecognizer.lang = resolveAiChatLocale();
     aiChatRecognizer.start();
