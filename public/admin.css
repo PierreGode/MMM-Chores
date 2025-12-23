@@ -34,6 +34,10 @@
   --reward-color: #28a745;
 }
 
+[data-theme="dark"] .form-text {
+  color: #adb5bd;
+}
+
 /* Global */
 body {
   background: var(--bg-grad);

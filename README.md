@@ -17,6 +17,12 @@
 ### 🎯 Point-Based Rewards
 - **Rewards in Pushover**: get better notifikations to pushover about rewards, and now with language support.
 
+### 🤖 AI Chatbot
+- **Smart Assistant**: Integrated OpenAI-powered chatbot in the admin dashboard.
+- **Voice Interaction**: Speak to your chores list! (Requires SSL/HTTPS).
+- **Text-to-Speech**: Hear responses with natural-sounding AI voices.  ( ssl cert is needed "https" for microphone to work)
+- **Context Aware**: Ask about upcoming tasks, people's points, or available rewards.
+
 ## ✨ New Features (October 2025)
 
 **Major Update**: Added comprehensive point-based reward system and enhanced recurring options! See [NEW_FEATURES.md](docs/NEW_FEATURES.md) for complete details.
