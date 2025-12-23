@@ -34,8 +34,17 @@
   --reward-color: #28a745;
 }
 
+/* Text visibility overrides */
+.form-text, .text-muted {
+  color: #495057 !important; /* Dark gray for light mode */
+}
+
+.form-check-label {
+  color: #212529; /* Dark for light mode */
+}
+
 [data-theme="dark"] .form-text {
-  color: #adb5bd;
+  color: #adb5bd !important;
 }
 
 [data-theme="dark"] .text-muted {
