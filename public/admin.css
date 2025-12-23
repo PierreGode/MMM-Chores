@@ -239,6 +239,63 @@ h1, h2 {
 .drag-handle {
   cursor: grab;
 }
+
+/* AI Chatbot */
+.ai-chat-log {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  min-height: 200px;
+  max-height: 340px;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ai-chat-bubble {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.03);
+  width: fit-content;
+  max-width: 100%;
+  word-break: break-word;
+}
+
+.ai-chat-bubble.user {
+  margin-left: auto;
+  background: #dbeafe;
+  color: #0f172a;
+}
+
+.ai-chat-bubble.assistant {
+  margin-right: auto;
+}
+
+.ai-chat-bubble.system {
+  margin: 0 auto;
+  color: #6c757d;
+  background: transparent;
+  font-size: 0.9rem;
+}
+
+[data-theme="dark"] .ai-chat-bubble {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .ai-chat-bubble.user {
+  background: rgba(124, 156, 255, 0.2);
+  color: #e9ecef;
+}
+
+.ai-chat-input .form-control {
+  min-height: 42px;
+}
+
+.ai-chat-input .btn {
+  min-height: 42px;
+}
 .drag-handle:active {
   cursor: grabbing;
 }

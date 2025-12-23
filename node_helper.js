@@ -1069,6 +1069,7 @@ module.exports = NodeHelper.create({
         showPast: previousSettings.showPast ?? payload.showPast,
         showAnalyticsOnMirror: previousSettings.showAnalyticsOnMirror ?? payload.showAnalyticsOnMirror,
         useAI: previousSettings.useAI ?? payload.useAI,
+        chatbotEnabled: previousSettings.chatbotEnabled ?? payload.chatbotEnabled ?? false,
         autoUpdate: previousSettings.autoUpdate ?? payload.autoUpdate,
         pushoverEnabled: previousSettings.pushoverEnabled ?? payload.pushoverEnabled,
         reminderTime: previousSettings.reminderTime ?? payload.reminderTime,
@@ -1955,6 +1956,78 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
         }
       }
       scheduleReminder(self);
+    });
+
+    app.post("/api/ai-chat", requireWrite, async (req, res) => {
+      if (!settings.chatbotEnabled) {
+        return res.status(400).json({ error: "AI chatbot is disabled in settings" });
+      }
+      if (!self.config || !self.config.openaiApiKey) {
+        return res.status(400).json({ error: "OpenAI API key missing" });
+      }
+      if (!openaiLoaded) {
+        return res.status(500).json({ error: "OpenAI package not installed. Run npm install openai." });
+      }
+
+      const { message, history } = req.body || {};
+      const prompt = typeof message === "string" ? message.trim() : "";
+      if (!prompt) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      const langCode = (settings.language || "en").toLowerCase();
+      const peopleSummary = people
+        .map(p => {
+          const coins = coinStore.peopleCoins?.[p.id] ?? p.points;
+          const parts = [p.name];
+          if (p.level !== undefined) parts.push(`level ${p.level}`);
+          if (coins !== undefined) parts.push(`${coins} coins`);
+          return parts.join(" - ");
+        })
+        .slice(0, 15)
+        .join("; ");
+
+      const upcomingTasks = tasks
+        .filter(t => !t.deleted && !t.done)
+        .slice(0, 20)
+        .map(t => {
+          const assignee = people.find(p => p.id === t.assignedTo);
+          const date = t.date ? ` on ${t.date}` : "";
+          return `${t.name}${assignee ? ` for ${assignee.name}` : ""}${date}`;
+        })
+        .join("; ");
+
+      const rewardSummary = (coinStore.rewards || [])
+        .slice(0, 10)
+        .map(r => `${r.name} (${r.pointCost} coins)`)
+        .join("; ");
+
+      const safeHistory = Array.isArray(history)
+        ? history
+            .filter(msg => msg && (msg.role === "user" || msg.role === "assistant") && typeof msg.content === "string")
+            .slice(-6)
+            .map(msg => ({ role: msg.role, content: msg.content.slice(0, 800) }))
+        : [];
+
+      const systemPrompt = `You are an assistant for the MMM-Chores admin dashboard. Be concise and actionable. Respond in ${langCode}. Context: People: ${
+        peopleSummary || "none"
+      }. Upcoming tasks: ${upcomingTasks || "none"}. Rewards: ${rewardSummary || "none"}.`;
+
+      try {
+        const client = new OpenAI({ apiKey: self.config.openaiApiKey });
+        const messages = [{ role: "system", content: systemPrompt }, ...safeHistory, { role: "user", content: prompt }];
+        const completion = await client.chat.completions.create({
+          model: "gpt-5-nano",
+          messages,
+          temperature: 0.4,
+          max_tokens: 300
+        });
+        const reply = completion.choices?.[0]?.message?.content?.trim();
+        res.json({ reply });
+      } catch (error) {
+        Log.error("MMM-Chores: AI chat failed", error);
+        res.status(500).json({ error: "Failed to generate AI response" });
+      }
     });
 
     app.post("/api/ai-generate", requireWrite, (req, res) => self.aiGenerateTasks(req, res));

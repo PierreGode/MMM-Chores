@@ -26,6 +26,11 @@ let personRewardsTarget = null;
 let editCoinsPersonId = null;
 let levelTitles = [];
 let taskPointsRules = [];
+let aiChatHistory = [];
+let aiChatRecognizer = null;
+let aiChatListening = false;
+let aiChatInitialized = false;
+let aiChatEnabled = false;
 const TASK_SERIES_FILTER_KEY = 'mmm-chores-series-filter';
 let showTaskSeriesRootsOnly = localStorage.getItem(TASK_SERIES_FILTER_KEY) === '1';
 const personRewardsModalEl = document.getElementById('personRewardsModal');
@@ -303,6 +308,7 @@ function initSettingsForm(settings) {
   const showRedeemedRewardsContainer = document.getElementById('settingsShowRedeemedRewardsContainer');
   const levelEnable = document.getElementById('settingsLevelEnable');
   const autoUpdate = document.getElementById('settingsAutoUpdate');
+  const chatbotEnabledToggle = document.getElementById('settingsChatbotEnabled');
   const pushoverEnable = document.getElementById('settingsPushoverEnable');
   const reminderTime = document.getElementById('settingsReminderTime');
   const backgroundSelect = document.getElementById('settingsBackground');
@@ -320,6 +326,7 @@ function initSettingsForm(settings) {
   if (showCoinsOnMirror) showCoinsOnMirror.checked = settings.showCoinsOnMirror !== false;
   if (levelEnable) levelEnable.checked = settings.levelingEnabled !== false;
   if (autoUpdate) autoUpdate.checked = !!settings.autoUpdate;
+  if (chatbotEnabledToggle) chatbotEnabledToggle.checked = !!settings.chatbotEnabled;
   if (pushoverEnable) pushoverEnable.checked = !!settings.pushoverEnabled;
   if (reminderTime) reminderTime.value = settings.reminderTime || '';
   if (backgroundSelect) backgroundSelect.value = settings.background || '';
@@ -420,6 +427,7 @@ function initSettingsForm(settings) {
       showRedeemedRewards: showRedeemedRewards ? showRedeemedRewards.checked : true,
       levelingEnabled: levelEnable ? levelEnable.checked : false,
       autoUpdate: autoUpdate ? autoUpdate.checked : false,
+      chatbotEnabled: chatbotEnabledToggle ? chatbotEnabledToggle.checked : false,
       pushoverEnabled: pushoverEnable ? pushoverEnable.checked : false,
       reminderTime: reminderTime ? reminderTime.value : '',
       background: backgroundSelect ? backgroundSelect.value : ''
@@ -457,6 +465,9 @@ function initSettingsForm(settings) {
       settings.useCoinSystem = newSettings.useCoinSystem;
       settings.usePointSystem = newSettings.useCoinSystem;
       settings.showCoinsOnMirror = newSettings.showCoinsOnMirror;
+      settings.chatbotEnabled = newSettings.chatbotEnabled;
+
+      toggleAiChat(newSettings.chatbotEnabled && newSettings.useAI !== false);
 
       showToast('Settings saved successfully', 'success');
       const settingsModal = document.getElementById('settingsModal');
@@ -516,6 +527,231 @@ function updateCoinTotalsPreview() {
   }).join('\n');
   
   preview.textContent = pointsText || t.coinTotalsLoading || t.loadingLabel || 'Loading...';
+}
+
+// ==========================
+// AI Chatbot (admin dashboard)
+// ==========================
+
+function getAiChatNodes() {
+  return {
+    container: document.getElementById('aiChatContainer'),
+    log: document.getElementById('aiChatLog'),
+    input: document.getElementById('aiChatInput'),
+    send: document.getElementById('aiChatSend'),
+    mic: document.getElementById('aiChatMic'),
+    micIcon: document.getElementById('aiChatMicIcon'),
+    status: document.getElementById('aiChatStatus')
+  };
+}
+
+function toggleAiChat(enabled) {
+  const { container } = getAiChatNodes();
+  aiChatEnabled = !!enabled;
+  if (container) {
+    container.style.display = aiChatEnabled ? '' : 'none';
+  }
+  if (aiChatEnabled) {
+    setupAiChat();
+    renderAiChatWelcome(true);
+  }
+}
+
+function renderAiChatWelcome(force = false) {
+  const { log } = getAiChatNodes();
+  if (!log) return;
+  if (aiChatHistory.length) return;
+  if (!force && log.childElementCount) return;
+  const t = LANGUAGES[currentLang] || {};
+  log.innerHTML = '';
+  appendAiChatBubble('system', t.aiChatWelcome || 'I am ready to help with chores, people, and schedules.');
+}
+
+function appendAiChatBubble(role, text) {
+  const { log } = getAiChatNodes();
+  if (!log || !text) return;
+  const bubble = document.createElement('div');
+  bubble.className = `ai-chat-bubble ${role}`;
+  bubble.textContent = text;
+  log.appendChild(bubble);
+  log.scrollTop = log.scrollHeight;
+}
+
+function setAiChatStatus(message, variant = 'muted') {
+  const { status } = getAiChatNodes();
+  if (!status) return;
+  status.classList.remove('text-danger', 'text-success');
+  if (variant === 'error') {
+    status.classList.add('text-danger');
+  } else if (variant === 'success') {
+    status.classList.add('text-success');
+  }
+  status.textContent = message || '';
+}
+
+function resolveAiChatLocale() {
+  const map = {
+    sv: 'sv-SE',
+    nb: 'nb-NO',
+    nn: 'nb-NO',
+    no: 'nb-NO',
+    da: 'da-DK',
+    de: 'de-DE',
+    es: 'es-ES',
+    fr: 'fr-FR',
+    it: 'it-IT',
+    nl: 'nl-NL',
+    pt: 'pt-PT'
+  };
+  return map[currentLang] || navigator.language || 'en-US';
+}
+
+function updateAiMicState(listening) {
+  const { mic, micIcon } = getAiChatNodes();
+  if (mic) {
+    mic.classList.toggle('btn-danger', listening);
+    mic.setAttribute('aria-pressed', listening ? 'true' : 'false');
+  }
+  if (micIcon) {
+    micIcon.className = listening ? 'bi bi-stop-fill' : 'bi bi-mic-fill';
+  }
+}
+
+function initAiChatSpeechRecognition() {
+  if (aiChatRecognizer || typeof window === 'undefined') return;
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Recognition) return;
+
+  aiChatRecognizer = new Recognition();
+  aiChatRecognizer.continuous = false;
+  aiChatRecognizer.interimResults = true;
+
+  aiChatRecognizer.onstart = () => {
+    aiChatListening = true;
+    updateAiMicState(true);
+    const t = LANGUAGES[currentLang] || {};
+    setAiChatStatus(t.aiChatListening || 'Listening...', 'success');
+  };
+
+  aiChatRecognizer.onerror = (event) => {
+    aiChatListening = false;
+    updateAiMicState(false);
+    const t = LANGUAGES[currentLang] || {};
+    setAiChatStatus(event.error || t.aiChatListenError || 'Speech recognition error', 'error');
+  };
+
+  aiChatRecognizer.onend = () => {
+    aiChatListening = false;
+    updateAiMicState(false);
+    const { input } = getAiChatNodes();
+    if (input && input.value.trim()) {
+      sendAiChatMessage();
+    } else {
+      const t = LANGUAGES[currentLang] || {};
+      setAiChatStatus(t.aiChatReady || 'Ready');
+    }
+  };
+
+  aiChatRecognizer.onresult = (event) => {
+    let transcript = '';
+    for (let i = 0; i < event.results.length; i++) {
+      const res = event.results[i];
+      if (res && res[0]) {
+        transcript += res[0].transcript + ' ';
+      }
+    }
+    const { input } = getAiChatNodes();
+    if (input) {
+      input.value = transcript.trim();
+    }
+  };
+}
+
+function toggleAiChatListening() {
+  if (!aiChatEnabled) return;
+  if (!aiChatRecognizer) {
+    initAiChatSpeechRecognition();
+  }
+  const t = LANGUAGES[currentLang] || {};
+  const { mic } = getAiChatNodes();
+  if (!aiChatRecognizer) {
+    if (mic) mic.disabled = true;
+    setAiChatStatus(t.aiChatNoSpeech || 'Speech recognition not supported in this browser.', 'error');
+    return;
+  }
+  if (aiChatListening) {
+    aiChatRecognizer.stop();
+    return;
+  }
+  try {
+    aiChatRecognizer.lang = resolveAiChatLocale();
+    aiChatRecognizer.start();
+  } catch (err) {
+    setAiChatStatus(err.message || t.aiChatListenError || 'Could not start microphone.', 'error');
+  }
+}
+
+async function sendAiChatMessage() {
+  if (!aiChatEnabled) return;
+  const { input, send, mic } = getAiChatNodes();
+  const prompt = (input && input.value ? input.value.trim() : '');
+  if (!prompt) return;
+
+  const t = LANGUAGES[currentLang] || {};
+  appendAiChatBubble('user', prompt);
+  aiChatHistory.push({ role: 'user', content: prompt });
+  if (input) input.value = '';
+  if (send) send.disabled = true;
+  if (mic) mic.disabled = true;
+  setAiChatStatus(t.aiChatWorking || 'Thinking...');
+
+  try {
+    const res = await authFetch('/api/ai-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: prompt, history: aiChatHistory.slice(-6) })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'AI chat failed');
+    }
+    const reply = data.reply || data.response || t.aiChatNoReply || 'No response from AI.';
+    aiChatHistory.push({ role: 'assistant', content: reply });
+    appendAiChatBubble('assistant', reply);
+    setAiChatStatus(t.aiChatReady || 'Ready', 'success');
+  } catch (err) {
+    setAiChatStatus(err.message || 'AI chat failed', 'error');
+    showToast(err.message || 'AI chat failed', 'danger', 6000);
+  } finally {
+    if (send) send.disabled = false;
+    if (mic) mic.disabled = false;
+  }
+}
+
+function setupAiChat() {
+  if (aiChatInitialized) return;
+  const { container, send, input, mic } = getAiChatNodes();
+  if (!container) return;
+  aiChatInitialized = true;
+
+  if (send) {
+    send.addEventListener('click', sendAiChatMessage);
+  }
+  if (input) {
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendAiChatMessage();
+      }
+    });
+  }
+  if (mic) {
+    mic.addEventListener('click', toggleAiChatListening);
+  }
+
+  initAiChatSpeechRecognition();
+  renderAiChatWelcome();
+  setAiChatStatus((LANGUAGES[currentLang] && LANGUAGES[currentLang].aiChatReady) || 'Ready');
 }
 
 function openSettingsToRewardSystem() {
@@ -616,6 +852,22 @@ function setLanguage(lang) {
   if (showRedeemedRewardsLbl) showRedeemedRewardsLbl.textContent = t.showRedeemedRewardsLabel || 'Show redeemed rewards on mirror';
   const useAiLbl = document.querySelector("label[for='settingsUseAI']");
   if (useAiLbl) useAiLbl.textContent = t.useAiLabel || 'Use AI features';
+  const chatbotLbl = document.getElementById('settingsChatbotLabel');
+  if (chatbotLbl) chatbotLbl.textContent = t.chatbotToggleLabel || 'Enable AI chatbot in admin';
+  const chatbotHelp = document.getElementById('settingsChatbotHelp');
+  if (chatbotHelp) chatbotHelp.textContent = t.chatbotToggleHelp || 'Show a chat box with text and microphone support on the dashboard.';
+  const aiChatTitle = document.getElementById('aiChatTitle');
+  if (aiChatTitle) aiChatTitle.textContent = t.aiChatTitle || 'AI Chatbot';
+  const aiChatSubtitle = document.getElementById('aiChatSubtitle');
+  if (aiChatSubtitle) aiChatSubtitle.textContent = t.aiChatSubtitle || 'Ask questions about your chores, people, and schedule.';
+  const aiChatSendLabel = document.getElementById('aiChatSendLabel');
+  if (aiChatSendLabel) aiChatSendLabel.textContent = t.aiChatSendLabel || 'Send';
+  const aiChatBadge = document.getElementById('aiChatBadge');
+  if (aiChatBadge) aiChatBadge.textContent = t.aiChatBadge || 'Beta';
+  const aiChatInput = document.getElementById('aiChatInput');
+  if (aiChatInput) aiChatInput.placeholder = t.aiChatPlaceholder || 'Type your question...';
+  const aiChatMic = document.getElementById('aiChatMic');
+  if (aiChatMic) aiChatMic.title = t.aiChatMicTitle || 'Speak to the assistant';
   const userRewardsHeader = document.getElementById('userRewardsHeader');
   if (userRewardsHeader) userRewardsHeader.textContent = t.userRewardsTitle || 'User Reward Config';
   const userRewardsDescription = document.getElementById('userRewardsDescription');
@@ -962,6 +1214,10 @@ async function applySettings(newSettings) {
   if (newSettings.useAI !== undefined) {
     const aiButton = document.getElementById('btnAiGenerate');
     if (aiButton) aiButton.style.display = newSettings.useAI === false ? 'none' : '';
+  }
+  if (newSettings.chatbotEnabled !== undefined || newSettings.useAI !== undefined) {
+    const allowChat = (newSettings.chatbotEnabled ?? aiChatEnabled) && (newSettings.useAI ?? true);
+    toggleAiChat(allowChat);
   }
   if (newSettings.dateFormatting !== undefined) {
     dateFormatting = newSettings.dateFormatting;
@@ -2221,6 +2477,8 @@ async function initApp() {
   initSettingsForm(userSettings);
 
   setLanguage(currentLang);
+  setupAiChat();
+  toggleAiChat(userSettings.chatbotEnabled && userSettings.useAI !== false);
   await applySettings(userSettings);
 
   // Initialize rewards system visibility
