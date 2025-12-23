@@ -1325,6 +1325,58 @@ function setLanguage(lang) {
     if (emptyOption) emptyOption.textContent = text;
   });
 
+  // Manual updates for Reward System Settings (to ensure translation)
+  const rewardSystemTitle = document.querySelector('[data-i18n="rewardSystemTitle"]');
+  if (rewardSystemTitle) rewardSystemTitle.textContent = t.rewardSystemTitle;
+  const rewardSystemInfo = document.querySelector('[data-i18n="rewardSystemInfo"]');
+  if (rewardSystemInfo) rewardSystemInfo.textContent = t.rewardSystemInfo;
+  const levelSystemLabel = document.querySelector('[data-i18n="levelSystemLabel"]');
+  if (levelSystemLabel) levelSystemLabel.textContent = t.levelSystemLabel;
+  const levelSystemDesc = document.querySelector('[data-i18n="levelSystemDesc"]');
+  if (levelSystemDesc) levelSystemDesc.textContent = t.levelSystemDesc;
+  const defaultBadge = document.querySelector('[data-i18n="defaultBadge"]');
+  if (defaultBadge) defaultBadge.textContent = t.defaultBadge;
+  const coinSystemLabel = document.querySelector('[data-i18n="coinSystemLabel"]');
+  if (coinSystemLabel) coinSystemLabel.textContent = t.coinSystemLabel;
+  const coinSystemDesc = document.querySelector('[data-i18n="coinSystemDesc"]');
+  if (coinSystemDesc) coinSystemDesc.textContent = t.coinSystemDesc;
+  const newFeatureBadge = document.querySelector('[data-i18n="newFeatureBadge"]');
+  if (newFeatureBadge) newFeatureBadge.textContent = t.newFeatureBadge;
+  const migrationWarning = document.querySelector('[data-i18n="migrationWarning"]');
+  if (migrationWarning) migrationWarning.textContent = t.migrationWarning;
+  
+  const displaySettingsTitle = document.querySelector('[data-i18n="displaySettingsTitle"]');
+  if (displaySettingsTitle) displaySettingsTitle.textContent = t.displaySettingsTitle;
+  const showRewardsTabLabel = document.querySelector('[data-i18n="showRewardsTabLabel"]');
+  if (showRewardsTabLabel) showRewardsTabLabel.textContent = t.showRewardsTabLabel;
+  const showCoinsOnMirrorLabel = document.querySelector('[data-i18n="showCoinsOnMirrorLabel"]');
+  if (showCoinsOnMirrorLabel) showCoinsOnMirrorLabel.textContent = t.showCoinsOnMirrorLabel;
+  
+  const levelSystemSettingsTitle = document.querySelector('[data-i18n="levelSystemSettingsTitle"]');
+  if (levelSystemSettingsTitle) levelSystemSettingsTitle.textContent = t.levelSystemSettingsTitle;
+  const configureLevelTitlesBtn = document.querySelector('[data-i18n="configureLevelTitlesBtn"]');
+  if (configureLevelTitlesBtn) configureLevelTitlesBtn.textContent = t.configureLevelTitlesBtn;
+  
+  const coinsSystemSettingsTitle = document.querySelector('[data-i18n="coinsSystemSettingsTitle"]');
+  if (coinsSystemSettingsTitle) coinsSystemSettingsTitle.textContent = t.coinsSystemSettingsTitle;
+  
+  const aiFeaturesTitle = document.querySelector('[data-i18n="aiFeaturesTitle"]');
+  if (aiFeaturesTitle) aiFeaturesTitle.textContent = t.aiFeaturesTitle;
+  const aiAudioLabel = document.querySelector('[data-i18n="aiAudioLabel"]');
+  if (aiAudioLabel) aiAudioLabel.textContent = t.aiAudioLabel;
+  const aiAudioHelp = document.querySelector('[data-i18n="aiAudioHelp"]');
+  if (aiAudioHelp) aiAudioHelp.textContent = t.aiAudioHelp;
+  
+  const advancedFeaturesTitle = document.querySelector('[data-i18n="advancedFeaturesTitle"]');
+  if (advancedFeaturesTitle) advancedFeaturesTitle.textContent = t.advancedFeaturesTitle;
+  
+  const maintenanceToolsTitle = document.querySelector('[data-i18n="maintenanceToolsTitle"]');
+  if (maintenanceToolsTitle) maintenanceToolsTitle.textContent = t.maintenanceToolsTitle;
+  const maintenanceToolsDesc = document.querySelector('[data-i18n="maintenanceToolsDesc"]');
+  if (maintenanceToolsDesc) maintenanceToolsDesc.textContent = t.maintenanceToolsDesc;
+  const runDataFixBtn = document.querySelector('[data-i18n="runDataFixBtn"]');
+  if (runDataFixBtn) runDataFixBtn.textContent = t.runDataFixBtn;
+
   updateBoardTitleMap();
   renderPeople();
   renderTasks();
