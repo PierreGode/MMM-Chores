@@ -623,10 +623,8 @@ function initAiChatSpeechRecognition() {
   if (!Recognition) return;
 
   aiChatRecognizer = new Recognition();
-  aiChatRecognizer.continuous = true;
+  aiChatRecognizer.continuous = false;
   aiChatRecognizer.interimResults = true;
-  aiChatRecognizer.maxAlternatives = 1;
-  aiChatRecognizer.lang = resolveAiChatLocale();
 
   aiChatRecognizer.onstart = () => {
     aiChatListening = true;
@@ -635,40 +633,14 @@ function initAiChatSpeechRecognition() {
     setAiChatStatus(t.aiChatListening || 'Listening...', 'success');
   };
 
-  aiChatRecognizer.onaudiostart = () => {
-    console.log('MMM-Chores: Audio capture started');
-  };
-
-  aiChatRecognizer.onaudioend = () => {
-    console.log('MMM-Chores: Audio capture ended');
-  };
-
-  aiChatRecognizer.onspeechstart = () => {
-    console.log('MMM-Chores: Speech detected');
-  };
-
-  aiChatRecognizer.onspeechend = () => {
-    console.log('MMM-Chores: Speech ended');
-  };
-
   aiChatRecognizer.onerror = (event) => {
-    console.error('MMM-Chores: Speech recognition error:', event.error);
     aiChatListening = false;
     updateAiMicState(false);
     const t = LANGUAGES[currentLang] || {};
-    let errorMsg = t.aiChatListenError || 'Speech recognition error';
-    if (event.error === 'no-speech') {
-      errorMsg = t.aiChatNoSpeech || 'No speech detected. Try again.';
-    } else if (event.error === 'audio-capture') {
-      errorMsg = 'Microphone not accessible. Check permissions.';
-    } else if (event.error === 'not-allowed') {
-      errorMsg = 'Microphone permission denied. Enable in browser settings.';
-    }
-    setAiChatStatus(errorMsg, 'error');
+    setAiChatStatus(event.error || t.aiChatListenError || 'Speech recognition error', 'error');
   };
 
   aiChatRecognizer.onend = () => {
-    console.log('MMM-Chores: Speech recognition ended');
     aiChatListening = false;
     updateAiMicState(false);
     const { input } = getAiChatNodes();
@@ -692,7 +664,6 @@ function initAiChatSpeechRecognition() {
     if (input) {
       input.value = transcript.trim();
     }
-    console.log('MMM-Chores: Transcript captured:', transcript.trim());
   };
 }
 
@@ -709,17 +680,13 @@ function toggleAiChatListening() {
     return;
   }
   if (aiChatListening) {
-    console.log('MMM-Chores: Stopping speech recognition');
     aiChatRecognizer.stop();
     return;
   }
   try {
-    const locale = resolveAiChatLocale();
-    console.log('MMM-Chores: Starting speech recognition with locale:', locale);
-    aiChatRecognizer.lang = locale;
+    aiChatRecognizer.lang = resolveAiChatLocale();
     aiChatRecognizer.start();
   } catch (err) {
-    console.error('MMM-Chores: Failed to start speech recognition:', err);
     setAiChatStatus(err.message || t.aiChatListenError || 'Could not start microphone.', 'error');
   }
 }
