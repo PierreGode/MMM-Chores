@@ -2053,7 +2053,7 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
 
         // Generate audio if chatbot is enabled
         let audioBase64 = null;
-        if (settings.chatbotEnabled) {
+        if (settings.chatbotEnabled && settings.chatbotTtsEnabled) {
           try {
             const selectedVoice = settings.chatbotVoice || "nova";
             const ttsResponse = await client.audio.speech.create({

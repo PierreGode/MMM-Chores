@@ -309,8 +309,9 @@ function initSettingsForm(settings) {
   const showRedeemedRewardsContainer = document.getElementById('settingsShowRedeemedRewardsContainer');
   const levelEnable = document.getElementById('settingsLevelEnable');
   const autoUpdate = document.getElementById('settingsAutoUpdate');
-  const chatbotToggleContainer = document.getElementById('chatbotToggleContainer');
+  const aiSettingsContainer = document.getElementById('aiSettingsContainer');
   const chatbotEnabledToggle = document.getElementById('settingsChatbotEnabled');
+  const aiAudioEnabledToggle = document.getElementById('settingsAiAudioEnabled');
   const chatbotVoiceSelect = document.getElementById('settingsChatbotVoice');
   const chatbotVoiceContainer = document.getElementById('chatbotVoiceContainer');
 
@@ -318,7 +319,8 @@ function initSettingsForm(settings) {
     if (!chatbotVoiceContainer) return;
     const aiOn = useAI ? useAI.checked : true;
     const chatOn = chatbotEnabledToggle ? chatbotEnabledToggle.checked : false;
-    const show = aiOn && chatOn;
+    const audioOn = aiAudioEnabledToggle ? aiAudioEnabledToggle.checked : false;
+    const show = aiOn && chatOn && audioOn;
     chatbotVoiceContainer.style.display = show ? '' : 'none';
     chatbotVoiceContainer.classList.toggle('d-none', !show);
     chatbotVoiceContainer.hidden = !show;
@@ -327,13 +329,16 @@ function initSettingsForm(settings) {
 
   const updateAiSettingsVisibility = () => {
     const aiOn = useAI ? useAI.checked : true;
-    if (chatbotToggleContainer) {
-      chatbotToggleContainer.style.display = aiOn ? '' : 'none';
-      chatbotToggleContainer.classList.toggle('d-none', !aiOn);
-      chatbotToggleContainer.hidden = !aiOn;
-      chatbotToggleContainer.setAttribute('aria-hidden', aiOn ? 'false' : 'true');
+    if (aiSettingsContainer) {
+      aiSettingsContainer.style.display = aiOn ? '' : 'none';
+      aiSettingsContainer.classList.toggle('d-none', !aiOn);
+      aiSettingsContainer.hidden = !aiOn;
+      aiSettingsContainer.setAttribute('aria-hidden', aiOn ? 'false' : 'true');
     }
-    if (!aiOn && chatbotEnabledToggle) chatbotEnabledToggle.checked = false;
+    if (!aiOn) {
+      if (chatbotEnabledToggle) chatbotEnabledToggle.checked = false;
+      if (aiAudioEnabledToggle) aiAudioEnabledToggle.checked = false;
+    }
     updateVoiceVisibility();
   };
 
@@ -343,6 +348,10 @@ function initSettingsForm(settings) {
 
   if (chatbotEnabledToggle) {
     chatbotEnabledToggle.addEventListener('change', updateVoiceVisibility);
+  }
+
+  if (aiAudioEnabledToggle) {
+    aiAudioEnabledToggle.addEventListener('change', updateVoiceVisibility);
   }
   
   updateAiSettingsVisibility();
@@ -365,13 +374,13 @@ function initSettingsForm(settings) {
   if (autoUpdate) autoUpdate.checked = !!settings.autoUpdate;
   if (chatbotEnabledToggle) {
     chatbotEnabledToggle.checked = !!settings.chatbotEnabled;
-    if (chatbotVoiceContainer) {
-      chatbotVoiceContainer.style.display = settings.chatbotEnabled ? '' : 'none';
-    }
+  }
+  if (aiAudioEnabledToggle) {
+    aiAudioEnabledToggle.checked = !!settings.chatbotTtsEnabled;
   }
   if (chatbotVoiceSelect) chatbotVoiceSelect.value = settings.chatbotVoice || 'nova';
   updateAiSettingsVisibility();
-  aiChatTtsEnabled = !!settings.chatbotEnabled && settings.useAI !== false;
+  aiChatTtsEnabled = !!settings.chatbotEnabled && !!settings.chatbotTtsEnabled && settings.useAI !== false;
   if (pushoverEnable) pushoverEnable.checked = !!settings.pushoverEnabled;
   if (reminderTime) reminderTime.value = settings.reminderTime || '';
   if (backgroundSelect) backgroundSelect.value = settings.background || '';
@@ -473,6 +482,7 @@ function initSettingsForm(settings) {
       levelingEnabled: levelEnable ? levelEnable.checked : false,
       autoUpdate: autoUpdate ? autoUpdate.checked : false,
       chatbotEnabled: (useAI ? useAI.checked : false) && (chatbotEnabledToggle ? chatbotEnabledToggle.checked : false),
+      chatbotTtsEnabled: (useAI ? useAI.checked : false) && (aiAudioEnabledToggle ? aiAudioEnabledToggle.checked : false),
       chatbotVoice: chatbotVoiceSelect ? chatbotVoiceSelect.value : 'nova',
       pushoverEnabled: pushoverEnable ? pushoverEnable.checked : false,
       reminderTime: reminderTime ? reminderTime.value : '',
@@ -513,10 +523,11 @@ function initSettingsForm(settings) {
       settings.showCoinsOnMirror = newSettings.showCoinsOnMirror;
       settings.useAI = newSettings.useAI;
       settings.chatbotEnabled = newSettings.chatbotEnabled;
+      settings.chatbotTtsEnabled = newSettings.chatbotTtsEnabled;
       settings.chatbotVoice = newSettings.chatbotVoice;
 
       toggleAiChat(newSettings.chatbotEnabled && newSettings.useAI !== false);
-      aiChatTtsEnabled = !!newSettings.chatbotEnabled && newSettings.useAI !== false;
+      aiChatTtsEnabled = !!newSettings.chatbotEnabled && !!newSettings.chatbotTtsEnabled && newSettings.useAI !== false;
 
       showToast('Settings saved successfully', 'success');
       const settingsModal = document.getElementById('settingsModal');
