@@ -32,6 +32,7 @@ let aiChatListening = false;
 let aiChatInitialized = false;
 let aiChatEnabled = false;
 let aiChatTtsEnabled = false;
+let aiResponseAudio = new Audio(); // Global audio object for AI responses
 const TASK_SERIES_FILTER_KEY = 'mmm-chores-series-filter';
 let showTaskSeriesRootsOnly = localStorage.getItem(TASK_SERIES_FILTER_KEY) === '1';
 const personRewardsModalEl = document.getElementById('personRewardsModal');
@@ -738,13 +739,17 @@ function speakAiResponse(text, audioBase64) {
         { type: 'audio/mpeg' }
       );
       const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-      audio.play().catch(err => {
+      
+      // Use the global audio object
+      aiResponseAudio.src = audioUrl;
+      aiResponseAudio.play().catch(err => {
         console.error('Failed to play audio:', err);
         // Fallback to browser TTS
         fallbackToWebSpeech(text);
       });
-      audio.onended = () => URL.revokeObjectURL(audioUrl);
+      
+      // Clean up blob url when done
+      aiResponseAudio.onended = () => URL.revokeObjectURL(audioUrl);
       return;
     } catch (err) {
       console.error('Failed to decode audio:', err);
@@ -766,17 +771,12 @@ function fallbackToWebSpeech(text) {
   }
 }
 
-function unlockAudio() {
-  // Play a short silent sound to unlock audio autoplay
-  const audio = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==");
-  audio.play().catch(e => console.log("Audio unlock failed", e));
-}
-
 function toggleAiChatListening() {
   if (!aiChatEnabled) return;
   
-  // Unlock audio context immediately on user interaction
-  unlockAudio();
+  // Unlock/warm up the global audio object with silence
+  aiResponseAudio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==";
+  aiResponseAudio.play().catch(e => console.log("Audio unlock failed", e));
 
   if (!aiChatRecognizer) {
     initAiChatSpeechRecognition();
@@ -803,8 +803,9 @@ function toggleAiChatListening() {
 async function sendAiChatMessage() {
   if (!aiChatEnabled) return;
   
-  // Unlock audio context immediately on user interaction
-  unlockAudio();
+  // Try to warm up audio if this was a click interaction
+  aiResponseAudio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==";
+  aiResponseAudio.play().catch(e => {}); // Ignore errors if not a user interaction
 
   const { input, send, mic } = getAiChatNodes();
   const prompt = (input && input.value ? input.value.trim() : '');
