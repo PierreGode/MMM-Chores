@@ -33,6 +33,7 @@ let aiChatInitialized = false;
 let aiChatEnabled = false;
 let aiChatTtsEnabled = false;
 let aiResponseAudio = new Audio(); // Global audio object for AI responses
+let aiAutoStopTimer = null;
 const TASK_SERIES_FILTER_KEY = 'mmm-chores-series-filter';
 let showTaskSeriesRootsOnly = localStorage.getItem(TASK_SERIES_FILTER_KEY) === '1';
 const personRewardsModalEl = document.getElementById('personRewardsModal');
@@ -714,7 +715,7 @@ function initAiChatSpeechRecognition() {
     updateAiMicState(false);
     const { input } = getAiChatNodes();
     if (input && input.value.trim()) {
-      sendAiChatMessage();
+      sendAiChatMessage(true);
     } else {
       const t = LANGUAGES[currentLang] || {};
       setAiChatStatus(t.aiChatReady || 'Ready');
@@ -722,6 +723,10 @@ function initAiChatSpeechRecognition() {
   };
 
   aiChatRecognizer.onresult = (event) => {
+    if (aiAutoStopTimer) {
+      clearTimeout(aiAutoStopTimer);
+      aiAutoStopTimer = null;
+    }
     let transcript = '';
     for (let i = 0; i < event.results.length; i++) {
       const res = event.results[i];
@@ -736,8 +741,11 @@ function initAiChatSpeechRecognition() {
   };
 }
 
-function speakAiResponse(text, audioBase64) {
-  if (!aiChatTtsEnabled) return;
+function speakAiResponse(text, audioBase64, onComplete) {
+  if (!aiChatTtsEnabled) {
+    if (onComplete) onComplete();
+    return;
+  }
   
   // If we have OpenAI TTS audio, play it
   if (audioBase64) {
@@ -753,11 +761,14 @@ function speakAiResponse(text, audioBase64) {
       aiResponseAudio.play().catch(err => {
         console.error('Failed to play audio:', err);
         // Fallback to browser TTS
-        fallbackToWebSpeech(text);
+        fallbackToWebSpeech(text, onComplete);
       });
       
       // Clean up blob url when done
-      aiResponseAudio.onended = () => URL.revokeObjectURL(audioUrl);
+      aiResponseAudio.onended = () => {
+        URL.revokeObjectURL(audioUrl);
+        if (onComplete) onComplete();
+      };
       return;
     } catch (err) {
       console.error('Failed to decode audio:', err);
@@ -765,18 +776,44 @@ function speakAiResponse(text, audioBase64) {
   }
   
   // Fallback to browser TTS if no audio provided
-  fallbackToWebSpeech(text);
+  fallbackToWebSpeech(text, onComplete);
 }
 
-function fallbackToWebSpeech(text) {
-  if (!text || !aiChatTtsEnabled) return;
+function fallbackToWebSpeech(text, onComplete) {
+  if (!text || !aiChatTtsEnabled) {
+    if (onComplete) onComplete();
+    return;
+  }
   if ('speechSynthesis' in window) {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = resolveAiChatLocale();
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
+    utterance.onend = () => {
+      if (onComplete) onComplete();
+    };
     speechSynthesis.speak(utterance);
+  } else {
+    if (onComplete) onComplete();
   }
+}
+
+function startListeningWithTimeout() {
+  if (!aiChatEnabled) return;
+  
+  // Start listening if not already
+  if (!aiChatListening) {
+    toggleAiChatListening();
+  }
+  
+  // Set timeout to stop listening if no speech detected
+  if (aiAutoStopTimer) clearTimeout(aiAutoStopTimer);
+  aiAutoStopTimer = setTimeout(() => {
+    if (aiChatListening && aiChatRecognizer) {
+      console.log("Auto-stop listening due to inactivity");
+      aiChatRecognizer.stop();
+    }
+  }, 7000);
 }
 
 function toggleAiChatListening() {
@@ -810,7 +847,7 @@ function toggleAiChatListening() {
   }
 }
 
-async function sendAiChatMessage() {
+async function sendAiChatMessage(isVoice = false) {
   if (!aiChatEnabled) return;
   
   // Try to warm up audio if this was a click interaction
@@ -842,7 +879,13 @@ async function sendAiChatMessage() {
     const reply = data.reply || data.response || t.aiChatNoReply || 'No response from AI.';
     aiChatHistory.push({ role: 'assistant', content: reply });
     appendAiChatBubble('assistant', reply);
-    speakAiResponse(reply, data.audio);
+    
+    speakAiResponse(reply, data.audio, () => {
+      if (isVoice) {
+        startListeningWithTimeout();
+      }
+    });
+    
     setAiChatStatus(t.aiChatReady || 'Ready', 'success');
 
     if (data.dataChanged) {
