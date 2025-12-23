@@ -2013,7 +2013,7 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
             .map(msg => ({ role: msg.role, content: msg.content.slice(0, 800) }))
         : [];
 
-      const systemPrompt = `You are an assistant for the MMM-Chores admin dashboard. Be concise and actionable. Respond in ${langCode}. Context: People: ${
+      const systemPrompt = `You are an assistant for the MMM-Chores admin dashboard. Be concise and actionable. Respond in ${langCode}. When a user asks about a reward, check if they have enough coins. If not, calculate and state exactly how many more coins they need. Context: People: ${
         peopleSummary || "none"
       }. Upcoming tasks: ${upcomingTasks || "none"}. Rewards: ${rewardSummary || "none"}.`;
 
