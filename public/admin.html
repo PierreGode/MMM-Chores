@@ -338,13 +338,13 @@
             <div class="card mb-4">
               <div class="card-header">
                 <h6 class="card-title mb-0">
-                  <i class="bi bi-trophy me-2"></i>Reward System
+                  <i class="bi bi-trophy me-2"></i><span data-i18n="rewardSystemTitle">Reward System</span>
                 </h6>
               </div>
               <div class="card-body">
                 <div class="alert alert-info">
                   <i class="bi bi-info-circle me-2"></i>
-                  Choose how rewards and progress are calculated. You can switch between systems at any time.
+                  <span data-i18n="rewardSystemInfo">Choose how rewards and progress are calculated. You can switch between systems at any time.</span>
                 </div>
                 
                 <div class="row">
@@ -353,16 +353,16 @@
                       <div class="card-body text-center">
                         <div class="form-check">
                           <input class="form-check-input" type="radio" name="rewardSystem" id="useLevelSystem" value="level" checked />
-                          <label class="form-check-label fw-bold" for="useLevelSystem">
+                          <label class="form-check-label fw-bold" for="useLevelSystem" data-i18n="levelSystemLabel">
                             Level System (Default)
                           </label>
                         </div>
                         <div class="mt-2">
                           <i class="bi bi-star text-warning display-6"></i>
-                          <p class="small text-muted mt-2">
+                          <p class="small text-muted mt-2" data-i18n="levelSystemDesc">
                             Traditional level-based progression with titles like "Junior", "Expert", "Master" based on completed tasks.
                           </p>
-                          <span class="badge bg-success">Default</span>
+                          <span class="badge bg-success" data-i18n="defaultBadge">Default</span>
                         </div>
                       </div>
                     </div>
@@ -373,16 +373,16 @@
                       <div class="card-body text-center">
                         <div class="form-check">
                           <input class="form-check-input" type="radio" name="rewardSystem" id="useCoinSystem" value="coins" />
-                          <label class="form-check-label fw-bold" for="useCoinSystem">
+                          <label class="form-check-label fw-bold" for="useCoinSystem" data-i18n="coinSystemLabel">
                             Coins System (Advanced)
                           </label>
                         </div>
                         <div class="mt-2">
                           <i class="bi bi-coin text-warning display-6"></i>
-                          <p class="small text-muted mt-2">
+                          <p class="small text-muted mt-2" data-i18n="coinSystemDesc">
                             Earn coins for tasks and spend them on custom rewards. More flexible and customizable.
                           </p>
-                          <span class="badge bg-info">New Feature</span>
+                          <span class="badge bg-info" data-i18n="newFeatureBadge">New Feature</span>
                         </div>
                       </div>
                     </div>
@@ -391,8 +391,7 @@
                 
                 <div id="migrationWarning" class="alert alert-warning d-none mt-3">
                   <i class="bi bi-exclamation-triangle me-2"></i>
-                  <strong>Migration Notice:</strong> Switching to the coins system will recalculate balances based on your completed tasks. 
-                  You can switch back to the level system anytime without losing data.
+                  <strong data-i18n="migrationWarning">Migration Notice: Switching to the coins system will recalculate balances based on your completed tasks. You can switch back to the level system anytime without losing data.</strong>
                 </div>
               </div>
             </div>
@@ -401,7 +400,7 @@
             <div class="card mb-4">
               <div class="card-header">
                 <h6 class="card-title mb-0">
-                  <i class="bi bi-display me-2"></i>Display Settings
+                  <i class="bi bi-display me-2"></i><span data-i18n="displaySettingsTitle">Display Settings</span>
                 </h6>
               </div>
               <div class="card-body">
@@ -409,45 +408,45 @@
                   <div class="col-12 col-sm-6" id="settingsShowRedeemedRewardsContainer">
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="settingsShowRedeemedRewards" />
-                      <label class="form-check-label" for="settingsShowRedeemedRewards">Show redeemed rewards on mirror</label>
+                      <label class="form-check-label" for="settingsShowRedeemedRewards" data-i18n="showRedeemedRewardsLabel">Show redeemed rewards on mirror</label>
                     </div>
                   </div>
                   <div class="col-12 col-sm-6">
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="settingsShowPast" />
-                      <label class="form-check-label" for="settingsShowPast">Show past tasks</label>
+                      <label class="form-check-label" for="settingsShowPast" data-i18n="showPastLabel">Show past tasks</label>
                     </div>
                   </div>
                   <div class="col-12 col-sm-6">
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="settingsShowAnalytics" />
-                      <label class="form-check-label" for="settingsShowAnalytics">Analytics on mirror</label>
+                      <label class="form-check-label" for="settingsShowAnalytics" data-i18n="analyticsOnMirrorLabel">Analytics on mirror</label>
                     </div>
                   </div>
                   <div class="col-12 col-sm-6" id="settingsShowRewardsTabContainer">
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="settingsShowRewardsTab" />
-                      <label class="form-check-label" for="settingsShowRewardsTab">Show Rewards tab</label>
+                      <label class="form-check-label" for="settingsShowRewardsTab" data-i18n="showRewardsTabLabel">Show Rewards tab</label>
                     </div>
                   </div>
                   <div class="col-12 col-sm-6" id="settingsShowCoinsOnMirrorContainer">
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="settingsShowCoinsOnMirror" />
-                      <label class="form-check-label" for="settingsShowCoinsOnMirror">Show coins on mirror</label>
+                      <label class="form-check-label" for="settingsShowCoinsOnMirror" data-i18n="showCoinsOnMirrorLabel">Show coins on mirror</label>
                     </div>
                   </div>
                   <div class="col-12 col-sm-6">
-                    <label class="form-label" for="settingsTextSize">Mirror text size</label>
+                    <label class="form-label" for="settingsTextSize" data-i18n="textSizeLabel">Mirror text size</label>
                     <select id="settingsTextSize" class="form-select">
-                      <option value="small">Small</option>
-                      <option value="medium">Medium</option>
-                      <option value="large">Large</option>
+                      <option value="small" data-i18n="textSizeOptions.small">Small</option>
+                      <option value="medium" data-i18n="textSizeOptions.medium">Medium</option>
+                      <option value="large" data-i18n="textSizeOptions.large">Large</option>
                     </select>
                   </div>
                   <div class="col-12 col-sm-6">
-                    <label class="form-label" for="settingsDateFmt">Date format</label>
+                    <label class="form-label" for="settingsDateFmt" data-i18n="dateFormatLabel">Date format</label>
                     <select id="settingsDateFmt" class="form-select">
-                      <option value="">Do not show date</option>
+                      <option value="" data-i18n="dateFormatOptions.none">Do not show date</option>
                       <option value="yyyy-mm-dd">yyyy-mm-dd</option>
                       <option value="mm-dd">mm-dd</option>
                       <option value="mm-dd-yyyy">mm-dd-yyyy</option>
@@ -455,13 +454,13 @@
                     </select>
                   </div>
                   <div class="col-12 col-sm-6">
-                    <label class="form-label" for="settingsBackground">Background</label>
+                    <label class="form-label" for="settingsBackground" data-i18n="backgroundLabel">Background</label>
                     <select id="settingsBackground" class="form-select">
-                      <option value="">No background</option>
-                      <option value="forest.png">Autumn</option>
-                      <option value="winter.png">Winter</option>
-                      <option value="summer.png">Summer</option>
-                      <option value="spring.png">Spring</option>
+                      <option value="" data-i18n="backgroundOptions.none">No background</option>
+                      <option value="forest.png" data-i18n="backgroundOptions.autumn">Autumn</option>
+                      <option value="winter.png" data-i18n="backgroundOptions.winter">Winter</option>
+                      <option value="summer.png" data-i18n="backgroundOptions.summer">Summer</option>
+                      <option value="spring.png" data-i18n="backgroundOptions.spring">Spring</option>
                     </select>
                   </div>
                 </div>
@@ -472,7 +471,7 @@
             <div class="card mb-4" id="levelSettings">
               <div class="card-header">
                 <h6 class="card-title mb-0">
-                  <i class="bi bi-star me-2"></i>Level System Settings
+                  <i class="bi bi-star me-2"></i><span data-i18n="levelSystemSettingsTitle">Level System Settings</span>
                 </h6>
               </div>
               <div class="card-body">
@@ -481,12 +480,12 @@
                   <div class="col-12" id="chatbotToggleContainer" style="display: none;">
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="settingsLevelEnable" />
-                      <label class="form-check-label" for="settingsLevelEnable">Enable leveling</label>
+                      <label class="form-check-label" for="settingsLevelEnable" data-i18n="levelingEnabledLabel">Enable leveling</label>
                     </div>
                   </div>
                   <div class="col-12">
                     <button class="btn btn-outline-secondary" type="button" id="editRewardsBtn">
-                      <i class="bi bi-gear me-2"></i>Configure Level Titles & Rewards
+                      <i class="bi bi-gear me-2"></i><span data-i18n="configureLevelTitlesBtn">Configure Level Titles & Rewards</span>
                     </button>
                   </div>
                 </div>
@@ -497,17 +496,17 @@
             <div class="card mb-4 d-none" id="coinSettings">
               <div class="card-header">
                 <h6 class="card-title mb-0">
-                  <i class="bi bi-coin me-2"></i>Coins System Settings
+                  <i class="bi bi-coin me-2"></i><span data-i18n="coinsSystemSettingsTitle">Coins System Settings</span>
                 </h6>
               </div>
               <div class="card-body">
                 <div class="alert alert-success" id="coinsSystemActiveAlert">
                   <i class="bi bi-check-circle me-2"></i>
-                  <span id="coinsSystemActiveText">Coins system is active. Manage rewards below and view balances on the Rewards tab.</span>
+                  <span id="coinsSystemActiveText" data-i18n="coinsSystemActiveAlert">Coins system is active. Manage rewards below and view balances on the Rewards tab.</span>
                 </div>
                 <div class="row gy-3 mb-4">
                   <div class="col-12">
-                    <label class="form-label" id="currentCoinTotalsLabel">Current Coin Totals:</label>
+                    <label class="form-label" id="currentCoinTotalsLabel" data-i18n="currentCoinTotalsLabel">Current Coin Totals:</label>
                     <div id="coinTotalsPreview" class="small text-body">
                       Loading...
                     </div>
@@ -516,9 +515,9 @@
 
                 <div class="border-top pt-3 mb-4">
                   <h6 class="mb-2">
-                    <i class="bi bi-clipboard-check me-2"></i><span id="userRewardsHeader">User Reward Config</span>
+                    <i class="bi bi-clipboard-check me-2"></i><span id="userRewardsHeader" data-i18n="userRewardsTitle">User Reward Config</span>
                   </h6>
-                  <p class="small text-muted mb-3" id="userRewardsDescription">
+                  <p class="small text-muted mb-3" id="userRewardsDescription" data-i18n="userRewardsDescription">
                     Track redeemed rewards and mark them as delivered once the user has received them.
                   </p>
                   <div style="max-height: 280px; overflow-y: auto;">
@@ -529,28 +528,28 @@
                 <!-- Rewards Management -->
                 <div class="border-top pt-3">
                   <h6 class="mb-3">
-                    <i class="bi bi-gift me-2"></i><span id="coinRewardsHeadingText">Rewards Management</span>
+                    <i class="bi bi-gift me-2"></i><span id="coinRewardsHeadingText" data-i18n="rewardsTitle">Rewards Management</span>
                   </h6>
                   <form id="rewardForm" class="row gy-2 gx-2 align-items-end mb-3">
                     <div class="col-sm-4">
-                      <label class="form-label small" for="rewardName" id="rewardNameLabel">Reward Name</label>
-                      <input type="text" id="rewardName" class="form-control form-control-sm" placeholder="Reward name…" required />
+                      <label class="form-label small" for="rewardName" id="rewardNameLabel" data-i18n="rewardNameLabel">Reward Name</label>
+                      <input type="text" id="rewardName" class="form-control form-control-sm" placeholder="Reward name…" data-i18n-placeholder="rewardName" required />
                     </div>
                     <div class="col-sm-2">
-                      <label class="form-label small" for="rewardPoints" id="rewardPointsLabel">Coins</label>
-                      <input type="number" id="rewardPoints" class="form-control form-control-sm" placeholder="Coins" min="1" required />
+                      <label class="form-label small" for="rewardPoints" id="rewardPointsLabel" data-i18n="pointsLabel">Coins</label>
+                      <input type="number" id="rewardPoints" class="form-control form-control-sm" placeholder="Coins" data-i18n-placeholder="taskPointsPlaceholder" min="1" required />
                     </div>
                     <div class="col-sm-4">
-                      <label class="form-label small" for="rewardDescription" id="rewardDescriptionLabel">Description</label>
-                      <input type="text" id="rewardDescription" class="form-control form-control-sm" placeholder="Optional" />
+                      <label class="form-label small" for="rewardDescription" id="rewardDescriptionLabel" data-i18n="rewardDescriptionLabel">Description</label>
+                      <input type="text" id="rewardDescription" class="form-control form-control-sm" placeholder="Optional" data-i18n-placeholder="rewardDescriptionPlaceholder" />
                     </div>
                     <div class="col-sm-2">
                       <div class="d-flex flex-column gap-2">
                         <button class="btn btn-primary btn-sm w-100" type="submit" id="rewardFormSubmitBtn">
-                          <i class="bi bi-plus-lg me-1"></i>Add
+                          <i class="bi bi-plus-lg me-1"></i><span data-i18n="addRewardButton">Add</span>
                         </button>
                         <button class="btn btn-outline-secondary btn-sm w-100 d-none" type="button" id="rewardFormCancelBtn">
-                          <i class="bi bi-x-circle me-1"></i>Cancel
+                          <i class="bi bi-x-circle me-1"></i><span data-i18n="cancelButton">Cancel</span>
                         </button>
                       </div>
                     </div>
@@ -569,22 +568,22 @@
                 <!-- Task Coin Assignment -->
                 <div class="border-top pt-3 mt-3">
                   <h6 class="mb-3">
-                    <i class="bi bi-list-task me-2"></i><span id="taskCoinAssignmentTitle">Task Coin Assignment</span>
+                    <i class="bi bi-list-task me-2"></i><span id="taskCoinAssignmentTitle" data-i18n="taskCoinAssignmentTitle">Task Coin Assignment</span>
                   </h6>
-                  <p class="small text-muted" id="taskCoinAssignmentDescription">Assign coin values to tasks by matching their names. Tasks matching these rules will automatically award the specified coins when completed.</p>
+                  <p class="small text-muted" id="taskCoinAssignmentDescription" data-i18n="taskCoinAssignmentDescription">Assign coin values to tasks by matching their names. Tasks matching these rules will automatically award the specified coins when completed.</p>
                   <form id="taskPointsForm" class="row gy-2 gx-2 align-items-end mb-3">
                     <div class="col-sm-6">
-                      <label class="form-label small" for="taskPatternName" id="taskPatternLabel">Task Name (any chore, even deleted)</label>
-                      <input type="text" id="taskPatternName" class="form-control form-control-sm w-100" list="taskPatternSuggestions" placeholder="Type a task name..." style="min-width: 250px;" required />
+                      <label class="form-label small" for="taskPatternName" id="taskPatternLabel" data-i18n="taskPatternLabel">Task Name (any chore, even deleted)</label>
+                      <input type="text" id="taskPatternName" class="form-control form-control-sm w-100" list="taskPatternSuggestions" placeholder="Type a task name..." data-i18n-placeholder="taskPatternSelectPlaceholder" style="min-width: 250px;" required />
                       <datalist id="taskPatternSuggestions"></datalist>
                     </div>
                     <div class="col-sm-3">
-                      <label class="form-label small" for="taskPatternPoints" id="taskPatternPointsLabel">Coins Awarded</label>
-                      <input type="number" id="taskPatternPoints" class="form-control form-control-sm" placeholder="Coins" min="1" required />
+                      <label class="form-label small" for="taskPatternPoints" id="taskPatternPointsLabel" data-i18n="taskPatternPointsLabel">Coins Awarded</label>
+                      <input type="number" id="taskPatternPoints" class="form-control form-control-sm" placeholder="Coins" data-i18n-placeholder="taskPointsPlaceholder" min="1" required />
                     </div>
                     <div class="col-sm-3">
                       <button class="btn btn-primary btn-sm w-100" type="submit" id="taskPointsAddRuleBtn">
-                        <i class="bi bi-plus-lg me-1"></i><span id="taskPointsAddRuleText">Add Rule</span>
+                        <i class="bi bi-plus-lg me-1"></i><span id="taskPointsAddRuleText" data-i18n="taskPointsAddRule">Add Rule</span>
                       </button>
                     </div>
                   </form>
@@ -592,34 +591,34 @@
                     <ul id="taskPointsRulesList" class="list-group"></ul>
                   </div>
                   <button class="btn btn-success btn-sm mt-2" type="button" id="applyTaskPointsBtn">
-                    <i class="bi bi-check-circle me-1"></i><span id="applyTaskPointsText">Apply Rules to Existing Tasks</span>
+                    <i class="bi bi-check-circle me-1"></i><span id="applyTaskPointsText" data-i18n="taskPointsApplyButton">Apply Rules to Existing Tasks</span>
                   </button>
                 </div>
                 
                 <!-- Gift Coins -->
                 <div class="border-top pt-3 mt-3">
                   <h6 class="mb-3">
-                    <i class="bi bi-gift-fill me-2"></i><span id="giftCoinsTitle">Gift Coins to Person</span>
+                    <i class="bi bi-gift-fill me-2"></i><span id="giftCoinsTitle" data-i18n="giftCoinsTitle">Gift Coins to Person</span>
                   </h6>
-                  <p class="small text-muted" id="giftCoinsDescription">Give bonus coins to people without completing a task.</p>
+                  <p class="small text-muted" id="giftCoinsDescription" data-i18n="giftCoinsDescription">Give bonus coins to people without completing a task.</p>
                   <form id="giftPointsForm" class="row gy-2 gx-2 align-items-end mb-3">
                     <div class="col-sm-5">
-                      <label class="form-label small" for="giftPersonSelect" id="giftPersonLabel">Person</label>
+                      <label class="form-label small" for="giftPersonSelect" id="giftPersonLabel" data-i18n="giftPersonLabel">Person</label>
                       <select id="giftPersonSelect" class="form-select form-select-sm" required>
                         <option value="">Select person…</option>
                       </select>
                     </div>
                     <div class="col-sm-3">
-                      <label class="form-label small" for="giftPointsAmount" id="giftPointsAmountLabel">Coins to Gift</label>
-                      <input type="number" id="giftPointsAmount" class="form-control form-control-sm" placeholder="Coins" min="1" required />
+                      <label class="form-label small" for="giftPointsAmount" id="giftPointsAmountLabel" data-i18n="giftPointsAmountLabel">Coins to Gift</label>
+                      <input type="number" id="giftPointsAmount" class="form-control form-control-sm" placeholder="Coins" data-i18n-placeholder="taskPointsPlaceholder" min="1" required />
                     </div>
                     <div class="col-sm-4">
-                      <label class="form-label small" for="giftPointsReason" id="giftPointsReasonLabel">Reason (optional)</label>
-                      <input type="text" id="giftPointsReason" class="form-control form-control-sm" placeholder="e.g., Bonus" />
+                      <label class="form-label small" for="giftPointsReason" id="giftPointsReasonLabel" data-i18n="giftPointsReasonLabel">Reason (optional)</label>
+                      <input type="text" id="giftPointsReason" class="form-control form-control-sm" placeholder="e.g., Bonus" data-i18n-placeholder="giftPointsReasonPlaceholder" />
                     </div>
                     <div class="col-sm-12">
                       <button class="btn btn-success btn-sm" type="submit" id="giftCoinsButton">
-                        <i class="bi bi-gift-fill me-1"></i><span id="giftCoinsButtonText">Gift Coins</span>
+                        <i class="bi bi-gift-fill me-1"></i><span id="giftCoinsButtonText" data-i18n="giftCoinsButton">Gift Coins</span>
                       </button>
                     </div>
                   </form>
@@ -631,7 +630,7 @@
             <div class="card mb-4">
               <div class="card-header">
                 <h6 class="card-title mb-0">
-                  <i class="bi bi-robot me-2"></i>AI Features
+                  <i class="bi bi-robot me-2"></i><span data-i18n="aiFeaturesTitle">AI Features</span>
                 </h6>
               </div>
               <div class="card-body">
@@ -639,7 +638,7 @@
                   <div class="col-12">
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="settingsUseAI" />
-                      <label class="form-check-label" for="settingsUseAI">Use AI features</label>
+                      <label class="form-check-label" for="settingsUseAI" data-i18n="useAiLabel">Use AI features</label>
                     </div>
                   </div>
                   
@@ -648,30 +647,30 @@
                       <div class="col-12">
                         <div class="form-check form-switch">
                           <input class="form-check-input" type="checkbox" id="settingsChatbotEnabled" />
-                          <label class="form-check-label" for="settingsChatbotEnabled" id="settingsChatbotLabel">Enable AI chatbot in admin</label>
+                          <label class="form-check-label" for="settingsChatbotEnabled" id="settingsChatbotLabel" data-i18n="chatbotToggleLabel">Enable AI chatbot in admin</label>
                         </div>
-                        <div class="form-text" id="settingsChatbotHelp">Show a chat box with text and microphone support on the dashboard. <span class="text-warning">Note: Microphone requires SSL (HTTPS). See README.</span></div>
+                        <div class="form-text" id="settingsChatbotHelp" data-i18n="chatbotToggleHelp">Show a chat box with text and microphone support on the dashboard. <span class="text-warning">Note: Microphone requires SSL (HTTPS). See README.</span></div>
                       </div>
 
                       <div class="col-12">
                         <div class="form-check form-switch">
                           <input class="form-check-input" type="checkbox" id="settingsAiAudioEnabled" />
-                          <label class="form-check-label" for="settingsAiAudioEnabled" id="settingsAiAudioLabel">Enable AI audio</label>
+                          <label class="form-check-label" for="settingsAiAudioEnabled" id="settingsAiAudioLabel" data-i18n="aiAudioLabel">Enable AI audio</label>
                         </div>
-                        <div class="form-text" id="settingsAiAudioHelp">Enable text-to-speech responses.</div>
+                        <div class="form-text" id="settingsAiAudioHelp" data-i18n="aiAudioHelp">Enable text-to-speech responses.</div>
                       </div>
 
                       <div class="col-12" id="chatbotVoiceContainer" style="display: none;">
-                        <label class="form-label" for="settingsChatbotVoice" id="settingsChatbotVoiceLabel">Voice</label>
+                        <label class="form-label" for="settingsChatbotVoice" id="settingsChatbotVoiceLabel" data-i18n="chatbotVoiceLabel">Voice</label>
                         <select class="form-select" id="settingsChatbotVoice">
-                          <option value="nova">Nova - Friendly female</option>
-                          <option value="alloy">Alloy - Neutral</option>
-                          <option value="echo">Echo - Male</option>
-                          <option value="fable">Fable - Expressive</option>
-                          <option value="onyx">Onyx - Deep male</option>
-                          <option value="shimmer">Shimmer - Warm female</option>
+                          <option value="nova" data-i18n="voiceNova">Nova - Friendly female</option>
+                          <option value="alloy" data-i18n="voiceAlloy">Alloy - Neutral</option>
+                          <option value="echo" data-i18n="voiceEcho">Echo - Male</option>
+                          <option value="fable" data-i18n="voiceFable">Fable - Expressive</option>
+                          <option value="onyx" data-i18n="voiceOnyx">Onyx - Deep male</option>
+                          <option value="shimmer" data-i18n="voiceShimmer">Shimmer - Warm female</option>
                         </select>
-                        <div class="form-text" id="settingsChatbotVoiceHelp">Choose the AI voice for spoken responses.</div>
+                        <div class="form-text" id="settingsChatbotVoiceHelp" data-i18n="chatbotVoiceHelp">Choose the AI voice for spoken responses.</div>
                       </div>
                     </div>
                   </div>
@@ -683,7 +682,7 @@
             <div class="card mb-4">
               <div class="card-header">
                 <h6 class="card-title mb-0">
-                  <i class="bi bi-gear-wide-connected me-2"></i>Advanced Features
+                  <i class="bi bi-gear-wide-connected me-2"></i><span data-i18n="advancedFeaturesTitle">Advanced Features</span>
                 </h6>
               </div>
               <div class="card-body">
@@ -691,7 +690,7 @@
                   <div class="col-12">
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="settingsAutoUpdate" />
-                      <label class="form-check-label" for="settingsAutoUpdate">Enable autoupdate</label>
+                      <label class="form-check-label" for="settingsAutoUpdate" data-i18n="autoUpdateLabel">Enable autoupdate</label>
                     </div>
                   </div>
                 </div>
@@ -702,7 +701,7 @@
             <div class="card mb-4">
               <div class="card-header">
                 <h6 class="card-title mb-0" id="notificationsTitle">
-                  <i class="bi bi-bell me-2"></i>Notifications
+                  <i class="bi bi-bell me-2"></i><span data-i18n="notificationsTitle">Notifications</span>
                 </h6>
               </div>
               <div class="card-body">
@@ -710,11 +709,11 @@
                   <div class="col-12 col-sm-6">
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="settingsPushoverEnable" />
-                      <label class="form-check-label" for="settingsPushoverEnable">Enable Pushover</label>
+                      <label class="form-check-label" for="settingsPushoverEnable" data-i18n="pushoverEnabledLabel">Enable Pushover</label>
                     </div>
                   </div>
                   <div class="col-12 col-sm-6">
-                    <label class="form-label" for="settingsReminderTime">Reminder time</label>
+                    <label class="form-label" for="settingsReminderTime" data-i18n="reminderTimeLabel">Reminder time</label>
                     <input type="time" id="settingsReminderTime" class="form-control" />
                   </div>
                 </div>
@@ -725,15 +724,15 @@
             <div class="card mb-4" id="maintenanceToolsCard">
               <div class="card-header">
                 <h6 class="card-title mb-0">
-                  <i class="bi bi-wrench-adjustable-circle me-2"></i>Maintenance Tools
+                  <i class="bi bi-wrench-adjustable-circle me-2"></i><span data-i18n="maintenanceToolsTitle">Maintenance Tools</span>
                 </h6>
               </div>
               <div class="card-body">
-                <p class="small text-muted mb-3" id="maintenanceToolsDescription">
+                <p class="small text-muted mb-3" id="maintenanceToolsDescription" data-i18n="maintenanceToolsDesc">
                   Recurring chores stuck in the past? Run this temporary fixer to archive overdue duplicates and keep only upcoming tasks.
                 </p>
                 <button class="btn btn-warning" type="button" id="runDataFixBtn">
-                  <i class="bi bi-tools me-2"></i>Run Temporary Data Fix
+                  <i class="bi bi-tools me-2"></i><span data-i18n="runDataFixBtn">Run Temporary Data Fix</span>
                 </button>
                 <div id="dataFixStatus" class="form-text mt-2"></div>
               </div>

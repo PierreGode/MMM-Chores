@@ -138,6 +138,48 @@ const LANGUAGES = {
     loginButton: "Login",
     loginError: "Login failed",
     
+    // Settings Modal - Reward System
+    rewardSystemTitle: "Reward System",
+    rewardSystemInfo: "Choose how rewards and progress are calculated. You can switch between systems at any time.",
+    levelSystemLabel: "Level System (Default)",
+    levelSystemDesc: "Traditional level-based progression with titles like 'Junior', 'Expert', 'Master' based on completed tasks.",
+    defaultBadge: "Default",
+    coinSystemLabel: "Coins System (Advanced)",
+    coinSystemDesc: "Earn coins for tasks and spend them on custom rewards. More flexible and customizable.",
+    newFeatureBadge: "New Feature",
+    migrationWarning: "Migration Notice: Switching to the coins system will recalculate balances based on your completed tasks. You can switch back to the level system anytime without losing data.",
+    
+    // Settings Modal - Display
+    displaySettingsTitle: "Display Settings",
+    showRewardsTabLabel: "Show Rewards tab",
+    showCoinsOnMirrorLabel: "Show coins on mirror",
+    
+    // Settings Modal - Level System
+    levelSystemSettingsTitle: "Level System Settings",
+    configureLevelTitlesBtn: "Configure Level Titles & Rewards",
+    
+    // Settings Modal - Coins System
+    coinsSystemSettingsTitle: "Coins System Settings",
+    
+    // Settings Modal - AI Features
+    aiFeaturesTitle: "AI Features",
+    aiAudioLabel: "Enable AI audio",
+    aiAudioHelp: "Enable text-to-speech responses.",
+    voiceNova: "Nova - Friendly female",
+    voiceAlloy: "Alloy - Neutral",
+    voiceEcho: "Echo - Male",
+    voiceFable: "Fable - Expressive",
+    voiceOnyx: "Onyx - Deep male",
+    voiceShimmer: "Shimmer - Warm female",
+    
+    // Settings Modal - Advanced Features
+    advancedFeaturesTitle: "Advanced Features",
+    
+    // Settings Modal - Maintenance
+    maintenanceToolsTitle: "Maintenance Tools",
+    maintenanceToolsDesc: "Recurring chores stuck in the past? Run this temporary fixer to archive overdue duplicates and keep only upcoming tasks.",
+    runDataFixBtn: "Run Temporary Data Fix",
+
     // New Rewards System
     rewardsTitle: "Rewards Management", 
     usePointSystemLabel: "Use Coin System",
@@ -339,6 +381,49 @@ const LANGUAGES = {
     loginPassword: "Lösenord",
     loginButton: "Logga in",
     loginError: "Inloggning misslyckades",
+    
+    // Inställningar - Belöningssystem
+    rewardSystemTitle: "Belöningssystem",
+    rewardSystemInfo: "Välj hur belöningar och framsteg beräknas. Du kan byta system när som helst.",
+    levelSystemLabel: "Nivåsystem (Standard)",
+    levelSystemDesc: "Traditionell nivåbaserad progression med titlar som 'Junior', 'Expert', 'Mästare' baserat på slutförda uppgifter.",
+    defaultBadge: "Standard",
+    coinSystemLabel: "Myntsystem (Avancerat)",
+    coinSystemDesc: "Tjäna mynt för uppgifter och spendera dem på anpassade belöningar. Mer flexibelt och anpassningsbart.",
+    newFeatureBadge: "Ny funktion",
+    migrationWarning: "Migreringsnotis: Att byta till myntsystemet kommer att räkna om saldon baserat på dina slutförda uppgifter. Du kan byta tillbaka till nivåsystemet när som helst utan att förlora data.",
+    
+    // Inställningar - Visning
+    displaySettingsTitle: "Visningsinställningar",
+    showRewardsTabLabel: "Visa fliken Belöningar",
+    showCoinsOnMirrorLabel: "Visa mynt på spegeln",
+    
+    // Inställningar - Nivåsystem
+    levelSystemSettingsTitle: "Inställningar för nivåsystem",
+    configureLevelTitlesBtn: "Konfigurera nivåtitlar & belöningar",
+    
+    // Inställningar - Myntsystem
+    coinsSystemSettingsTitle: "Inställningar för myntsystem",
+    
+    // Inställningar - AI-funktioner
+    aiFeaturesTitle: "AI-funktioner",
+    aiAudioLabel: "Aktivera AI-ljud",
+    aiAudioHelp: "Aktivera text-till-tal-svar.",
+    voiceNova: "Nova - Vänlig kvinna",
+    voiceAlloy: "Alloy - Neutral",
+    voiceEcho: "Echo - Manlig",
+    voiceFable: "Fable - Uttrycksfull",
+    voiceOnyx: "Onyx - Djup manlig",
+    voiceShimmer: "Shimmer - Varm kvinna",
+    
+    // Inställningar - Avancerade funktioner
+    advancedFeaturesTitle: "Avancerade funktioner",
+    
+    // Inställningar - Underhåll
+    maintenanceToolsTitle: "Underhållsverktyg",
+    maintenanceToolsDesc: "Återkommande sysslor fast i det förflutna? Kör denna tillfälliga fixare för att arkivera förfallna dubbletter och behålla endast kommande uppgifter.",
+    runDataFixBtn: "Kör tillfällig datafix",
+
     // Nytt belöningssystem
     rewardsTitle: "Belöningshantering",
     usePointSystemLabel: "Använd myntsystemet",

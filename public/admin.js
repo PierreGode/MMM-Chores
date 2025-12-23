@@ -893,6 +893,32 @@ function setLanguage(lang) {
 
   const t = LANGUAGES[lang];
 
+  // Generic data-i18n handler
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const keys = key.split('.');
+    let value = t;
+    for (const k of keys) {
+      value = value ? value[k] : null;
+    }
+    if (value) {
+      el.textContent = value;
+    }
+  });
+
+  // Generic data-i18n-placeholder handler
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    const keys = key.split('.');
+    let value = t;
+    for (const k of keys) {
+      value = value ? value[k] : null;
+    }
+    if (value) {
+      el.placeholder = value;
+    }
+  });
+
   localizedMonths = Array.from({ length: 12 }, (_, i) =>
     new Date(2000, i).toLocaleDateString(lang, { month: "short" })
   );
