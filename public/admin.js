@@ -321,6 +321,8 @@ function initSettingsForm(settings) {
     const show = aiOn && chatOn;
     chatbotVoiceContainer.style.display = show ? '' : 'none';
     chatbotVoiceContainer.classList.toggle('d-none', !show);
+    chatbotVoiceContainer.hidden = !show;
+    chatbotVoiceContainer.setAttribute('aria-hidden', show ? 'false' : 'true');
   };
 
   const updateAiSettingsVisibility = () => {
@@ -328,6 +330,8 @@ function initSettingsForm(settings) {
     if (chatbotToggleContainer) {
       chatbotToggleContainer.style.display = aiOn ? '' : 'none';
       chatbotToggleContainer.classList.toggle('d-none', !aiOn);
+      chatbotToggleContainer.hidden = !aiOn;
+      chatbotToggleContainer.setAttribute('aria-hidden', aiOn ? 'false' : 'true');
     }
     if (!aiOn && chatbotEnabledToggle) chatbotEnabledToggle.checked = false;
     updateVoiceVisibility();
