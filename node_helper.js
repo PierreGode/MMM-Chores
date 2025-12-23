@@ -2012,6 +2012,25 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
         peopleSummary || "none"
       }. Upcoming tasks: ${upcomingTasks || "none"}. Rewards: ${rewardSummary || "none"}.`;
 
+      function extractChatContent(content) {
+        if (!content) return "";
+        if (typeof content === "string") return content.trim();
+        if (Array.isArray(content)) {
+          return content
+            .map(part => extractChatContent(part))
+            .filter(Boolean)
+            .join("")
+            .trim();
+        }
+        if (typeof content === "object") {
+          if (typeof content.text?.value === "string") return content.text.value.trim();
+          if (typeof content.value === "string") return content.value.trim();
+          if (typeof content.content === "string") return content.content.trim();
+          if (Array.isArray(content.content)) return extractChatContent(content.content);
+        }
+        return "";
+      }
+
       try {
         const client = new OpenAI({ apiKey: self.config.openaiApiKey });
         const messages = [{ role: "system", content: systemPrompt }, ...safeHistory, { role: "user", content: prompt }];
@@ -2021,9 +2040,7 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
           max_completion_tokens: 300
         });
         const raw = completion.choices?.[0]?.message?.content;
-        const reply = Array.isArray(raw)
-          ? raw.map(part => (typeof part === "string" ? part : part?.text || "")).join("").trim()
-          : (raw || "").trim();
+        const reply = extractChatContent(raw);
         if (!reply) {
           Log.error("MMM-Chores: AI chat returned empty response", completion);
           return res.status(500).json({ error: "Empty response from AI" });
