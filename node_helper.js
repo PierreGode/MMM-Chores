@@ -1070,6 +1070,7 @@ module.exports = NodeHelper.create({
         showAnalyticsOnMirror: previousSettings.showAnalyticsOnMirror ?? payload.showAnalyticsOnMirror,
         useAI: previousSettings.useAI ?? payload.useAI,
         chatbotEnabled: previousSettings.chatbotEnabled ?? payload.chatbotEnabled ?? false,
+        chatbotAudioEnabled: previousSettings.chatbotAudioEnabled ?? payload.chatbotAudioEnabled ?? true,
         chatbotVoice: previousSettings.chatbotVoice ?? payload.chatbotVoice ?? "nova",
         autoUpdate: previousSettings.autoUpdate ?? payload.autoUpdate,
         pushoverEnabled: previousSettings.pushoverEnabled ?? payload.pushoverEnabled,
@@ -2051,9 +2052,9 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
           return res.status(500).json({ error: "Empty response from AI" });
         }
 
-        // Generate audio if chatbot is enabled
+        // Generate audio if chatbot and audio are enabled
         let audioBase64 = null;
-        if (settings.chatbotEnabled) {
+        if (settings.chatbotEnabled && settings.chatbotAudioEnabled) {
           try {
             const selectedVoice = settings.chatbotVoice || "nova";
             const ttsResponse = await client.audio.speech.create({
