@@ -2006,6 +2006,10 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
         .map(r => `${r.name} (${r.pointCost} coins)`)
         .join("; ");
 
+      const taskRulesSummary = (settings.taskPointsRules || [])
+        .map(r => `${r.pattern} (${r.points} coins)`)
+        .join("; ");
+
       const safeHistory = Array.isArray(history)
         ? history
             .filter(msg => msg && (msg.role === "user" || msg.role === "assistant") && typeof msg.content === "string")
@@ -2013,9 +2017,13 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
             .map(msg => ({ role: msg.role, content: msg.content.slice(0, 800) }))
         : [];
 
-      const systemPrompt = `You are an assistant for the MMM-Chores admin dashboard. Be concise and actionable. Respond in ${langCode}. When a user asks about a reward, check if they have enough coins. If not, calculate and state exactly how many more coins they need. Context: People: ${
-        peopleSummary || "none"
-      }. Upcoming tasks: ${upcomingTasks || "none"}. Rewards: ${rewardSummary || "none"}.`;
+      const systemPrompt = `You are an assistant for the MMM-Chores admin dashboard. Be concise and actionable. Respond in ${langCode}. 
+When a user asks about a reward, check if they have enough coins. If not, calculate and state exactly how many more coins they need.
+You can create tasks. If a user wants to create a task, ensure you have the task name, person, and date. If any are missing, ask for them.
+Context: People: ${peopleSummary || "none"}. 
+Upcoming tasks: ${upcomingTasks || "none"}. 
+Rewards: ${rewardSummary || "none"}.
+Task Rules (Points): ${taskRulesSummary || "none"}.`;
 
       function extractChatContent(content) {
         if (!content) return "";
@@ -2041,18 +2049,92 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
       try {
         const client = new OpenAI({ apiKey: self.config.openaiApiKey });
         const messages = [{ role: "system", content: systemPrompt }, ...safeHistory, { role: "user", content: prompt }];
-        const completion = await client.chat.completions.create({
+        
+        const tools = [
+          {
+            type: "function",
+            function: {
+              name: "create_task",
+              description: "Create a new household chore task for a person",
+              parameters: {
+                type: "object",
+                properties: {
+                  taskName: { type: "string", description: "The name of the task" },
+                  personName: { type: "string", description: "The name of the person" },
+                  date: { type: "string", description: "YYYY-MM-DD" }
+                },
+                required: ["taskName", "personName", "date"]
+              }
+            }
+          }
+        ];
+
+        let completion = await client.chat.completions.create({
           model: "gpt-4o-mini",
           messages,
+          tools,
+          tool_choice: "auto",
           max_tokens: 512,
           temperature: 0.7
         });
-        const raw = completion.choices?.[0]?.message?.content;
-        Log.log("MMM-Chores: AI chat raw content type:", typeof raw, "structure:", JSON.stringify(raw).slice(0, 200));
-        const reply = extractChatContent(raw);
+
+        const choice = completion.choices[0];
+        let reply = "";
+
+        if (choice.message.tool_calls) {
+          const toolCall = choice.message.tool_calls[0];
+          if (toolCall.function.name === "create_task") {
+            const args = JSON.parse(toolCall.function.arguments);
+            const person = people.find(p => p.name.toLowerCase() === args.personName.toLowerCase());
+            
+            if (person) {
+              const newTask = {
+                id: Date.now(),
+                name: args.taskName,
+                assignedTo: person.id,
+                date: args.date,
+                created: getLocalISO(new Date()),
+                done: false
+              };
+              // Auto-assign points if rule matches
+              autoAssignTaskPoints(newTask, { force: true });
+              tasks.push(newTask);
+              saveData();
+              
+              messages.push(choice.message);
+              messages.push({
+                role: "tool",
+                tool_call_id: toolCall.id,
+                content: `Task created: ${args.taskName} for ${person.name} on ${args.date}. Points: ${newTask.points || 0}`
+              });
+              
+              const followUp = await client.chat.completions.create({
+                model: "gpt-4o-mini",
+                messages,
+                max_tokens: 512
+              });
+              reply = extractChatContent(followUp.choices[0].message.content);
+            } else {
+              messages.push(choice.message);
+              messages.push({
+                role: "tool",
+                tool_call_id: toolCall.id,
+                content: `Error: Person '${args.personName}' not found.`
+              });
+              const followUp = await client.chat.completions.create({
+                model: "gpt-4o-mini",
+                messages,
+                max_tokens: 512
+              });
+              reply = extractChatContent(followUp.choices[0].message.content);
+            }
+          }
+        } else {
+          reply = extractChatContent(choice.message.content);
+        }
+
         if (!reply) {
-          Log.error("MMM-Chores: AI chat returned empty response", completion);
-          return res.status(500).json({ error: "Empty response from AI" });
+          reply = "I processed your request.";
         }
 
         // Generate audio if chatbot is enabled
