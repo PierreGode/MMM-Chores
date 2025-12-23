@@ -2020,7 +2020,14 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
           messages,
           max_completion_tokens: 300
         });
-        const reply = completion.choices?.[0]?.message?.content?.trim();
+        const raw = completion.choices?.[0]?.message?.content;
+        const reply = Array.isArray(raw)
+          ? raw.map(part => (typeof part === "string" ? part : part?.text || "")).join("").trim()
+          : (raw || "").trim();
+        if (!reply) {
+          Log.error("MMM-Chores: AI chat returned empty response", completion);
+          return res.status(500).json({ error: "Empty response from AI" });
+        }
         res.json({ reply });
       } catch (error) {
         Log.error("MMM-Chores: AI chat failed", error);
