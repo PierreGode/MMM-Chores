@@ -398,6 +398,25 @@ const LANGUAGES = {
     showRewardsTabLabel: "Visa fliken Belöningar",
     showCoinsOnMirrorLabel: "Visa mynt på spegeln",
     
+    // AI Chatbot
+    chatbotToggleLabel: "Aktivera AI-chatbot i admin",
+    chatbotToggleHelp: "Visa en chattruta med text- och mikrofonstöd på instrumentpanelen.",
+    chatbotVoiceLabel: "Röst",
+    chatbotVoiceHelp: "Välj AI-röst för talade svar.",
+    aiChatTitle: "AI-chatbot",
+    aiChatSubtitle: "Ställ frågor om dina sysslor, personer och schema.",
+    aiChatSendLabel: "Skicka",
+    aiChatBadge: "Beta",
+    aiChatPlaceholder: "Skriv din fråga...",
+    aiChatMicTitle: "Tala med assistenten",
+    aiChatWelcome: "Jag är redo att hjälpa till med sysslor, personer och scheman.",
+    aiChatListening: "Lyssnar...",
+    aiChatListenError: "Fel vid taligenkänning",
+    aiChatNoSpeech: "Taligenkänning stöds inte i denna webbläsare.",
+    aiChatWorking: "Tänker...",
+    aiChatReady: "Redo",
+    aiChatNoReply: "Inget svar från AI.",
+    
     // Inställningar - Nivåsystem
     levelSystemSettingsTitle: "Inställningar för nivåsystem",
     configureLevelTitlesBtn: "Konfigurera nivåtitlar & belöningar",
@@ -619,6 +638,67 @@ const LANGUAGES = {
       loginPassword: "Mot de passe",
       loginButton: "Se connecter",
       loginError: "Échec de la connexion",
+    // Paramètres - Système de récompenses
+    rewardSystemTitle: "Système de récompenses",
+    rewardSystemInfo: "Choisissez comment les récompenses et la progression sont calculées. Vous pouvez changer de système à tout moment.",
+    levelSystemLabel: "Système de niveaux (Par défaut)",
+    levelSystemDesc: "Progression traditionnelle par niveaux avec des titres comme 'Junior', 'Expert', 'Maître' basés sur les tâches terminées.",
+    defaultBadge: "Défaut",
+    coinSystemLabel: "Système de pièces (Avancé)",
+    coinSystemDesc: "Gagnez des pièces pour les tâches et dépensez-les pour des récompenses personnalisées. Plus flexible et personnalisable.",
+    newFeatureBadge: "Nouvelle fonctionnalité",
+    migrationWarning: "Avis de migration : Passer au système de pièces recalculera les soldes en fonction de vos tâches terminées. Vous pouvez revenir au système de niveaux à tout moment sans perdre de données.",
+    
+    // Paramètres - Affichage
+    displaySettingsTitle: "Paramètres d'affichage",
+    showRewardsTabLabel: "Afficher l'onglet Récompenses",
+    showCoinsOnMirrorLabel: "Afficher les pièces sur le miroir",
+    
+    // Chatbot IA
+    chatbotToggleLabel: "Activer le chatbot IA dans l'admin",
+    chatbotToggleHelp: "Afficher une boîte de discussion avec support texte et microphone sur le tableau de bord.",
+    chatbotVoiceLabel: "Voix",
+    chatbotVoiceHelp: "Choisissez la voix IA pour les réponses vocales.",
+    aiChatTitle: "Chatbot IA",
+    aiChatSubtitle: "Posez des questions sur vos corvées, les personnes et le planning.",
+    aiChatSendLabel: "Envoyer",
+    aiChatBadge: "Bêta",
+    aiChatPlaceholder: "Tapez votre question...",
+    aiChatMicTitle: "Parler à l'assistant",
+    aiChatWelcome: "Je suis prêt à aider avec les corvées, les personnes et les plannings.",
+    aiChatListening: "Écoute...",
+    aiChatListenError: "Erreur de reconnaissance vocale",
+    aiChatNoSpeech: "Reconnaissance vocale non supportée dans ce navigateur.",
+    aiChatWorking: "Réfléchit...",
+    aiChatReady: "Prêt",
+    aiChatNoReply: "Pas de réponse de l'IA.",
+    
+    // Paramètres - Système de niveaux
+    levelSystemSettingsTitle: "Paramètres du système de niveaux",
+    configureLevelTitlesBtn: "Configurer les titres de niveau et récompenses",
+    
+    // Paramètres - Système de pièces
+    coinsSystemSettingsTitle: "Paramètres du système de pièces",
+    
+    // Paramètres - Fonctionnalités IA
+    aiFeaturesTitle: "Fonctionnalités IA",
+    aiAudioLabel: "Activer l'audio IA",
+    aiAudioHelp: "Activer les réponses vocales.",
+    voiceNova: "Nova - Femme amicale",
+    voiceAlloy: "Alloy - Neutre",
+    voiceEcho: "Echo - Homme",
+    voiceFable: "Fable - Expressif",
+    voiceOnyx: "Onyx - Homme profond",
+    voiceShimmer: "Shimmer - Femme chaleureuse",
+    
+    // Paramètres - Fonctionnalités avancées
+    advancedFeaturesTitle: "Fonctionnalités avancées",
+    
+    // Paramètres - Maintenance
+    maintenanceToolsTitle: "Outils de maintenance",
+    maintenanceToolsDesc: "Des corvées récurrentes bloquées dans le passé ? Exécutez ce correctif temporaire pour archiver les doublons en retard et ne conserver que les tâches à venir.",
+    runDataFixBtn: "Exécuter le correctif temporaire",
+
       // Nouveau système de récompenses
       rewardsTitle: "Gestion des récompenses",
       usePointSystemLabel: "Utiliser le système de pièces",
@@ -814,6 +894,67 @@ const LANGUAGES = {
       loginPassword: "Contraseña",
       loginButton: "Entrar",
       loginError: "Error de inicio de sesión",
+    // Configuración - Sistema de recompensas
+    rewardSystemTitle: "Sistema de recompensas",
+    rewardSystemInfo: "Elige cómo se calculan las recompensas y el progreso. Puedes cambiar entre sistemas en cualquier momento.",
+    levelSystemLabel: "Sistema de niveles (Predeterminado)",
+    levelSystemDesc: "Progresión tradicional basada en niveles con títulos como 'Junior', 'Experto', 'Maestro' según las tareas completadas.",
+    defaultBadge: "Predeterminado",
+    coinSystemLabel: "Sistema de monedas (Avanzado)",
+    coinSystemDesc: "Gana monedas por tareas y gástalas en recompensas personalizadas. Más flexible y personalizable.",
+    newFeatureBadge: "Nueva función",
+    migrationWarning: "Aviso de migración: Cambiar al sistema de monedas recalculará los saldos según tus tareas completadas. Puedes volver al sistema de niveles en cualquier momento sin perder datos.",
+    
+    // Configuración - Pantalla
+    displaySettingsTitle: "Configuración de pantalla",
+    showRewardsTabLabel: "Mostrar pestaña de Recompensas",
+    showCoinsOnMirrorLabel: "Mostrar monedas en el espejo",
+    
+    // Chatbot de IA
+    chatbotToggleLabel: "Habilitar chatbot de IA en admin",
+    chatbotToggleHelp: "Mostrar un cuadro de chat con soporte de texto y micrófono en el panel.",
+    chatbotVoiceLabel: "Voz",
+    chatbotVoiceHelp: "Elige la voz de IA para las respuestas habladas.",
+    aiChatTitle: "Chatbot de IA",
+    aiChatSubtitle: "Haz preguntas sobre tus tareas, personas y horarios.",
+    aiChatSendLabel: "Enviar",
+    aiChatBadge: "Beta",
+    aiChatPlaceholder: "Escribe tu pregunta...",
+    aiChatMicTitle: "Hablar con el asistente",
+    aiChatWelcome: "Estoy listo para ayudar con tareas, personas y horarios.",
+    aiChatListening: "Escuchando...",
+    aiChatListenError: "Error de reconocimiento de voz",
+    aiChatNoSpeech: "Reconocimiento de voz no soportado en este navegador.",
+    aiChatWorking: "Pensando...",
+    aiChatReady: "Listo",
+    aiChatNoReply: "Sin respuesta de la IA.",
+    
+    // Configuración - Sistema de niveles
+    levelSystemSettingsTitle: "Configuración del sistema de niveles",
+    configureLevelTitlesBtn: "Configurar títulos de nivel y recompensas",
+    
+    // Configuración - Sistema de monedas
+    coinsSystemSettingsTitle: "Configuración del sistema de monedas",
+    
+    // Configuración - Funciones de IA
+    aiFeaturesTitle: "Funciones de IA",
+    aiAudioLabel: "Habilitar audio de IA",
+    aiAudioHelp: "Habilitar respuestas de texto a voz.",
+    voiceNova: "Nova - Mujer amigable",
+    voiceAlloy: "Alloy - Neutral",
+    voiceEcho: "Echo - Hombre",
+    voiceFable: "Fable - Expresivo",
+    voiceOnyx: "Onyx - Hombre profundo",
+    voiceShimmer: "Shimmer - Mujer cálida",
+    
+    // Configuración - Funciones avanzadas
+    advancedFeaturesTitle: "Funciones avanzadas",
+    
+    // Configuración - Mantenimiento
+    maintenanceToolsTitle: "Herramientas de mantenimiento",
+    maintenanceToolsDesc: "¿Tareas recurrentes atascadas en el pasado? Ejecuta este corrector temporal para archivar duplicados vencidos y mantener solo las tareas futuras.",
+    runDataFixBtn: "Ejecutar corrección de datos temporal",
+
       // Nuevo sistema de recompensas
       rewardsTitle: "Gestión de recompensas",
       usePointSystemLabel: "Usar sistema de monedas",
@@ -1009,6 +1150,67 @@ const LANGUAGES = {
       loginPassword: "Passwort",
       loginButton: "Anmelden",
       loginError: "Anmeldung fehlgeschlagen",
+    // Einstellungen - Belohnungssystem
+    rewardSystemTitle: "Belohnungssystem",
+    rewardSystemInfo: "Wähle, wie Belohnungen und Fortschritt berechnet werden. Du kannst jederzeit zwischen den Systemen wechseln.",
+    levelSystemLabel: "Levelsystem (Standard)",
+    levelSystemDesc: "Traditioneller levelbasierter Fortschritt mit Titeln wie 'Junior', 'Experte', 'Meister' basierend auf erledigten Aufgaben.",
+    defaultBadge: "Standard",
+    coinSystemLabel: "Münzsystem (Erweitert)",
+    coinSystemDesc: "Verdiene Münzen für Aufgaben und gib sie für benutzerdefinierte Belohnungen aus. Flexibler und anpassbarer.",
+    newFeatureBadge: "Neue Funktion",
+    migrationWarning: "Migrationshinweis: Der Wechsel zum Münzsystem berechnet die Salden basierend auf deinen erledigten Aufgaben neu. Du kannst jederzeit zum Levelsystem zurückkehren, ohne Daten zu verlieren.",
+    
+    // Einstellungen - Anzeige
+    displaySettingsTitle: "Anzeigeeinstellungen",
+    showRewardsTabLabel: "Belohnungs-Tab anzeigen",
+    showCoinsOnMirrorLabel: "Münzen auf dem Spiegel anzeigen",
+    
+    // KI-Chatbot
+    chatbotToggleLabel: "KI-Chatbot im Admin aktivieren",
+    chatbotToggleHelp: "Zeige eine Chatbox mit Text- und Mikrofonunterstützung auf dem Dashboard.",
+    chatbotVoiceLabel: "Stimme",
+    chatbotVoiceHelp: "Wähle die KI-Stimme für gesprochene Antworten.",
+    aiChatTitle: "KI-Chatbot",
+    aiChatSubtitle: "Stelle Fragen zu deinen Aufgaben, Personen und Zeitplänen.",
+    aiChatSendLabel: "Senden",
+    aiChatBadge: "Beta",
+    aiChatPlaceholder: "Tippe deine Frage...",
+    aiChatMicTitle: "Sprich mit dem Assistenten",
+    aiChatWelcome: "Ich bin bereit, bei Aufgaben, Personen und Zeitplänen zu helfen.",
+    aiChatListening: "Zuhören...",
+    aiChatListenError: "Spracherkennungsfehler",
+    aiChatNoSpeech: "Spracherkennung in diesem Browser nicht unterstützt.",
+    aiChatWorking: "Denken...",
+    aiChatReady: "Bereit",
+    aiChatNoReply: "Keine Antwort von der KI.",
+    
+    // Einstellungen - Levelsystem
+    levelSystemSettingsTitle: "Einstellungen für Levelsystem",
+    configureLevelTitlesBtn: "Leveltitel & Belohnungen konfigurieren",
+    
+    // Einstellungen - Münzsystem
+    coinsSystemSettingsTitle: "Einstellungen für Münzsystem",
+    
+    // Einstellungen - KI-Funktionen
+    aiFeaturesTitle: "KI-Funktionen",
+    aiAudioLabel: "KI-Audio aktivieren",
+    aiAudioHelp: "Text-zu-Sprache-Antworten aktivieren.",
+    voiceNova: "Nova - Freundliche Frau",
+    voiceAlloy: "Alloy - Neutral",
+    voiceEcho: "Echo - Mann",
+    voiceFable: "Fable - Ausdrucksstark",
+    voiceOnyx: "Onyx - Tiefer Mann",
+    voiceShimmer: "Shimmer - Warme Frau",
+    
+    // Einstellungen - Erweiterte Funktionen
+    advancedFeaturesTitle: "Erweiterte Funktionen",
+    
+    // Einstellungen - Wartung
+    maintenanceToolsTitle: "Wartungswerkzeuge",
+    maintenanceToolsDesc: "Wiederkehrende Aufgaben in der Vergangenheit stecken geblieben? Führe diesen temporären Fix aus, um überfällige Duplikate zu archivieren und nur kommende Aufgaben zu behalten.",
+    runDataFixBtn: "Temporären Datenfix ausführen",
+
       // Neues Belohnungssystem
       rewardsTitle: "Belohnungsverwaltung",
       usePointSystemLabel: "Münzsystem verwenden",
@@ -1204,6 +1406,67 @@ const LANGUAGES = {
       loginPassword: "Password",
       loginButton: "Accedi",
       loginError: "Accesso non riuscito",
+    // Impostazioni - Sistema di ricompense
+    rewardSystemTitle: "Sistema di ricompense",
+    rewardSystemInfo: "Scegli come vengono calcolati i premi e i progressi. Puoi passare da un sistema all'altro in qualsiasi momento.",
+    levelSystemLabel: "Sistema a livelli (Predefinito)",
+    levelSystemDesc: "Progressione tradizionale basata sui livelli con titoli come 'Junior', 'Esperto', 'Maestro' basati sui compiti completati.",
+    defaultBadge: "Predefinito",
+    coinSystemLabel: "Sistema a monete (Avanzato)",
+    coinSystemDesc: "Guadagna monete per i compiti e spendile in premi personalizzati. Più flessibile e personalizzabile.",
+    newFeatureBadge: "Nuova funzionalità",
+    migrationWarning: "Avviso di migrazione: Passare al sistema a monete ricalcolerà i saldi in base ai tuoi compiti completati. Puoi tornare al sistema a livelli in qualsiasi momento senza perdere dati.",
+    
+    // Impostazioni - Visualizzazione
+    displaySettingsTitle: "Impostazioni di visualizzazione",
+    showRewardsTabLabel: "Mostra scheda Ricompense",
+    showCoinsOnMirrorLabel: "Mostra monete sullo specchio",
+    
+    // Chatbot IA
+    chatbotToggleLabel: "Abilita chatbot IA nell'admin",
+    chatbotToggleHelp: "Mostra una casella di chat con supporto testo e microfono nella dashboard.",
+    chatbotVoiceLabel: "Voce",
+    chatbotVoiceHelp: "Scegli la voce IA per le risposte vocali.",
+    aiChatTitle: "Chatbot IA",
+    aiChatSubtitle: "Fai domande sulle tue faccende, persone e programmi.",
+    aiChatSendLabel: "Invia",
+    aiChatBadge: "Beta",
+    aiChatPlaceholder: "Scrivi la tua domanda...",
+    aiChatMicTitle: "Parla con l'assistente",
+    aiChatWelcome: "Sono pronto ad aiutare con faccende, persone e programmi.",
+    aiChatListening: "Ascolto...",
+    aiChatListenError: "Errore di riconoscimento vocale",
+    aiChatNoSpeech: "Riconoscimento vocale non supportato in questo browser.",
+    aiChatWorking: "Pensando...",
+    aiChatReady: "Pronto",
+    aiChatNoReply: "Nessuna risposta dall'IA.",
+    
+    // Impostazioni - Sistema a livelli
+    levelSystemSettingsTitle: "Impostazioni sistema a livelli",
+    configureLevelTitlesBtn: "Configura titoli di livello e ricompense",
+    
+    // Impostazioni - Sistema a monete
+    coinsSystemSettingsTitle: "Impostazioni sistema a monete",
+    
+    // Impostazioni - Funzionalità IA
+    aiFeaturesTitle: "Funzionalità IA",
+    aiAudioLabel: "Abilita audio IA",
+    aiAudioHelp: "Abilita risposte text-to-speech.",
+    voiceNova: "Nova - Donna amichevole",
+    voiceAlloy: "Alloy - Neutrale",
+    voiceEcho: "Echo - Uomo",
+    voiceFable: "Fable - Espressivo",
+    voiceOnyx: "Onyx - Uomo profondo",
+    voiceShimmer: "Shimmer - Donna calorosa",
+    
+    // Impostazioni - Funzionalità avanzate
+    advancedFeaturesTitle: "Funzionalità avanzate",
+    
+    // Impostazioni - Manutenzione
+    maintenanceToolsTitle: "Strumenti di manutenzione",
+    maintenanceToolsDesc: "Faccende ricorrenti bloccate nel passato? Esegui questo correttore temporaneo per archiviare i duplicati scaduti e mantenere solo i compiti futuri.",
+    runDataFixBtn: "Esegui correzione dati temporanea",
+
       // Nuovo sistema ricompense
       rewardsTitle: "Gestione ricompense",
       usePointSystemLabel: "Usa sistema di monete",
@@ -1399,6 +1662,67 @@ const LANGUAGES = {
       loginPassword: "Wachtwoord",
       loginButton: "Inloggen",
       loginError: "Inloggen mislukt",
+    // Instellingen - Beloningssysteem
+    rewardSystemTitle: "Beloningssysteem",
+    rewardSystemInfo: "Kies hoe beloningen en voortgang worden berekend. Je kunt op elk moment wisselen tussen systemen.",
+    levelSystemLabel: "Niveausysteem (Standaard)",
+    levelSystemDesc: "Traditionele voortgang op basis van niveaus met titels als 'Junior', 'Expert', 'Meester' op basis van voltooide taken.",
+    defaultBadge: "Standaard",
+    coinSystemLabel: "Muntensysteem (Geavanceerd)",
+    coinSystemDesc: "Verdien munten voor taken en geef ze uit aan aangepaste beloningen. Flexibeler en aanpasbaar.",
+    newFeatureBadge: "Nieuwe functie",
+    migrationWarning: "Migratiemelding: Overschakelen naar het muntensysteem herberekent saldi op basis van je voltooide taken. Je kunt op elk moment terugkeren naar het niveausysteem zonder gegevens te verliezen.",
+    
+    // Instellingen - Weergave
+    displaySettingsTitle: "Weergave-instellingen",
+    showRewardsTabLabel: "Toon tabblad Beloningen",
+    showCoinsOnMirrorLabel: "Toon munten op spiegel",
+    
+    // AI-chatbot
+    chatbotToggleLabel: "Schakel AI-chatbot in admin in",
+    chatbotToggleHelp: "Toon een chatbox met tekst- en microfoonondersteuning op het dashboard.",
+    chatbotVoiceLabel: "Stem",
+    chatbotVoiceHelp: "Kies de AI-stem voor gesproken antwoorden.",
+    aiChatTitle: "AI-chatbot",
+    aiChatSubtitle: "Stel vragen over je klusjes, mensen en schema's.",
+    aiChatSendLabel: "Verzenden",
+    aiChatBadge: "Bèta",
+    aiChatPlaceholder: "Typ je vraag...",
+    aiChatMicTitle: "Spreek met de assistent",
+    aiChatWelcome: "Ik ben klaar om te helpen met klusjes, mensen en schema's.",
+    aiChatListening: "Luisteren...",
+    aiChatListenError: "Spraakherkenningsfout",
+    aiChatNoSpeech: "Spraakherkenning niet ondersteund in deze browser.",
+    aiChatWorking: "Denken...",
+    aiChatReady: "Klaar",
+    aiChatNoReply: "Geen antwoord van AI.",
+    
+    // Instellingen - Niveausysteem
+    levelSystemSettingsTitle: "Instellingen niveausysteem",
+    configureLevelTitlesBtn: "Configureer niveautitels & beloningen",
+    
+    // Instellingen - Muntensysteem
+    coinsSystemSettingsTitle: "Instellingen muntensysteem",
+    
+    // Instellingen - AI-functies
+    aiFeaturesTitle: "AI-functies",
+    aiAudioLabel: "Schakel AI-audio in",
+    aiAudioHelp: "Schakel tekst-naar-spraak antwoorden in.",
+    voiceNova: "Nova - Vriendelijke vrouw",
+    voiceAlloy: "Alloy - Neutraal",
+    voiceEcho: "Echo - Man",
+    voiceFable: "Fable - Expressief",
+    voiceOnyx: "Onyx - Diepe man",
+    voiceShimmer: "Shimmer - Warme vrouw",
+    
+    // Instellingen - Geavanceerde functies
+    advancedFeaturesTitle: "Geavanceerde functies",
+    
+    // Instellingen - Onderhoud
+    maintenanceToolsTitle: "Onderhoudstools",
+    maintenanceToolsDesc: "Terugkerende klusjes vast in het verleden? Voer deze tijdelijke oplossing uit om achterstallige duplicaten te archiveren en alleen toekomstige taken te behouden.",
+    runDataFixBtn: "Voer tijdelijke gegevenscorrectie uit",
+
       // Nieuw beloningssysteem
       rewardsTitle: "Beloningenbeheer",
       usePointSystemLabel: "Gebruik muntsysteem",
@@ -1594,6 +1918,67 @@ const LANGUAGES = {
       loginPassword: "Hasło",
       loginButton: "Zaloguj się",
       loginError: "Logowanie nieudane",
+    // Ustawienia - System nagród
+    rewardSystemTitle: "System nagród",
+    rewardSystemInfo: "Wybierz sposób obliczania nagród i postępów. Możesz przełączać się między systemami w dowolnym momencie.",
+    levelSystemLabel: "System poziomów (Domyślny)",
+    levelSystemDesc: "Tradycyjny postęp oparty na poziomach z tytułami takimi jak 'Junior', 'Ekspert', 'Mistrz' na podstawie ukończonych zadań.",
+    defaultBadge: "Domyślny",
+    coinSystemLabel: "System monet (Zaawansowany)",
+    coinSystemDesc: "Zarabiaj monety za zadania i wydawaj je na niestandardowe nagrody. Bardziej elastyczny i konfigurowalny.",
+    newFeatureBadge: "Nowa funkcja",
+    migrationWarning: "Uwaga dotycząca migracji: Przełączenie na system monet spowoduje przeliczenie sald na podstawie ukończonych zadań. Możesz wrócić do systemu poziomów w dowolnym momencie bez utraty danych.",
+    
+    // Ustawienia - Wyświetlanie
+    displaySettingsTitle: "Ustawienia wyświetlania",
+    showRewardsTabLabel: "Pokaż kartę Nagrody",
+    showCoinsOnMirrorLabel: "Pokaż monety na lustrze",
+    
+    // Chatbot AI
+    chatbotToggleLabel: "Włącz chatbot AI w panelu admina",
+    chatbotToggleHelp: "Pokaż okno czatu z obsługą tekstu i mikrofonu na pulpicie nawigacyjnym.",
+    chatbotVoiceLabel: "Głos",
+    chatbotVoiceHelp: "Wybierz głos AI dla odpowiedzi głosowych.",
+    aiChatTitle: "Chatbot AI",
+    aiChatSubtitle: "Zadawaj pytania dotyczące obowiązków, osób i harmonogramów.",
+    aiChatSendLabel: "Wyślij",
+    aiChatBadge: "Beta",
+    aiChatPlaceholder: "Wpisz swoje pytanie...",
+    aiChatMicTitle: "Rozmawiaj z asystentem",
+    aiChatWelcome: "Jestem gotowy do pomocy w obowiązkach, osobach i harmonogramach.",
+    aiChatListening: "Słuchanie...",
+    aiChatListenError: "Błąd rozpoznawania mowy",
+    aiChatNoSpeech: "Rozpoznawanie mowy nieobsługiwane w tej przeglądarce.",
+    aiChatWorking: "Myślenie...",
+    aiChatReady: "Gotowy",
+    aiChatNoReply: "Brak odpowiedzi od AI.",
+    
+    // Ustawienia - System poziomów
+    levelSystemSettingsTitle: "Ustawienia systemu poziomów",
+    configureLevelTitlesBtn: "Konfiguruj tytuły poziomów i nagrody",
+    
+    // Ustawienia - System monet
+    coinsSystemSettingsTitle: "Ustawienia systemu monet",
+    
+    // Ustawienia - Funkcje AI
+    aiFeaturesTitle: "Funkcje AI",
+    aiAudioLabel: "Włącz dźwięk AI",
+    aiAudioHelp: "Włącz odpowiedzi tekst na mowę.",
+    voiceNova: "Nova - Przyjazna kobieta",
+    voiceAlloy: "Alloy - Neutralny",
+    voiceEcho: "Echo - Mężczyzna",
+    voiceFable: "Fable - Wyrazisty",
+    voiceOnyx: "Onyx - Głęboki mężczyzna",
+    voiceShimmer: "Shimmer - Ciepła kobieta",
+    
+    // Ustawienia - Funkcje zaawansowane
+    advancedFeaturesTitle: "Funkcje zaawansowane",
+    
+    // Ustawienia - Konserwacja
+    maintenanceToolsTitle: "Narzędzia konserwacji",
+    maintenanceToolsDesc: "Powtarzające się obowiązki utknęły w przeszłości? Uruchom tę tymczasową poprawkę, aby zarchiwizować zaległe duplikaty i zachować tylko nadchodzące zadania.",
+    runDataFixBtn: "Uruchom tymczasową naprawę danych",
+
       // Nowy system nagród
       rewardsTitle: "Zarządzanie nagrodami",
       usePointSystemLabel: "Użyj systemu monet",
@@ -1789,6 +2174,67 @@ const LANGUAGES = {
       loginPassword: "密码",
       loginButton: "登录",
       loginError: "登录失败",
+    // 设置 - 奖励系统
+    rewardSystemTitle: "奖励系统",
+    rewardSystemInfo: "选择如何计算奖励和进度。您可以随时在系统之间切换。",
+    levelSystemLabel: "等级系统（默认）",
+    levelSystemDesc: "传统的基于等级的进度，根据完成的任务获得“初级”、“专家”、“大师”等头衔。",
+    defaultBadge: "默认",
+    coinSystemLabel: "金币系统（高级）",
+    coinSystemDesc: "通过任务赚取金币并将其用于自定义奖励。更加灵活和可定制。",
+    newFeatureBadge: "新功能",
+    migrationWarning: "迁移通知：切换到金币系统将根据您完成的任务重新计算余额。您可以随时切换回等级系统而不会丢失数据。",
+    
+    // 设置 - 显示
+    displaySettingsTitle: "显示设置",
+    showRewardsTabLabel: "显示奖励标签",
+    showCoinsOnMirrorLabel: "在镜子上显示金币",
+    
+    // AI 聊天机器人
+    chatbotToggleLabel: "在管理后台启用 AI 聊天机器人",
+    chatbotToggleHelp: "在仪表板上显示支持文本和麦克风的聊天框。",
+    chatbotVoiceLabel: "语音",
+    chatbotVoiceHelp: "选择用于语音回复的 AI 语音。",
+    aiChatTitle: "AI 聊天机器人",
+    aiChatSubtitle: "询问有关您的家务、人员和日程安排的问题。",
+    aiChatSendLabel: "发送",
+    aiChatBadge: "测试版",
+    aiChatPlaceholder: "输入您的问题...",
+    aiChatMicTitle: "与助手交谈",
+    aiChatWelcome: "我已准备好协助处理家务、人员和日程安排。",
+    aiChatListening: "正在聆听...",
+    aiChatListenError: "语音识别错误",
+    aiChatNoSpeech: "此浏览器不支持语音识别。",
+    aiChatWorking: "正在思考...",
+    aiChatReady: "就绪",
+    aiChatNoReply: "AI 没有回应。",
+    
+    // 设置 - 等级系统
+    levelSystemSettingsTitle: "等级系统设置",
+    configureLevelTitlesBtn: "配置等级头衔和奖励",
+    
+    // 设置 - 金币系统
+    coinsSystemSettingsTitle: "金币系统设置",
+    
+    // 设置 - AI 功能
+    aiFeaturesTitle: "AI 功能",
+    aiAudioLabel: "启用 AI 音频",
+    aiAudioHelp: "启用文本转语音响应。",
+    voiceNova: "Nova - 友好的女性",
+    voiceAlloy: "Alloy - 中性",
+    voiceEcho: "Echo - 男性",
+    voiceFable: "Fable - 富有表现力",
+    voiceOnyx: "Onyx - 深沉的男性",
+    voiceShimmer: "Shimmer - 温暖的女性",
+    
+    // 设置 - 高级功能
+    advancedFeaturesTitle: "高级功能",
+    
+    // 设置 - 维护
+    maintenanceToolsTitle: "维护工具",
+    maintenanceToolsDesc: "重复的家务卡在过去？运行此临时修复程序以归档过期的重复项并仅保留即将到来的任务。",
+    runDataFixBtn: "运行临时数据修复",
+
       // 新奖励系统
       rewardsTitle: "奖励管理",
       usePointSystemLabel: "使用金币系统",
@@ -1984,6 +2430,67 @@ const LANGUAGES = {
       loginPassword: "كلمة المرور",
       loginButton: "تسجيل الدخول",
       loginError: "فشل تسجيل الدخول",
+    // الإعدادات - نظام المكافآت
+    rewardSystemTitle: "نظام المكافآت",
+    rewardSystemInfo: "اختر كيفية حساب المكافآت والتقدم. يمكنك التبديل بين الأنظمة في أي وقت.",
+    levelSystemLabel: "نظام المستويات (افتراضي)",
+    levelSystemDesc: "تقدم تقليدي قائم على المستويات مع ألقاب مثل 'مبتدئ'، 'خبير'، 'سيد' بناءً على المهام المكتملة.",
+    defaultBadge: "افتراضي",
+    coinSystemLabel: "نظام العملات (متقدم)",
+    coinSystemDesc: "اربح عملات للمهام وأنفقها على مكافآت مخصصة. أكثر مرونة وقابلية للتخصيص.",
+    newFeatureBadge: "ميزة جديدة",
+    migrationWarning: "إشعار الترحيل: سيؤدي التبديل إلى نظام العملات إلى إعادة حساب الأرصدة بناءً على مهامك المكتملة. يمكنك العودة إلى نظام المستويات في أي وقت دون فقدان البيانات.",
+    
+    // الإعدادات - العرض
+    displaySettingsTitle: "إعدادات العرض",
+    showRewardsTabLabel: "إظهار علامة تبويب المكافآت",
+    showCoinsOnMirrorLabel: "إظهار العملات على المرآة",
+    
+    // روبوت الدردشة بالذكاء الاصطناعي
+    chatbotToggleLabel: "تمكين روبوت الدردشة بالذكاء الاصطناعي في المسؤول",
+    chatbotToggleHelp: "إظهار مربع دردشة مع دعم النص والميكروفون على لوحة القيادة.",
+    chatbotVoiceLabel: "الصوت",
+    chatbotVoiceHelp: "اختر صوت الذكاء الاصطناعي للردود المنطوقة.",
+    aiChatTitle: "روبوت الدردشة بالذكاء الاصطناعي",
+    aiChatSubtitle: "اطرح أسئلة حول أعمالك الروتينية والأشخاص والجداول الزمنية.",
+    aiChatSendLabel: "إرسال",
+    aiChatBadge: "تجريبي",
+    aiChatPlaceholder: "اكتب سؤالك...",
+    aiChatMicTitle: "تحدث إلى المساعد",
+    aiChatWelcome: "أنا مستعد للمساعدة في الأعمال الروتينية والأشخاص والجداول الزمنية.",
+    aiChatListening: "جاري الاستماع...",
+    aiChatListenError: "خطأ في التعرف على الكلام",
+    aiChatNoSpeech: "التعرف على الكلام غير مدعوم في هذا المتصفح.",
+    aiChatWorking: "جاري التفكير...",
+    aiChatReady: "جاهز",
+    aiChatNoReply: "لا يوجد رد من الذكاء الاصطناعي.",
+    
+    // الإعدادات - نظام المستويات
+    levelSystemSettingsTitle: "إعدادات نظام المستويات",
+    configureLevelTitlesBtn: "تكوين ألقاب المستويات والمكافآت",
+    
+    // الإعدادات - نظام العملات
+    coinsSystemSettingsTitle: "إعدادات نظام العملات",
+    
+    // الإعدادات - ميزات الذكاء الاصطناعي
+    aiFeaturesTitle: "ميزات الذكاء الاصطناعي",
+    aiAudioLabel: "تمكين صوت الذكاء الاصطناعي",
+    aiAudioHelp: "تمكين استجابات تحويل النص إلى كلام.",
+    voiceNova: "Nova - أنثى ودودة",
+    voiceAlloy: "Alloy - محايد",
+    voiceEcho: "Echo - ذكر",
+    voiceFable: "Fable - معبر",
+    voiceOnyx: "Onyx - ذكر عميق",
+    voiceShimmer: "Shimmer - أنثى دافئة",
+    
+    // الإعدادات - ميزات متقدمة
+    advancedFeaturesTitle: "ميزات متقدمة",
+    
+    // الإعدادات - الصيانة
+    maintenanceToolsTitle: "أدوات الصيانة",
+    maintenanceToolsDesc: "الأعمال الروتينية المتكررة عالقة في الماضي؟ قم بتشغيل هذا الإصلاح المؤقت لأرشفة التكرارات المتأخرة والاحتفاظ بالمهام القادمة فقط.",
+    runDataFixBtn: "تشغيل إصلاح البيانات المؤقت",
+
       // نظام المكافآت الجديد
       rewardsTitle: "إدارة المكافآت",
       usePointSystemLabel: "استخدام نظام العملات",

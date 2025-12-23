@@ -153,21 +153,21 @@
                 <div>
                   <div class="d-flex align-items-center gap-2">
                     <i class="bi bi-chat-dots-fill text-primary"></i>
-                    <span id="aiChatTitle">AI Chatbot</span>
+                    <span id="aiChatTitle" data-i18n="aiChatTitle">AI Chatbot</span>
                   </div>
-                  <small class="text-muted" id="aiChatSubtitle">Ask questions about your chores, people, and schedule.</small>
+                  <small class="text-muted" id="aiChatSubtitle" data-i18n="aiChatSubtitle">Ask questions about your chores, people, and schedule.</small>
                 </div>
-                <span class="badge bg-primary-subtle text-primary" id="aiChatBadge">Beta</span>
+                <span class="badge bg-primary-subtle text-primary" id="aiChatBadge" data-i18n="aiChatBadge">Beta</span>
               </div>
               <div class="card-body d-flex flex-column">
                 <div id="aiChatLog" class="ai-chat-log mb-3" aria-live="polite"></div>
                 <div class="input-group ai-chat-input">
-                  <button class="btn btn-outline-secondary" type="button" id="aiChatMic" title="Speak to the assistant" aria-label="Speak to the assistant">
+                  <button class="btn btn-outline-secondary" type="button" id="aiChatMic" title="Speak to the assistant" aria-label="Speak to the assistant" data-i18n-title="aiChatMicTitle" data-i18n-aria-label="aiChatMicTitle">
                     <i class="bi bi-mic-fill" id="aiChatMicIcon"></i>
                   </button>
-                  <input type="text" class="form-control" id="aiChatInput" placeholder="Type your question..." aria-label="AI chatbot prompt" />
+                  <input type="text" class="form-control" id="aiChatInput" placeholder="Type your question..." aria-label="AI chatbot prompt" data-i18n-placeholder="aiChatPlaceholder" data-i18n-aria-label="aiChatPlaceholder" />
                   <button class="btn btn-primary" type="button" id="aiChatSend">
-                    <i class="bi bi-send-fill me-1"></i><span id="aiChatSendLabel">Send</span>
+                    <i class="bi bi-send-fill me-1"></i><span id="aiChatSendLabel" data-i18n="aiChatSendLabel">Send</span>
                   </button>
                 </div>
                 <div id="aiChatStatus" class="form-text mt-2"></div>

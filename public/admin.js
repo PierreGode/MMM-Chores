@@ -919,6 +919,32 @@ function setLanguage(lang) {
     }
   });
 
+  // Generic data-i18n-title handler
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    const keys = key.split('.');
+    let value = t;
+    for (const k of keys) {
+      value = value ? value[k] : null;
+    }
+    if (value) {
+      el.title = value;
+    }
+  });
+
+  // Generic data-i18n-aria-label handler
+  document.querySelectorAll('[data-i18n-aria-label]').forEach(el => {
+    const key = el.getAttribute('data-i18n-aria-label');
+    const keys = key.split('.');
+    let value = t;
+    for (const k of keys) {
+      value = value ? value[k] : null;
+    }
+    if (value) {
+      el.setAttribute('aria-label', value);
+    }
+  });
+
   localizedMonths = Array.from({ length: 12 }, (_, i) =>
     new Date(2000, i).toLocaleDateString(lang, { month: "short" })
   );
