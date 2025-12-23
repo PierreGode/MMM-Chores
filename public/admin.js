@@ -318,12 +318,17 @@ function initSettingsForm(settings) {
     if (!chatbotVoiceContainer) return;
     const aiOn = useAI ? useAI.checked : true;
     const chatOn = chatbotEnabledToggle ? chatbotEnabledToggle.checked : false;
-    chatbotVoiceContainer.style.display = aiOn && chatOn ? '' : 'none';
+    const show = aiOn && chatOn;
+    chatbotVoiceContainer.style.display = show ? '' : 'none';
+    chatbotVoiceContainer.classList.toggle('d-none', !show);
   };
 
   const updateAiSettingsVisibility = () => {
     const aiOn = useAI ? useAI.checked : true;
-    if (chatbotToggleContainer) chatbotToggleContainer.style.display = aiOn ? '' : 'none';
+    if (chatbotToggleContainer) {
+      chatbotToggleContainer.style.display = aiOn ? '' : 'none';
+      chatbotToggleContainer.classList.toggle('d-none', !aiOn);
+    }
     if (!aiOn && chatbotEnabledToggle) chatbotEnabledToggle.checked = false;
     updateVoiceVisibility();
   };
