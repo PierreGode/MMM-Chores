@@ -679,6 +679,14 @@ function updateAiMicState(listening) {
   }
 }
 
+function isIosDevice() {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  const isiOS = /iPad|iPhone|iPod/.test(ua);
+  const iPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+  return isiOS || iPadOS;
+}
+
 function initAiChatSpeechRecognition() {
   if (typeof window === 'undefined') return;
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -708,6 +716,7 @@ function initAiChatSpeechRecognition() {
     updateAiMicState(false);
     const t = LANGUAGES[currentLang] || {};
     setAiChatStatus(event.error || t.aiChatListenError || 'Speech recognition error', 'error');
+    aiChatRecognizer = null;
   };
 
   aiChatRecognizer.onend = () => {
@@ -720,6 +729,7 @@ function initAiChatSpeechRecognition() {
       const t = LANGUAGES[currentLang] || {};
       setAiChatStatus(t.aiChatReady || 'Ready');
     }
+    aiChatRecognizer = null;
   };
 
   aiChatRecognizer.onresult = (event) => {
@@ -800,6 +810,12 @@ function fallbackToWebSpeech(text, onComplete) {
 
 function startListeningWithTimeout() {
   if (!aiChatEnabled) return;
+  if (isIosDevice()) {
+    const t = LANGUAGES[currentLang] || {};
+    setAiChatStatus(t.aiChatReady || 'Ready');
+    updateAiMicState(false);
+    return;
+  }
   
   // Start listening if not already
   if (!aiChatListening) {
@@ -843,6 +859,9 @@ function toggleAiChatListening() {
     aiChatRecognizer.lang = resolveAiChatLocale();
     aiChatRecognizer.start();
   } catch (err) {
+    aiChatListening = false;
+    updateAiMicState(false);
+    aiChatRecognizer = null;
     setAiChatStatus(err.message || t.aiChatListenError || 'Could not start microphone.', 'error');
   }
 }
