@@ -486,12 +486,12 @@ select#taskRecurring option[value="first_monday_month"] {
 
 .reward-system-card.selected {
   border-color: var(--hero-start);
-  background: linear-gradient(135deg, var(--hero-start)10, var(--hero-end)10);
-  color: white;
+  background: linear-gradient(135deg, rgba(78, 116, 255, 0.1), rgba(111, 153, 255, 0.1));
+  color: var(--text);
 }
 
 .reward-system-card.selected .text-muted {
-  color: rgba(255, 255, 255, 0.8) !important;
+  color: #6c757d !important;
 }
 
 .reward-system-card .form-check-input:checked {
