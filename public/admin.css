@@ -38,6 +38,14 @@
   color: #adb5bd;
 }
 
+[data-theme="dark"] .text-muted {
+  color: #adb5bd !important;
+}
+
+[data-theme="dark"] .form-check-label {
+  color: #e9ecef;
+}
+
 /* Global */
 body {
   background: var(--bg-grad);

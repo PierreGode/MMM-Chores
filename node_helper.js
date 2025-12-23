@@ -1980,12 +1980,15 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
       }
 
       const langCode = (settings.language || "en").toLowerCase();
+      const useCoins = settings.useCoinSystem !== false; // Default to true if undefined, or check logic elsewhere
+      const useLevels = settings.levelingEnabled !== false; // Default to true if undefined
+
       const peopleSummary = people
         .map(p => {
           const coins = coinStore.peopleCoins?.[p.id] ?? p.points;
           const parts = [p.name];
-          if (p.level !== undefined) parts.push(`level ${p.level}`);
-          if (coins !== undefined) parts.push(`${coins} coins`);
+          if (useLevels && p.level !== undefined) parts.push(`level ${p.level}`);
+          if (useCoins && coins !== undefined) parts.push(`${coins} coins`);
           return parts.join(" - ");
         })
         .slice(0, 15)
@@ -2022,6 +2025,7 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
       const systemPrompt = `You are an assistant for the MMM-Chores admin dashboard. Be gentle, uplifting, and encouraging. Use a friendly tone. Respond in ${langCode}. 
 Current Date: ${currentDate} (YYYY-MM-DD: ${new Date().toISOString().split('T')[0]}).
 Current User: ${currentUser || "Guest"}.
+Active Reward System: ${useCoins ? "Coins/Points" : "Levels"}. Do not mention levels if the Coin system is active, unless specifically asked.
 You can answer questions about:
 1. Managing tasks, rewards, and people in this dashboard.
 2. General advice on how to perform household chores (e.g., "how to clean a window", "how to start a dishwasher").
