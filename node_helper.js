@@ -1070,6 +1070,7 @@ module.exports = NodeHelper.create({
         showAnalyticsOnMirror: previousSettings.showAnalyticsOnMirror ?? payload.showAnalyticsOnMirror,
         useAI: previousSettings.useAI ?? payload.useAI,
         chatbotEnabled: previousSettings.chatbotEnabled ?? payload.chatbotEnabled ?? false,
+        chatbotTtsEnabled: previousSettings.chatbotTtsEnabled ?? payload.chatbotTtsEnabled ?? false,
         autoUpdate: previousSettings.autoUpdate ?? payload.autoUpdate,
         pushoverEnabled: previousSettings.pushoverEnabled ?? payload.pushoverEnabled,
         reminderTime: previousSettings.reminderTime ?? payload.reminderTime,

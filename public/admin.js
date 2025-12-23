@@ -31,6 +31,7 @@ let aiChatRecognizer = null;
 let aiChatListening = false;
 let aiChatInitialized = false;
 let aiChatEnabled = false;
+let aiChatTtsEnabled = false;
 const TASK_SERIES_FILTER_KEY = 'mmm-chores-series-filter';
 let showTaskSeriesRootsOnly = localStorage.getItem(TASK_SERIES_FILTER_KEY) === '1';
 const personRewardsModalEl = document.getElementById('personRewardsModal');
@@ -309,6 +310,7 @@ function initSettingsForm(settings) {
   const levelEnable = document.getElementById('settingsLevelEnable');
   const autoUpdate = document.getElementById('settingsAutoUpdate');
   const chatbotEnabledToggle = document.getElementById('settingsChatbotEnabled');
+  const chatbotTtsEnabledToggle = document.getElementById('settingsChatbotTtsEnabled');
   const pushoverEnable = document.getElementById('settingsPushoverEnable');
   const reminderTime = document.getElementById('settingsReminderTime');
   const backgroundSelect = document.getElementById('settingsBackground');
@@ -327,6 +329,8 @@ function initSettingsForm(settings) {
   if (levelEnable) levelEnable.checked = settings.levelingEnabled !== false;
   if (autoUpdate) autoUpdate.checked = !!settings.autoUpdate;
   if (chatbotEnabledToggle) chatbotEnabledToggle.checked = !!settings.chatbotEnabled;
+  if (chatbotTtsEnabledToggle) chatbotTtsEnabledToggle.checked = !!settings.chatbotTtsEnabled;
+  aiChatTtsEnabled = !!settings.chatbotTtsEnabled;
   if (pushoverEnable) pushoverEnable.checked = !!settings.pushoverEnabled;
   if (reminderTime) reminderTime.value = settings.reminderTime || '';
   if (backgroundSelect) backgroundSelect.value = settings.background || '';
@@ -428,6 +432,7 @@ function initSettingsForm(settings) {
       levelingEnabled: levelEnable ? levelEnable.checked : false,
       autoUpdate: autoUpdate ? autoUpdate.checked : false,
       chatbotEnabled: chatbotEnabledToggle ? chatbotEnabledToggle.checked : false,
+      chatbotTtsEnabled: chatbotTtsEnabledToggle ? chatbotTtsEnabledToggle.checked : false,
       pushoverEnabled: pushoverEnable ? pushoverEnable.checked : false,
       reminderTime: reminderTime ? reminderTime.value : '',
       background: backgroundSelect ? backgroundSelect.value : ''
@@ -468,6 +473,7 @@ function initSettingsForm(settings) {
       settings.chatbotEnabled = newSettings.chatbotEnabled;
 
       toggleAiChat(newSettings.chatbotEnabled && newSettings.useAI !== false);
+    aiChatTtsEnabled = !!newSettings.chatbotTtsEnabled;
 
       showToast('Settings saved successfully', 'success');
       const settingsModal = document.getElementById('settingsModal');
@@ -667,6 +673,17 @@ function initAiChatSpeechRecognition() {
   };
 }
 
+function speakAiResponse(text) {
+  if (!aiChatTtsEnabled || !text) return;
+  if ('speechSynthesis' in window) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = resolveAiChatLocale();
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    speechSynthesis.speak(utterance);
+  }
+}
+
 function toggleAiChatListening() {
   if (!aiChatEnabled) return;
   if (!aiChatRecognizer) {
@@ -718,6 +735,7 @@ async function sendAiChatMessage() {
     const reply = data.reply || data.response || t.aiChatNoReply || 'No response from AI.';
     aiChatHistory.push({ role: 'assistant', content: reply });
     appendAiChatBubble('assistant', reply);
+    speakAiResponse(reply);
     setAiChatStatus(t.aiChatReady || 'Ready', 'success');
   } catch (err) {
     setAiChatStatus(err.message || 'AI chat failed', 'error');
@@ -856,6 +874,10 @@ function setLanguage(lang) {
   if (chatbotLbl) chatbotLbl.textContent = t.chatbotToggleLabel || 'Enable AI chatbot in admin';
   const chatbotHelp = document.getElementById('settingsChatbotHelp');
   if (chatbotHelp) chatbotHelp.textContent = t.chatbotToggleHelp || 'Show a chat box with text and microphone support on the dashboard.';
+  const chatbotTtsLbl = document.getElementById('settingsChatbotTtsLabel');
+  if (chatbotTtsLbl) chatbotTtsLbl.textContent = t.chatbotTtsLabel || 'Enable voice responses';
+  const chatbotTtsHelp = document.getElementById('settingsChatbotTtsHelp');
+  if (chatbotTtsHelp) chatbotTtsHelp.textContent = t.chatbotTtsHelp || 'Speak AI responses out loud using text-to-speech.';
   const aiChatTitle = document.getElementById('aiChatTitle');
   if (aiChatTitle) aiChatTitle.textContent = t.aiChatTitle || 'AI Chatbot';
   const aiChatSubtitle = document.getElementById('aiChatSubtitle');

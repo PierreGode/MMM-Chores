@@ -76,6 +76,8 @@ const LANGUAGES = {
     useAiLabel: "Use AI features",
     chatbotToggleLabel: "Enable AI chatbot in admin",
     chatbotToggleHelp: "Show a chat box with text and microphone support on the dashboard.",
+    chatbotTtsLabel: "Enable voice responses",
+    chatbotTtsHelp: "Speak AI responses out loud using text-to-speech.",
     aiChatTitle: "AI Chatbot",
     aiChatSubtitle: "Ask questions about your chores, people, and schedule.",
     aiChatSendLabel: "Send",
