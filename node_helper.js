@@ -2017,7 +2017,9 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
             .map(msg => ({ role: msg.role, content: msg.content.slice(0, 800) }))
         : [];
 
+      const currentDate = new Date().toLocaleDateString(langCode, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
       const systemPrompt = `You are an assistant for the MMM-Chores admin dashboard. Be concise and actionable. Respond in ${langCode}. 
+Current Date: ${currentDate} (YYYY-MM-DD: ${new Date().toISOString().split('T')[0]}).
 When a user asks about a reward, check if they have enough coins. If not, calculate and state exactly how many more coins they need.
 You can create tasks. If a user wants to create a task, ensure you have the task name, person, and date. If any are missing, ask for them.
 Context: People: ${peopleSummary || "none"}. 
@@ -2080,6 +2082,7 @@ Task Rules (Points): ${taskRulesSummary || "none"}.`;
 
         const choice = completion.choices[0];
         let reply = "";
+        let dataChanged = false;
 
         if (choice.message.tool_calls) {
           const toolCall = choice.message.tool_calls[0];
@@ -2100,6 +2103,7 @@ Task Rules (Points): ${taskRulesSummary || "none"}.`;
               autoAssignTaskPoints(newTask, { force: true });
               tasks.push(newTask);
               saveData();
+              dataChanged = true;
               
               messages.push(choice.message);
               messages.push({
@@ -2156,7 +2160,7 @@ Task Rules (Points): ${taskRulesSummary || "none"}.`;
           }
         }
 
-        res.json({ reply, audio: audioBase64 });
+        res.json({ reply, audio: audioBase64, dataChanged });
       } catch (error) {
         Log.error("MMM-Chores: AI chat failed", error);
         res.status(500).json({ error: "Failed to generate AI response" });

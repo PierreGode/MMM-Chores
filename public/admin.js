@@ -819,6 +819,11 @@ async function sendAiChatMessage() {
     appendAiChatBubble('assistant', reply);
     speakAiResponse(reply, data.audio);
     setAiChatStatus(t.aiChatReady || 'Ready', 'success');
+
+    if (data.dataChanged) {
+      await fetchTasks();
+      await fetchPeople();
+    }
   } catch (err) {
     setAiChatStatus(err.message || 'AI chat failed', 'error');
     showToast(err.message || 'AI chat failed', 'danger', 6000);
