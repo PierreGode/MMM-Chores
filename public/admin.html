@@ -627,33 +627,34 @@
               </div>
             </div>
 
-            <!-- Advanced Features -->
+            <!-- AI Features -->
             <div class="card mb-4">
               <div class="card-header">
-                <h6 class="card-title mb-0">
-                  <i class="bi bi-gear-wide-connected me-2"></i>Advanced Features
+                <h6 class="card-title mb-0" id="aiFeaturesTitle">
+                  <i class="bi bi-cpu me-2"></i>AI Features
                 </h6>
               </div>
               <div class="card-body">
                 <div class="row gy-3">
-                  <div class="col-12 col-sm-6">
+                  <div class="col-12">
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="settingsUseAI" />
-                      <label class="form-check-label" for="settingsUseAI">Use AI features</label>
+                      <label class="form-check-label" for="settingsUseAI" id="settingsUseAILabel">Use AI features</label>
                     </div>
                   </div>
-                  <div class="col-12 col-sm-6">
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="settingsAutoUpdate" />
-                      <label class="form-check-label" for="settingsAutoUpdate">Enable autoupdate</label>
-                    </div>
-                  </div>
-                  <div class="col-12">
+                  <div class="col-12" id="chatbotToggleContainer" style="display: none;">
                     <div class="form-check form-switch">
                       <input class="form-check-input" type="checkbox" id="settingsChatbotEnabled" />
                       <label class="form-check-label" for="settingsChatbotEnabled" id="settingsChatbotLabel">Enable AI chatbot in admin</label>
                     </div>
                     <div class="form-text" id="settingsChatbotHelp">Show a chat box with text and microphone support on the dashboard.</div>
+                  </div>
+                  <div class="col-12" id="chatbotAudioContainer" style="display: none;">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="settingsChatbotAudioEnabled" />
+                      <label class="form-check-label" for="settingsChatbotAudioEnabled" id="settingsChatbotAudioLabel">Enable AI audio responses</label>
+                    </div>
+                    <div class="form-text" id="settingsChatbotAudioHelp">Speak AI responses out loud.</div>
                   </div>
                   <div class="col-12" id="chatbotVoiceContainer" style="display: none;">
                     <label class="form-label" for="settingsChatbotVoice" id="settingsChatbotVoiceLabel">Voice</label>
@@ -666,6 +667,25 @@
                       <option value="shimmer">Shimmer - Warm female</option>
                     </select>
                     <div class="form-text" id="settingsChatbotVoiceHelp">Choose the AI voice for spoken responses.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Advanced Features -->
+            <div class="card mb-4">
+              <div class="card-header">
+                <h6 class="card-title mb-0">
+                  <i class="bi bi-gear-wide-connected me-2"></i>Advanced Features
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="row gy-3">
+                  <div class="col-12">
+                    <div class="form-check form-switch">
+                      <input class="form-check-input" type="checkbox" id="settingsAutoUpdate" />
+                      <label class="form-check-label" for="settingsAutoUpdate">Enable autoupdate</label>
+                    </div>
                   </div>
                 </div>
               </div>

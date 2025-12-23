@@ -311,6 +311,8 @@ function initSettingsForm(settings) {
   const autoUpdate = document.getElementById('settingsAutoUpdate');
   const chatbotToggleContainer = document.getElementById('chatbotToggleContainer');
   const chatbotEnabledToggle = document.getElementById('settingsChatbotEnabled');
+  const chatbotAudioContainer = document.getElementById('chatbotAudioContainer');
+  const chatbotAudioEnabled = document.getElementById('settingsChatbotAudioEnabled');
   const chatbotVoiceSelect = document.getElementById('settingsChatbotVoice');
   const chatbotVoiceContainer = document.getElementById('chatbotVoiceContainer');
 
@@ -318,11 +320,24 @@ function initSettingsForm(settings) {
     if (!chatbotVoiceContainer) return;
     const aiOn = useAI ? useAI.checked : true;
     const chatOn = chatbotEnabledToggle ? chatbotEnabledToggle.checked : false;
-    const show = aiOn && chatOn;
+    const audioOn = chatbotAudioEnabled ? chatbotAudioEnabled.checked : false;
+    const show = aiOn && chatOn && audioOn;
     chatbotVoiceContainer.style.display = show ? '' : 'none';
     chatbotVoiceContainer.classList.toggle('d-none', !show);
     chatbotVoiceContainer.hidden = !show;
     chatbotVoiceContainer.setAttribute('aria-hidden', show ? 'false' : 'true');
+  };
+
+  const updateAudioVisibility = () => {
+    if (!chatbotAudioContainer) return;
+    const aiOn = useAI ? useAI.checked : true;
+    const chatOn = chatbotEnabledToggle ? chatbotEnabledToggle.checked : false;
+    const show = aiOn && chatOn;
+    chatbotAudioContainer.style.display = show ? '' : 'none';
+    chatbotAudioContainer.classList.toggle('d-none', !show);
+    chatbotAudioContainer.hidden = !show;
+    chatbotAudioContainer.setAttribute('aria-hidden', show ? 'false' : 'true');
+    updateVoiceVisibility();
   };
 
   const updateAiSettingsVisibility = () => {
@@ -334,7 +349,7 @@ function initSettingsForm(settings) {
       chatbotToggleContainer.setAttribute('aria-hidden', aiOn ? 'false' : 'true');
     }
     if (!aiOn && chatbotEnabledToggle) chatbotEnabledToggle.checked = false;
-    updateVoiceVisibility();
+    updateAudioVisibility();
   };
 
   if (useAI) {
@@ -342,9 +357,13 @@ function initSettingsForm(settings) {
   }
 
   if (chatbotEnabledToggle) {
-    chatbotEnabledToggle.addEventListener('change', updateVoiceVisibility);
+    chatbotEnabledToggle.addEventListener('change', updateAudioVisibility);
   }
-  
+
+  if (chatbotAudioEnabled) {
+    chatbotAudioEnabled.addEventListener('change', updateVoiceVisibility);
+  }
+
   updateAiSettingsVisibility();
   const pushoverEnable = document.getElementById('settingsPushoverEnable');
   const reminderTime = document.getElementById('settingsReminderTime');
@@ -365,13 +384,13 @@ function initSettingsForm(settings) {
   if (autoUpdate) autoUpdate.checked = !!settings.autoUpdate;
   if (chatbotEnabledToggle) {
     chatbotEnabledToggle.checked = !!settings.chatbotEnabled;
-    if (chatbotVoiceContainer) {
-      chatbotVoiceContainer.style.display = settings.chatbotEnabled ? '' : 'none';
-    }
+  }
+  if (chatbotAudioEnabled) {
+    chatbotAudioEnabled.checked = settings.chatbotAudioEnabled !== false;
   }
   if (chatbotVoiceSelect) chatbotVoiceSelect.value = settings.chatbotVoice || 'nova';
   updateAiSettingsVisibility();
-  aiChatTtsEnabled = !!settings.chatbotEnabled && settings.useAI !== false;
+  aiChatTtsEnabled = !!settings.chatbotEnabled && (settings.chatbotAudioEnabled !== false) && settings.useAI !== false;
   if (pushoverEnable) pushoverEnable.checked = !!settings.pushoverEnabled;
   if (reminderTime) reminderTime.value = settings.reminderTime || '';
   if (backgroundSelect) backgroundSelect.value = settings.background || '';
@@ -473,6 +492,7 @@ function initSettingsForm(settings) {
       levelingEnabled: levelEnable ? levelEnable.checked : false,
       autoUpdate: autoUpdate ? autoUpdate.checked : false,
       chatbotEnabled: (useAI ? useAI.checked : false) && (chatbotEnabledToggle ? chatbotEnabledToggle.checked : false),
+      chatbotAudioEnabled: chatbotAudioEnabled ? chatbotAudioEnabled.checked : true,
       chatbotVoice: chatbotVoiceSelect ? chatbotVoiceSelect.value : 'nova',
       pushoverEnabled: pushoverEnable ? pushoverEnable.checked : false,
       reminderTime: reminderTime ? reminderTime.value : '',
@@ -513,10 +533,11 @@ function initSettingsForm(settings) {
       settings.showCoinsOnMirror = newSettings.showCoinsOnMirror;
       settings.useAI = newSettings.useAI;
       settings.chatbotEnabled = newSettings.chatbotEnabled;
+      settings.chatbotAudioEnabled = newSettings.chatbotAudioEnabled;
       settings.chatbotVoice = newSettings.chatbotVoice;
 
       toggleAiChat(newSettings.chatbotEnabled && newSettings.useAI !== false);
-      aiChatTtsEnabled = !!newSettings.chatbotEnabled && newSettings.useAI !== false;
+      aiChatTtsEnabled = !!newSettings.chatbotEnabled && newSettings.chatbotAudioEnabled && newSettings.useAI !== false;
 
       showToast('Settings saved successfully', 'success');
       const settingsModal = document.getElementById('settingsModal');
@@ -939,12 +960,18 @@ function setLanguage(lang) {
   if (showAnalyticsLbl) showAnalyticsLbl.textContent = t.analyticsOnMirrorLabel || 'Analytics on mirror';
   const showRedeemedRewardsLbl = document.querySelector("label[for='settingsShowRedeemedRewards']");
   if (showRedeemedRewardsLbl) showRedeemedRewardsLbl.textContent = t.showRedeemedRewardsLabel || 'Show redeemed rewards on mirror';
-  const useAiLbl = document.querySelector("label[for='settingsUseAI']");
+  const aiFeaturesTitle = document.getElementById('aiFeaturesTitle');
+  if (aiFeaturesTitle) aiFeaturesTitle.textContent = t.aiFeaturesTitle || 'AI Features';
+  const useAiLbl = document.getElementById('settingsUseAILabel');
   if (useAiLbl) useAiLbl.textContent = t.useAiLabel || 'Use AI features';
   const chatbotLbl = document.getElementById('settingsChatbotLabel');
   if (chatbotLbl) chatbotLbl.textContent = t.chatbotToggleLabel || 'Enable AI chatbot in admin';
   const chatbotHelp = document.getElementById('settingsChatbotHelp');
   if (chatbotHelp) chatbotHelp.textContent = t.chatbotToggleHelp || 'Show a chat box with text and microphone support on the dashboard.';
+  const chatbotAudioLbl = document.getElementById('settingsChatbotAudioLabel');
+  if (chatbotAudioLbl) chatbotAudioLbl.textContent = t.chatbotAudioLabel || 'Enable AI audio responses';
+  const chatbotAudioHelp = document.getElementById('settingsChatbotAudioHelp');
+  if (chatbotAudioHelp) chatbotAudioHelp.textContent = t.chatbotAudioHelp || 'Speak AI responses out loud.';
   const chatbotVoiceLbl = document.getElementById('settingsChatbotVoiceLabel');
   if (chatbotVoiceLbl) chatbotVoiceLbl.textContent = t.chatbotVoiceLabel || 'Voice';
   const chatbotVoiceHelp = document.getElementById('settingsChatbotVoiceHelp');
