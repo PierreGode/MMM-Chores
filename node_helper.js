@@ -1161,6 +1161,10 @@ Available actions:
 - add_task: Create new task (needs task name, optional: assignee, date)
 - check_stats: Show statistics (person's points, level, completed tasks)
 - redeem_reward: Redeem a reward (needs reward name)
+- check_reward: Check reward details (needs reward name)
+- halp user caulculare remaining coins to get reward (needs reward name)
+- do not return full dates only day for upcomming tasks 
+
 
 Current people: ${context.people.map(p => p.name).join(", ")}
 Current tasks: ${context.tasks.slice(0, 10).map(t => `"${t.name}"`).join(", ")}
