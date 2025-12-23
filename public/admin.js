@@ -810,12 +810,6 @@ function fallbackToWebSpeech(text, onComplete) {
 
 function startListeningWithTimeout() {
   if (!aiChatEnabled) return;
-  if (isIosDevice()) {
-    const t = LANGUAGES[currentLang] || {};
-    setAiChatStatus(t.aiChatReady || 'Ready');
-    updateAiMicState(false);
-    return;
-  }
   
   // Start listening if not already
   if (!aiChatListening) {
