@@ -2019,7 +2019,7 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
 
       const currentUser = (req.user && req.user.username) ? req.user.username : null;
       const currentDate = new Date().toLocaleDateString(langCode, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-      const systemPrompt = `You are an assistant for the MMM-Chores admin dashboard. Be concise and actionable. Respond in ${langCode}. 
+      const systemPrompt = `You are an assistant for the MMM-Chores admin dashboard. Be gentle, uplifting, and encouraging. Use a friendly tone. Respond in ${langCode}. 
 Current Date: ${currentDate} (YYYY-MM-DD: ${new Date().toISOString().split('T')[0]}).
 Current User: ${currentUser || "Guest"}.
 You can answer questions about:
