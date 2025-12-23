@@ -54,7 +54,20 @@ Module.register("MMM-Chores", {
       "Legend",
       "Mythic"
     ],
-    customLevelTitles: {}
+    customLevelTitles: {},
+    voiceAssistant: {
+      enabled: false,
+      language: null,          // null = derive from module language (en->en-US, sv->sv-SE, etc.)
+      continuous: false,
+      interimResults: false,
+      maxAlternatives: 1,
+      ttsEnabled: true,
+      ttsVoice: "default",
+      ttsRate: 1.0,
+      ttsPitch: 1.0,
+      showTranscription: true,
+      wakeWord: null  // Optional wake word like "hey chores"
+    }
   },
 
   start() {
@@ -64,8 +77,14 @@ Module.register("MMM-Chores", {
     this.redemptions = [];
     this.levelInfo = null;
     this.chartInstances = {};
+    this.voiceRecognition = null;
+    this.isListening = false;
+    this.lastTranscript = "";
     this.sendSocketNotification("INIT_SERVER", this.config);
     this.scheduleUpdate();
+    if (this.config.voiceAssistant && this.config.voiceAssistant.enabled) {
+      this.initVoiceRecognition();
+    }
   },
 
   getStyles() {
@@ -149,6 +168,14 @@ Module.register("MMM-Chores", {
         message: payload || "Please set pushoverApiKey and pushoverUser in config.js to use Pushover notifications."
       });
     }
+    if (notification === "VOICE_RESPONSE") {
+      if (this.config.voiceAssistant && this.config.voiceAssistant.ttsEnabled) {
+        this.speakResponse(payload.text);
+      }
+      if (payload.action) {
+        this.handleVoiceAction(payload.action);
+      }
+    }
   },
 
   shouldShowTask(task) {
@@ -196,6 +223,16 @@ Module.register("MMM-Chores", {
 
   toggleDone(task, done) {
     this.sendSocketNotification("USER_TOGGLE_CHORE", { id: task.id, done });
+  },
+
+  handleVoiceAction(action) {
+    if (action.type === "TOGGLE_TASK" && action.taskId) {
+      const task = this.tasks.find(t => t.id === action.taskId);
+      if (task) {
+        this.toggleDone(task, action.done);
+      }
+    }
+    // Additional actions can be handled here
   },
 
   formatDate(dateStr) {
@@ -430,8 +467,146 @@ Module.register("MMM-Chores", {
     return entry ? entry[1] : labels.en;
   },
 
+  resolveVoiceLocale(preferred) {
+    const fallback = "en-US";
+    const fromConfig = (this.config.language || "").toLowerCase();
+    const preferredCode = (preferred || fromConfig || "en").toLowerCase();
+    const map = {
+      en: "en-US",
+      sv: "sv-SE",
+      es: "es-ES",
+      fr: "fr-FR",
+      de: "de-DE",
+      it: "it-IT",
+      nl: "nl-NL",
+      pl: "pl-PL",
+      zh: "zh-CN",
+      ar: "ar-AR"
+    };
+    return map[preferredCode.split("-")[0]] || preferred || fallback;
+  },
+
+  initVoiceRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      Log.warn("MMM-Chores: Speech recognition not supported in this browser");
+      return;
+    }
+
+    const config = this.config.voiceAssistant;
+    this.voiceRecognition = new SpeechRecognition();
+    this.voiceRecognition.lang = this.resolveVoiceLocale(config.language);
+    this.voiceRecognition.continuous = config.continuous || false;
+    this.voiceRecognition.interimResults = config.interimResults || false;
+    this.voiceRecognition.maxAlternatives = config.maxAlternatives || 1;
+
+    this.voiceRecognition.onstart = () => {
+      this.isListening = true;
+      this.updateDom();
+    };
+
+    this.voiceRecognition.onresult = (event) => {
+      const result = event.results[event.results.length - 1];
+      if (result.isFinal) {
+        const transcript = result[0].transcript.trim();
+        this.lastTranscript = transcript;
+        this.handleVoiceCommand(transcript);
+      }
+    };
+
+    this.voiceRecognition.onerror = (event) => {
+      Log.error("MMM-Chores: Voice recognition error", event.error);
+      this.isListening = false;
+      this.updateDom();
+    };
+
+    this.voiceRecognition.onend = () => {
+      this.isListening = false;
+      this.updateDom();
+    };
+  },
+
+  startListening() {
+    if (!this.voiceRecognition) {
+      this.initVoiceRecognition();
+    }
+    if (this.voiceRecognition && !this.isListening) {
+      try {
+        this.voiceRecognition.start();
+      } catch (err) {
+        Log.error("MMM-Chores: Failed to start voice recognition", err);
+      }
+    }
+  },
+
+  stopListening() {
+    if (this.voiceRecognition && this.isListening) {
+      this.voiceRecognition.stop();
+    }
+  },
+
+  handleVoiceCommand(transcript) {
+    Log.log("MMM-Chores: Voice command received:", transcript);
+    this.sendSocketNotification("VOICE_COMMAND", {
+      transcript,
+      people: this.people,
+      tasks: this.tasks
+    });
+    this.updateDom();
+  },
+
+  speakResponse(text) {
+    if (!this.config.voiceAssistant || !this.config.voiceAssistant.ttsEnabled) {
+      return;
+    }
+
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(text);
+      const config = this.config.voiceAssistant;
+      
+      if (config.ttsVoice && config.ttsVoice !== 'default') {
+        const voices = speechSynthesis.getVoices();
+        const voice = voices.find(v => v.name === config.ttsVoice);
+        if (voice) utterance.voice = voice;
+      }
+      
+      utterance.rate = config.ttsRate || 1.0;
+      utterance.pitch = config.ttsPitch || 1.0;
+      utterance.lang = this.resolveVoiceLocale(config.language);
+      
+      speechSynthesis.speak(utterance);
+    }
+  },
+
   getDom() {
     const wrapper = document.createElement("div");
+
+    // Voice Assistant UI
+    if (this.config.voiceAssistant && this.config.voiceAssistant.enabled) {
+      const voiceControls = document.createElement("div");
+      voiceControls.className = "voice-controls";
+      
+      const micButton = document.createElement("button");
+      micButton.className = `voice-mic-button ${this.isListening ? "listening" : ""}`;
+      micButton.innerHTML = this.isListening ? "🎙️ Listening..." : "🎤 Voice";
+      micButton.addEventListener("click", () => {
+        if (this.isListening) {
+          this.stopListening();
+        } else {
+          this.startListening();
+        }
+      });
+      voiceControls.appendChild(micButton);
+
+      if (this.config.voiceAssistant.showTranscription && this.lastTranscript) {
+        const transcript = document.createElement("div");
+        transcript.className = "voice-transcript xsmall dimmed";
+        transcript.textContent = `"${this.lastTranscript}"`;
+        voiceControls.appendChild(transcript);
+      }
+
+      wrapper.appendChild(voiceControls);
+    }
 
     // Remove the large header showing the global level. Levels are displayed
     // next to each person's name instead.

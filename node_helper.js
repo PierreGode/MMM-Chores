@@ -1111,6 +1111,168 @@ module.exports = NodeHelper.create({
     if (notification === "USER_TOGGLE_CHORE") {
       this.handleUserToggle(payload);
     }
+    if (notification === "VOICE_COMMAND") {
+      this.handleVoiceCommand(payload);
+    }
+  },
+
+  async handleVoiceCommand(payload) {
+    const { transcript, people: currentPeople, tasks: currentTasks } = payload;
+    
+    if (!this.config || !this.config.openaiApiKey) {
+      Log.warn("MMM-Chores: Voice commands require OpenAI API key");
+      return;
+    }
+
+    if (!openaiLoaded) {
+      Log.warn("MMM-Chores: OpenAI package not installed. Run: npm install openai");
+      return;
+    }
+
+    try {
+      const client = new OpenAI({ apiKey: this.config.openaiApiKey });
+      
+      // Build context about current state
+      const context = {
+        people: people.map(p => ({
+          id: p.id,
+          name: p.name,
+          points: coinStore.peopleCoins?.[p.id] || 0
+        })),
+        tasks: tasks.filter(t => !t.deleted).map(t => ({
+          id: t.id,
+          name: t.name,
+          assignedTo: t.assignedTo,
+          done: t.done,
+          date: t.date
+        }))
+      };
+
+      // Ask GPT to parse the intent
+      const langCode = (settings.language || "en").toLowerCase();
+      const systemPrompt = `You are a voice assistant for a chore management system. Parse user commands and return JSON with the intent. Always respond in ${langCode}.
+
+Available actions:
+- list_tasks: Show tasks (filters: today, week, person_name, all)
+- mark_done: Mark task as complete (needs task name or id)
+- mark_undone: Mark task as incomplete
+- add_task: Create new task (needs task name, optional: assignee, date)
+- check_stats: Show statistics (person's points, level, completed tasks)
+- redeem_reward: Redeem a reward (needs reward name)
+
+Current people: ${context.people.map(p => p.name).join(", ")}
+Current tasks: ${context.tasks.slice(0, 10).map(t => `"${t.name}"`).join(", ")}
+
+Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natural language response"}`;
+
+      const completion = await client.chat.completions.create({
+        model: "gpt-5-nano",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: transcript }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.3
+      });
+
+      const result = JSON.parse(completion.choices[0].message.content);
+      
+      // Execute the action
+      const actionResult = await this.executeVoiceAction(result, context);
+      
+      // Send response back to frontend
+      this.sendSocketNotification("VOICE_RESPONSE", {
+        text: actionResult.response || result.response,
+        action: actionResult.action
+      });
+
+    } catch (error) {
+      Log.error("MMM-Chores: Voice command error", error);
+      this.sendSocketNotification("VOICE_RESPONSE", {
+        text: "Sorry, I couldn't process that command.",
+        action: null
+      });
+    }
+  },
+
+  async executeVoiceAction(intent, context) {
+    const { action, params, response } = intent;
+    let actionPayload = null;
+
+    switch (action) {
+      case "list_tasks": {
+        const filter = params.filter || "today";
+        const today = new Date().toISOString().split("T")[0];
+        let filtered = context.tasks;
+
+        if (filter === "today") {
+          filtered = filtered.filter(t => t.date === today && !t.done);
+        } else if (filter === "week") {
+          const weekFromNow = new Date();
+          weekFromNow.setDate(weekFromNow.getDate() + 7);
+          filtered = filtered.filter(t => !t.done && new Date(t.date) <= weekFromNow);
+        } else if (filter !== "all") {
+          // Filter by person name
+          const person = context.people.find(p => p.name.toLowerCase() === filter.toLowerCase());
+          if (person) {
+            filtered = filtered.filter(t => t.assignedTo === person.id && !t.done);
+          }
+        }
+
+        const taskList = filtered.map(t => {
+          const assignee = context.people.find(p => p.id === t.assignedTo);
+          return `${t.name}${assignee ? ` for ${assignee.name}` : ""}`;
+        }).join(", ");
+
+        return {
+          response: filtered.length > 0 
+            ? `You have ${filtered.length} task${filtered.length > 1 ? "s" : ""}: ${taskList}`
+            : "No tasks found.",
+          action: null
+        };
+      }
+
+      case "mark_done":
+      case "mark_undone": {
+        const taskName = params.task_name?.toLowerCase();
+        const task = context.tasks.find(t => 
+          t.name.toLowerCase().includes(taskName) || t.id === params.task_id
+        );
+
+        if (task) {
+          const isDone = action === "mark_done";
+          this.handleUserToggle({ id: task.id, done: isDone });
+          
+          return {
+            response: `Marked "${task.name}" as ${isDone ? "complete" : "incomplete"}.`,
+            action: { type: "TOGGLE_TASK", taskId: task.id, done: isDone }
+          };
+        }
+        return { response: "I couldn't find that task.", action: null };
+      }
+
+      case "check_stats": {
+        const personName = params.person_name;
+        const person = context.people.find(p => 
+          p.name.toLowerCase() === personName?.toLowerCase()
+        );
+
+        if (person) {
+          const completedCount = context.tasks.filter(t => 
+            t.assignedTo === person.id && t.done
+          ).length;
+          
+          return {
+            response: `${person.name} has ${person.points} coins and has completed ${completedCount} tasks.`,
+            action: null
+          };
+        }
+        return { response: "I couldn't find that person.", action: null };
+      }
+
+      default:
+        return { response: response || "I'm not sure how to help with that.", action: null };
+    }
   },
 
   async aiGenerateTasks(req, res) {
