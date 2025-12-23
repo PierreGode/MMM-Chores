@@ -2050,7 +2050,26 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
           Log.error("MMM-Chores: AI chat returned empty response", completion);
           return res.status(500).json({ error: "Empty response from AI" });
         }
-        res.json({ reply });
+
+        // Generate audio if TTS is enabled
+        let audioBase64 = null;
+        if (settings.chatbotTtsEnabled) {
+          try {
+            const ttsResponse = await client.audio.speech.create({
+              model: "tts-1",
+              voice: "nova",
+              input: reply
+            });
+            const buffer = Buffer.from(await ttsResponse.arrayBuffer());
+            audioBase64 = buffer.toString("base64");
+            Log.log("MMM-Chores: Generated TTS audio, size:", buffer.length);
+          } catch (ttsError) {
+            Log.error("MMM-Chores: TTS generation failed", ttsError);
+            // Continue without audio if TTS fails
+          }
+        }
+
+        res.json({ reply, audio: audioBase64 });
       } catch (error) {
         Log.error("MMM-Chores: AI chat failed", error);
         res.status(500).json({ error: "Failed to generate AI response" });

@@ -673,8 +673,36 @@ function initAiChatSpeechRecognition() {
   };
 }
 
-function speakAiResponse(text) {
-  if (!aiChatTtsEnabled || !text) return;
+function speakAiResponse(text, audioBase64) {
+  if (!aiChatTtsEnabled) return;
+  
+  // If we have OpenAI TTS audio, play it
+  if (audioBase64) {
+    try {
+      const audioBlob = new Blob(
+        [Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0))],
+        { type: 'audio/mpeg' }
+      );
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
+      audio.play().catch(err => {
+        console.error('Failed to play audio:', err);
+        // Fallback to browser TTS
+        fallbackToWebSpeech(text);
+      });
+      audio.onended = () => URL.revokeObjectURL(audioUrl);
+      return;
+    } catch (err) {
+      console.error('Failed to decode audio:', err);
+    }
+  }
+  
+  // Fallback to browser TTS if no audio provided
+  fallbackToWebSpeech(text);
+}
+
+function fallbackToWebSpeech(text) {
+  if (!text || !aiChatTtsEnabled) return;
   if ('speechSynthesis' in window) {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = resolveAiChatLocale();
@@ -735,7 +763,7 @@ async function sendAiChatMessage() {
     const reply = data.reply || data.response || t.aiChatNoReply || 'No response from AI.';
     aiChatHistory.push({ role: 'assistant', content: reply });
     appendAiChatBubble('assistant', reply);
-    speakAiResponse(reply);
+    speakAiResponse(reply, data.audio);
     setAiChatStatus(t.aiChatReady || 'Ready', 'success');
   } catch (err) {
     setAiChatStatus(err.message || 'AI chat failed', 'error');
