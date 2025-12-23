@@ -1172,8 +1172,7 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
           { role: "system", content: systemPrompt },
           { role: "user", content: transcript }
         ],
-        response_format: { type: "json_object" },
-        temperature: 0.3
+        response_format: { type: "json_object" }
       });
 
       const result = JSON.parse(completion.choices[0].message.content);
@@ -2019,7 +2018,6 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
         const completion = await client.chat.completions.create({
           model: "gpt-5-nano",
           messages,
-          temperature: 0.4,
           max_completion_tokens: 300
         });
         const reply = completion.choices?.[0]?.message?.content?.trim();
