@@ -364,7 +364,6 @@ function initSettingsForm(settings) {
     chatbotAudioEnabled.addEventListener('change', updateVoiceVisibility);
   }
 
-  updateAiSettingsVisibility();
   const pushoverEnable = document.getElementById('settingsPushoverEnable');
   const reminderTime = document.getElementById('settingsReminderTime');
   const backgroundSelect = document.getElementById('settingsBackground');
