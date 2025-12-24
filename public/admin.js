@@ -679,6 +679,24 @@ function updateAiMicState(listening) {
   }
 }
 
+function stopAiChatListeningSession() {
+  if (aiAutoStopTimer) {
+    clearTimeout(aiAutoStopTimer);
+    aiAutoStopTimer = null;
+  }
+  if (aiChatRecognizer) {
+    try {
+      aiChatRecognizer.onend = null;
+      aiChatRecognizer.onresult = null;
+      aiChatRecognizer.onerror = null;
+      aiChatRecognizer.stop();
+    } catch (e) {}
+    aiChatRecognizer = null;
+  }
+  aiChatListening = false;
+  updateAiMicState(false);
+}
+
 function isIosDevice() {
   if (typeof navigator === 'undefined') return false;
   const ua = navigator.userAgent || '';
@@ -760,6 +778,12 @@ function speakAiResponse(text, audioBase64, onComplete) {
   // If we have OpenAI TTS audio, play it
   if (audioBase64) {
     try {
+      try {
+        aiResponseAudio.pause();
+        aiResponseAudio.currentTime = 0;
+      } catch (e) {}
+      aiResponseAudio.onended = null;
+
       const audioBlob = new Blob(
         [Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0))],
         { type: 'audio/mpeg' }
@@ -871,6 +895,8 @@ async function sendAiChatMessage(isVoice = false) {
   const prompt = (input && input.value ? input.value.trim() : '');
   if (!prompt) return;
 
+  stopAiChatListeningSession();
+
   const t = LANGUAGES[currentLang] || {};
   appendAiChatBubble('user', prompt);
   aiChatHistory.push({ role: 'user', content: prompt });
@@ -878,6 +904,14 @@ async function sendAiChatMessage(isVoice = false) {
   if (send) send.disabled = true;
   if (mic) mic.disabled = true;
   setAiChatStatus(t.aiChatWorking || 'Thinking...');
+  let micReleased = false;
+  let playbackCompleted = false;
+  const releaseMic = () => {
+    if (mic && !micReleased) {
+      mic.disabled = false;
+      micReleased = true;
+    }
+  };
 
   try {
     const res = await authFetch('/api/ai-chat', {
@@ -894,6 +928,8 @@ async function sendAiChatMessage(isVoice = false) {
     appendAiChatBubble('assistant', reply);
     
     speakAiResponse(reply, data.audio, () => {
+      playbackCompleted = true;
+      releaseMic();
       if (isVoice) {
         startListeningWithTimeout();
       }
@@ -906,11 +942,15 @@ async function sendAiChatMessage(isVoice = false) {
       await fetchPeople();
     }
   } catch (err) {
+    playbackCompleted = true;
+    releaseMic();
     setAiChatStatus(err.message || 'AI chat failed', 'error');
     showToast(err.message || 'AI chat failed', 'danger', 6000);
   } finally {
     if (send) send.disabled = false;
-    if (mic) mic.disabled = false;
+    if (playbackCompleted) {
+      releaseMic();
+    }
   }
 }
 
