@@ -1671,8 +1671,8 @@ function setLanguage(lang) {
   const taskGroupByPersonWrapper = document.getElementById('taskGroupByPersonWrapper');
   if (taskGroupByPersonToggle && taskGroupByPersonWrapper) {
     taskGroupByPersonToggle.checked = showTaskGroupByPerson;
-    // Only show for write users
-    taskGroupByPersonWrapper.style.display = (userPermission === 'write') ? '' : 'none';
+    // Show for write and screen users
+    taskGroupByPersonWrapper.style.display = (userPermission === 'write' || userPermission === 'screen') ? '' : 'none';
     
     if (!taskGroupByPersonToggle.dataset.bound) {
       taskGroupByPersonToggle.addEventListener('change', (event) => {
