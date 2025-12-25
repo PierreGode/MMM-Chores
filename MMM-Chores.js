@@ -583,6 +583,8 @@ Module.register("MMM-Chores", {
       const wasListening = this.isListening;
       if (this.voiceRecognition && wasListening) {
         this.voiceRecognition.abort();
+        this.isListening = false;
+        this.updateDom();
       }
 
       utterance.onend = () => {

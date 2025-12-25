@@ -770,6 +770,9 @@ function initAiChatSpeechRecognition() {
 }
 
 function speakAiResponse(text, audioBase64, onComplete) {
+  // Ensure mic is stopped before speaking to prevent feedback
+  stopAiChatListeningSession();
+
   if (!aiChatTtsEnabled) {
     if (onComplete) onComplete();
     return;
