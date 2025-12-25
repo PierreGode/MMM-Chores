@@ -37,8 +37,6 @@ let aiAutoStopTimer = null;
 window.isAiSpeaking = false;
 const DEFAULT_TTS_AUDIO = { volume: 0.7, pauseMs: 600, fadeMs: 120 };
 let ttsAudio = { ...DEFAULT_TTS_AUDIO };
-let currentUser = { username: null, personId: null };
-const TASK_MINE_FILTER_KEY = 'mmm-chores-mine-filter';
 let audioContext = null;
 let silenceAudioBuffer = null;
 const TASK_SERIES_FILTER_KEY = 'mmm-chores-series-filter';
@@ -114,13 +112,11 @@ async function checkLogin() {
     if (logoutBtn) logoutBtn.style.display = 'none';
     if (loginDiv) loginDiv.style.display = 'none';
     if (app) app.style.display = '';
-    currentUser = { username: null, personId: null };
     initApp();
     return;
   }
   if (data.loggedIn) {
     userPermission = data.permission || 'write';
-    currentUser = { username: data.username || null, personId: data.personId || null };
     if (loginDiv) loginDiv.style.display = 'none';
     if (app) app.style.display = '';
     initApp();
@@ -143,7 +139,6 @@ async function checkLogin() {
         authToken = out.token;
         localStorage.setItem('choresToken', authToken);
         userPermission = out.permission || 'write';
-        currentUser = { username: out.username || null, personId: out.personId || null };
         loginDiv.style.display = 'none';
         if (app) app.style.display = '';
         initApp();
@@ -194,12 +189,8 @@ function initSettingsForm(settings) {
   const settingsSaveBtn = settingsContainer.querySelector('#settingsSaveBtn');
   if (!settingsSaveBtn) return;
 
-  // Merge user-specific settings overrides if present
-  const userSettings = settings.userSettings?.settings || settings.userSettings || {};
-  const merged = { ...settings, ...userSettings };
-
   // Normalize shared TTS audio settings
-  ttsAudio = parseTtsAudio(merged);
+  ttsAudio = parseTtsAudio(settings);
   aiResponseAudio.volume = ttsAudio.volume;
 
   // Load task coin rules
@@ -221,7 +212,7 @@ function initSettingsForm(settings) {
   const coinSettings = document.getElementById('coinSettings');
 
   // Initialize reward system selection
-  const coinSystemEnabled = merged.useCoinSystem ?? merged.usePointSystem ?? false;
+  const coinSystemEnabled = settings.useCoinSystem ?? settings.usePointSystem ?? false;
   const currentSystem = coinSystemEnabled ? 'coins' : 'level';
   if (useLevelSystem && useCoinSystem) {
     useLevelSystem.checked = currentSystem === 'level';
@@ -511,26 +502,10 @@ function initSettingsForm(settings) {
     };
 
     try {
-      let targetUrl = '/api/settings';
-      let payload = newSettings;
-
-      // Regular users save only per-user settings
-      if (userPermission && userPermission !== 'write') {
-        targetUrl = '/api/user-settings';
-        payload = {
-          background: newSettings.background,
-          showRewardsTab: newSettings.showRewardsTab,
-          useAI: newSettings.useAI,
-          chatbotEnabled: newSettings.chatbotEnabled,
-          ttsAudio: newSettings.ttsAudio,
-          chatbotVoice: newSettings.chatbotVoice
-        };
-      }
-
-      const res = await authFetch(targetUrl, {
+      const res = await authFetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(newSettings)
       });
 
       if (!res.ok) {
@@ -539,42 +514,33 @@ function initSettingsForm(settings) {
       }
 
       settingsSaved = true;
-
-      // Apply immediate UI updates based on what was saved
       setBackground(newSettings.background);
       localStorage.setItem('choresBackground', newSettings.background || '');
-
-      if (userPermission === 'write') {
-        // Update rewards tab based on new system
-        updateRewardsTabVisibility(newSettings.useCoinSystem, newSettings.showRewardsTab);
-        
-        // Refresh data if switching systems
-        const previousCoinSetting = settings.useCoinSystem ?? settings.usePointSystem ?? false;
-        if (previousCoinSetting !== newSettings.useCoinSystem) {
-          if (newSettings.useCoinSystem) {
-            await fetchRewards();
-            await fetchRedemptions();
-          }
-          await fetchPeople();
+      
+      // Update rewards tab based on new system
+      updateRewardsTabVisibility(newSettings.useCoinSystem, newSettings.showRewardsTab);
+      
+      // Refresh data if switching systems
+      const previousCoinSetting = settings.useCoinSystem ?? settings.usePointSystem ?? false;
+      if (previousCoinSetting !== newSettings.useCoinSystem) {
+        if (newSettings.useCoinSystem) {
+          await fetchRewards();
+          await fetchRedemptions();
         }
-
-        settings.useCoinSystem = newSettings.useCoinSystem;
-        settings.usePointSystem = newSettings.useCoinSystem;
-        settings.showCoinsOnMirror = newSettings.showCoinsOnMirror;
-        settings.useAI = newSettings.useAI;
-        settings.chatbotEnabled = newSettings.chatbotEnabled;
-        settings.chatbotTtsEnabled = newSettings.chatbotTtsEnabled;
-        settings.chatbotVoice = newSettings.chatbotVoice;
-        settings.ttsAudio = newSettings.ttsAudio;
-
-        toggleAiChat(newSettings.chatbotEnabled && newSettings.useAI !== false);
-        aiChatTtsEnabled = !!newSettings.chatbotEnabled && !!newSettings.chatbotTtsEnabled && newSettings.useAI !== false;
-      } else {
-        // For regular users, apply AI/chat visibility locally
-        toggleAiChat(newSettings.chatbotEnabled && newSettings.useAI !== false);
-        aiChatTtsEnabled = !!newSettings.chatbotEnabled && !!newSettings.chatbotTtsEnabled && newSettings.useAI !== false;
-        updateRewardsTabVisibility(settings.useCoinSystem ?? false, newSettings.showRewardsTab);
+        await fetchPeople();
       }
+
+      settings.useCoinSystem = newSettings.useCoinSystem;
+      settings.usePointSystem = newSettings.useCoinSystem;
+      settings.showCoinsOnMirror = newSettings.showCoinsOnMirror;
+      settings.useAI = newSettings.useAI;
+      settings.chatbotEnabled = newSettings.chatbotEnabled;
+      settings.chatbotTtsEnabled = newSettings.chatbotTtsEnabled;
+      settings.chatbotVoice = newSettings.chatbotVoice;
+      settings.ttsAudio = newSettings.ttsAudio;
+
+      toggleAiChat(newSettings.chatbotEnabled && newSettings.useAI !== false);
+      aiChatTtsEnabled = !!newSettings.chatbotEnabled && !!newSettings.chatbotTtsEnabled && newSettings.useAI !== false;
 
       showToast('Settings saved successfully', 'success');
       const settingsModal = document.getElementById('settingsModal');
@@ -1577,10 +1543,6 @@ function setLanguage(lang) {
   if (taskSeriesFilterLabel) {
     taskSeriesFilterLabel.textContent = t.taskSeriesFilterLabel || 'Show recurring tasks only';
   }
-  const taskMineFilterLabel = document.getElementById('tasksMineFilterLabel');
-  if (taskMineFilterLabel) {
-    taskMineFilterLabel.textContent = t.taskMineFilterLabel || 'Show only my tasks';
-  }
   const taskSeriesFilterToggle = document.getElementById('tasksSeriesFilter');
   if (taskSeriesFilterToggle) {
     taskSeriesFilterToggle.checked = showTaskSeriesRootsOnly;
@@ -1591,24 +1553,6 @@ function setLanguage(lang) {
         renderTasks();
       });
       taskSeriesFilterToggle.dataset.bound = 'true';
-    }
-  }
-  const taskMineFilterWrapper = document.getElementById('taskMineFilterWrapper');
-  const taskMineFilterToggle = document.getElementById('tasksMineFilter');
-  if (taskMineFilterWrapper && taskMineFilterToggle) {
-    const hasPerson = Boolean(currentUser.personId);
-    taskMineFilterWrapper.style.display = hasPerson ? '' : 'none';
-    if (hasPerson) {
-      const stored = localStorage.getItem(`${TASK_MINE_FILTER_KEY}-${currentUser.username || 'guest'}`) === '1';
-      taskMineFilterToggle.checked = stored;
-      if (!taskMineFilterToggle.dataset.bound) {
-        taskMineFilterToggle.addEventListener('change', (event) => {
-          const val = event.target.checked;
-          localStorage.setItem(`${TASK_MINE_FILTER_KEY}-${currentUser.username || 'guest'}`, val ? '1' : '0');
-          renderTasks();
-        });
-        taskMineFilterToggle.dataset.bound = 'true';
-      }
     }
   }
 
@@ -1738,29 +1682,21 @@ async function fetchTasks() {
 }
 
 async function applySettings(newSettings) {
-  const userSettings = newSettings.userSettings?.settings || {};
-  const merged = { ...newSettings, ...userSettings };
-  if (merged.background !== undefined) {
-    setBackground(merged.background);
-    localStorage.setItem('choresBackground', merged.background || '');
-  }
   if (typeof newSettings.levelingEnabled === 'boolean') {
     levelingEnabled = newSettings.levelingEnabled;
   }
   if (newSettings.useAI !== undefined) {
     const aiButton = document.getElementById('btnAiGenerate');
-    const effectiveUseAI = merged.useAI !== undefined ? merged.useAI : newSettings.useAI;
-    if (aiButton) aiButton.style.display = effectiveUseAI === false ? 'none' : '';
+    if (aiButton) aiButton.style.display = newSettings.useAI === false ? 'none' : '';
   }
   if (newSettings.chatbotEnabled !== undefined || newSettings.useAI !== undefined) {
-    const allowChat = (merged.chatbotEnabled ?? aiChatEnabled) && (merged.useAI ?? true);
+    const allowChat = (newSettings.chatbotEnabled ?? aiChatEnabled) && (newSettings.useAI ?? true);
     toggleAiChat(allowChat);
   }
   if (newSettings.ttsAudio !== undefined) {
-    ttsAudio = parseTtsAudio({ ttsAudio: merged.ttsAudio || newSettings.ttsAudio });
+    ttsAudio = parseTtsAudio({ ttsAudio: newSettings.ttsAudio });
     aiResponseAudio.volume = ttsAudio.volume;
   }
-  updateRewardsTabVisibility(merged.useCoinSystem ?? merged.usePointSystem ?? false, merged.showRewardsTab ?? true);
   if (newSettings.dateFormatting !== undefined) {
     dateFormatting = newSettings.dateFormatting;
   }
@@ -2013,13 +1949,7 @@ function renderPeople() {
   const useCoinSystem = document.getElementById('useCoinSystem');
   const isCoinSystemActive = useCoinSystem && useCoinSystem.checked;
 
-  let peopleToShow = peopleCache.slice();
-  const isRegular = userPermission && userPermission !== 'write';
-  if (isRegular && currentUser.personId) {
-    peopleToShow = peopleToShow.filter(p => p.id === currentUser.personId);
-  }
-
-  if (peopleToShow.length === 0) {
+  if (peopleCache.length === 0) {
     const li = document.createElement("li");
     li.className = "list-group-item text-center text-muted";
     li.textContent = LANGUAGES[currentLang].noPeople;
@@ -2027,7 +1957,7 @@ function renderPeople() {
     return;
   }
 
-  for (const person of peopleToShow) {
+  for (const person of peopleCache) {
     const li = document.createElement("li");
     li.className = "list-group-item d-flex justify-content-between align-items-center";
     const info = document.createElement("span");
@@ -2083,18 +2013,17 @@ function renderPeople() {
   }
   const taskPerson = document.getElementById('taskPerson');
   const editPerson = document.getElementById('editTaskPerson');
-  const isRegular = userPermission && userPermission !== 'write';
   if (taskPerson) {
     taskPerson.innerHTML = '';
     taskPerson.add(new Option(LANGUAGES[currentLang].unassigned, ''));
-    (isRegular && currentUser.personId ? peopleToShow : peopleCache).forEach(p => {
+    peopleCache.forEach(p => {
       taskPerson.add(new Option(p.name, p.id));
     });
   }
   if (editPerson) {
     editPerson.innerHTML = '';
     editPerson.add(new Option(LANGUAGES[currentLang].unassigned, ''));
-    (isRegular && currentUser.personId ? peopleToShow : peopleCache).forEach(p => {
+    peopleCache.forEach(p => {
       editPerson.add(new Option(p.name, p.id));
     });
   }
@@ -2131,13 +2060,7 @@ function renderTasks() {
   list.innerHTML = "";
   const useCoinSystem = document.getElementById('useCoinSystem');
   const isCoinSystemActive = useCoinSystem && useCoinSystem.checked;
-  let activeTasks = tasksCache.filter(task => !task.deleted);
-  if (onlyMine) {
-    activeTasks = activeTasks.filter(task => task.assignedTo === currentUser.personId);
-  }
-
-  const mineToggle = document.getElementById('tasksMineFilter');
-  const onlyMine = mineToggle && mineToggle.checked && currentUser.personId;
+  const activeTasks = tasksCache.filter(task => !task.deleted);
 
   if (activeTasks.length === 0) {
     const li = document.createElement("li");
