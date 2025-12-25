@@ -18,6 +18,8 @@ let settingsSaved = false;
 let dateFormatting = '';
 let authToken = localStorage.getItem('choresToken') || null;
 let userPermission = 'write';
+let currentUserName = null;
+let currentPersonId = null;
 let loginEnabled = true;
 let editTaskId = null;
 let editTaskModal = null;
@@ -37,6 +39,9 @@ let aiAutoStopTimer = null;
 window.isAiSpeaking = false;
 const DEFAULT_TTS_AUDIO = { volume: 0.7, pauseMs: 600, fadeMs: 120 };
 let ttsAudio = { ...DEFAULT_TTS_AUDIO };
+let userSettings = {};
+const MY_TASKS_FILTER_KEY = 'mmm-chores-my-tasks';
+let showMyTasksOnly = localStorage.getItem(MY_TASKS_FILTER_KEY) === '1';
 let audioContext = null;
 let silenceAudioBuffer = null;
 const TASK_SERIES_FILTER_KEY = 'mmm-chores-series-filter';
@@ -117,6 +122,7 @@ async function checkLogin() {
   }
   if (data.loggedIn) {
     userPermission = data.permission || 'write';
+    currentUserName = data.username || null;
     if (loginDiv) loginDiv.style.display = 'none';
     if (app) app.style.display = '';
     initApp();
@@ -158,6 +164,12 @@ async function fetchUserSettings() {
     const res = await authFetch('/api/settings');
     if (!res.ok) throw new Error('Failed fetching user settings');
     const data = await res.json();
+    userSettings = data.userSettings || {};
+    currentUserName = currentUserName || data.currentUser || null;
+    currentPersonId = data.currentPersonId || null;
+    if (data.permission) userPermission = data.permission;
+    const effective = data.effectiveSettings || data;
+    settings = effective; // sync global settings reference with merged view
     return data;
   } catch (e) {
     console.warn('Could not fetch user settings:', e);
@@ -188,6 +200,22 @@ function initSettingsForm(settings) {
   if (!settingsContainer) return;
   const settingsSaveBtn = settingsContainer.querySelector('#settingsSaveBtn');
   if (!settingsSaveBtn) return;
+
+  if (userPermission === 'regular') {
+    // Hide unrelated sections for regular users
+    [
+      'levelSystemCard', 'coinSystemCard', 'levelSettings', 'coinSettings', 'settingsShowPast',
+      'settingsShowAnalytics', 'settingsShowRedeemedRewards', 'settingsPushoverEnable',
+      'settingsReminderTime', 'settingsAutoUpdate', 'settingsTextSize', 'settingsDateFmt',
+      'settingsShowCoinsOnMirror'
+    ].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        const wrap = el.closest('.form-check') || el.closest('.mb-3') || el.closest('.card');
+        if (wrap) wrap.style.display = 'none';
+      }
+    });
+  }
 
   // Normalize shared TTS audio settings
   ttsAudio = parseTtsAudio(settings);
@@ -500,6 +528,48 @@ function initSettingsForm(settings) {
       background: backgroundSelect ? backgroundSelect.value : '',
       ttsAudio
     };
+
+    // Regular users only save their own overrides
+    if (userPermission === 'regular') {
+      const userOnly = {
+        useCoinSystem: coinSystemSelected,
+        usePointSystem: coinSystemSelected,
+        useAI: useAI ? useAI.checked : false,
+        chatbotEnabled: (useAI ? useAI.checked : false) && (chatbotEnabledToggle ? chatbotEnabledToggle.checked : false),
+        chatbotTtsEnabled: (useAI ? useAI.checked : false) && (aiAudioEnabledToggle ? aiAudioEnabledToggle.checked : false),
+        chatbotVoice: chatbotVoiceSelect ? chatbotVoiceSelect.value : 'nova',
+        background: backgroundSelect ? backgroundSelect.value : '',
+        showRewardsTab: showRewardsTab ? showRewardsTab.checked : true
+      };
+
+      try {
+        const res = await authFetch('/api/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userSettings: userOnly })
+        });
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.error || 'Failed to save settings');
+        }
+        userSettings = userOnly;
+        settings = { ...settings, ...userOnly };
+        setBackground(userOnly.background);
+        localStorage.setItem('choresBackground', userOnly.background || '');
+        updateRewardsTabVisibility(userOnly.useCoinSystem, userOnly.showRewardsTab);
+        toggleAiChat(userOnly.chatbotEnabled && userOnly.useAI !== false);
+        aiChatTtsEnabled = !!userOnly.chatbotEnabled && !!userOnly.chatbotTtsEnabled && userOnly.useAI !== false;
+        showToast('Settings saved successfully', 'success');
+        const settingsModal = document.getElementById('settingsModal');
+        const modalInstance = settingsModal ? bootstrap.Modal.getInstance(settingsModal) : null;
+        if (modalInstance) modalInstance.hide();
+        return;
+      } catch (e) {
+        console.error('Failed to save settings:', e);
+        showToast(e.message || 'Failed to save settings', 'danger');
+        return;
+      }
+    }
 
     try {
       const res = await authFetch('/api/settings', {
@@ -1543,6 +1613,10 @@ function setLanguage(lang) {
   if (taskSeriesFilterLabel) {
     taskSeriesFilterLabel.textContent = t.taskSeriesFilterLabel || 'Show recurring tasks only';
   }
+  const taskMyFilterLabel = document.getElementById('taskMyFilterLabel');
+  if (taskMyFilterLabel) {
+    taskMyFilterLabel.textContent = t.taskMyFilterLabel || 'Show only my tasks';
+  }
   const taskSeriesFilterToggle = document.getElementById('tasksSeriesFilter');
   if (taskSeriesFilterToggle) {
     taskSeriesFilterToggle.checked = showTaskSeriesRootsOnly;
@@ -1553,6 +1627,21 @@ function setLanguage(lang) {
         renderTasks();
       });
       taskSeriesFilterToggle.dataset.bound = 'true';
+    }
+  }
+  const taskMyFilterToggle = document.getElementById('tasksMyFilter');
+  const taskMyFilterWrapper = document.getElementById('taskMyFilterWrapper');
+  if (taskMyFilterToggle && taskMyFilterWrapper) {
+    taskMyFilterToggle.checked = showMyTasksOnly;
+    const hasPerson = Boolean(currentPersonId);
+    taskMyFilterWrapper.style.display = hasPerson ? '' : 'none';
+    if (!taskMyFilterToggle.dataset.bound) {
+      taskMyFilterToggle.addEventListener('change', (event) => {
+        showMyTasksOnly = event.target.checked;
+        localStorage.setItem(MY_TASKS_FILTER_KEY, showMyTasksOnly ? '1' : '0');
+        renderTasks();
+      });
+      taskMyFilterToggle.dataset.bound = 'true';
     }
   }
 
@@ -1944,12 +2033,16 @@ function renderPersonRewardsList() {
 function renderPeople() {
   const list = document.getElementById("peopleList");
   list.innerHTML = "";
+  const isRegular = userPermission === 'regular';
+  const visiblePeople = isRegular && currentPersonId
+    ? peopleCache.filter(p => p.id === currentPersonId)
+    : peopleCache.slice();
   
   // Check if coin system is active
   const useCoinSystem = document.getElementById('useCoinSystem');
   const isCoinSystemActive = useCoinSystem && useCoinSystem.checked;
 
-  if (peopleCache.length === 0) {
+  if (visiblePeople.length === 0) {
     const li = document.createElement("li");
     li.className = "list-group-item text-center text-muted";
     li.textContent = LANGUAGES[currentLang].noPeople;
@@ -1957,7 +2050,7 @@ function renderPeople() {
     return;
   }
 
-  for (const person of peopleCache) {
+  for (const person of visiblePeople) {
     const li = document.createElement("li");
     li.className = "list-group-item d-flex justify-content-between align-items-center";
     const info = document.createElement("span");
@@ -2009,6 +2102,19 @@ function renderPeople() {
       actions.appendChild(delBtn);
       li.appendChild(actions);
     }
+    if (userPermission === 'regular') {
+      const actions = document.createElement('div');
+      actions.className = 'btn-group btn-group-sm';
+      if (isCoinSystemActive) {
+        const redeemBtn = document.createElement('button');
+        redeemBtn.className = 'btn btn-outline-success';
+        redeemBtn.title = LANGUAGES[currentLang].redeemReward || 'Redeem Reward';
+        redeemBtn.innerHTML = '<i class="bi bi-gift"></i>';
+        redeemBtn.onclick = () => openRedeemModalForPerson(person.id);
+        actions.appendChild(redeemBtn);
+      }
+      if (actions.childElementCount > 0) li.appendChild(actions);
+    }
     list.appendChild(li);
   }
   const taskPerson = document.getElementById('taskPerson');
@@ -2026,6 +2132,11 @@ function renderPeople() {
     peopleCache.forEach(p => {
       editPerson.add(new Option(p.name, p.id));
     });
+  }
+
+  if (isRegular) {
+    const personForm = document.getElementById('personForm');
+    if (personForm) personForm.style.display = 'none';
   }
 }
 
@@ -2071,7 +2182,11 @@ function renderTasks() {
   }
 
   const recurringTasks = activeTasks.filter(task => task.recurring && task.recurring !== 'none'); // only keep recurring entries
-  const visibleTasks = showTaskSeriesRootsOnly ? recurringTasks : activeTasks;
+  let visibleTasks = showTaskSeriesRootsOnly ? recurringTasks : activeTasks;
+
+  if (showMyTasksOnly && currentPersonId) {
+    visibleTasks = visibleTasks.filter(task => task.assignedTo === currentPersonId);
+  }
 
   if (visibleTasks.length === 0) {
     const li = document.createElement("li");
@@ -2893,26 +3008,27 @@ function setIcon(theme) {
 }
 
 async function initApp() {
-  const userSettings = await fetchUserSettings();
-  customLevelTitles = userSettings.customLevelTitles || {};
-  if (userPermission !== 'write') {
+  const settingsResponse = await fetchUserSettings();
+  const effectiveSettings = settingsResponse.effectiveSettings || settingsResponse;
+  customLevelTitles = effectiveSettings.customLevelTitles || {};
+  if (userPermission !== 'write' && userPermission !== 'regular') {
     const personForm = document.getElementById('personForm');
     if (personForm) personForm.style.display = 'none';
     const taskForm = document.getElementById('taskForm');
     if (taskForm) taskForm.style.display = 'none';
   }
-  if (typeof userSettings.levelingEnabled === "boolean") {
-    levelingEnabled = userSettings.levelingEnabled;
+  if (typeof effectiveSettings.levelingEnabled === "boolean") {
+    levelingEnabled = effectiveSettings.levelingEnabled;
   }
-  if (userSettings.settings) {
-    settingsMode = userSettings.settings;
+  if (effectiveSettings.settings) {
+    settingsMode = effectiveSettings.settings;
   }
-  if (userSettings.language && LANGUAGES[userSettings.language]) {
-    currentLang = userSettings.language;
+  if (effectiveSettings.language && LANGUAGES[effectiveSettings.language]) {
+    currentLang = effectiveSettings.language;
   } else {
     currentLang = localStorage.getItem("mmm-chores-lang") || 'en';
   }
-  dateFormatting = userSettings.dateFormatting || '';
+  dateFormatting = effectiveSettings.dateFormatting || '';
 
   const selector = document.createElement("select");
   selector.className = "language-select";
@@ -2937,7 +3053,7 @@ async function initApp() {
   }
 
   const aiButton = document.getElementById("btnAiGenerate");
-  if (aiButton && userSettings.useAI === false) {
+  if (aiButton && effectiveSettings.useAI === false) {
     aiButton.style.display = "none";
   }
 
@@ -2952,12 +3068,14 @@ async function initApp() {
     });
   }
 
-  initSettingsForm(userSettings);
+  setBackground(effectiveSettings.background || '');
+
+  initSettingsForm(effectiveSettings);
 
   setLanguage(currentLang);
   setupAiChat();
-  toggleAiChat(userSettings.chatbotEnabled && userSettings.useAI !== false);
-  await applySettings(userSettings);
+  toggleAiChat(effectiveSettings.chatbotEnabled && effectiveSettings.useAI !== false);
+  await applySettings(effectiveSettings);
 
   // Initialize rewards system visibility
   const userCoinSystemEnabled = userSettings.useCoinSystem ?? userSettings.usePointSystem ?? false;

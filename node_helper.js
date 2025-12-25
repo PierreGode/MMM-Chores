@@ -36,6 +36,36 @@ const DATA_FILE_BAK = `${DATA_FILE}.bak`;
 const COINS_FILE    = path.join(__dirname, "rewards.json");
 const COINS_FILE_BAK = `${COINS_FILE}.bak`;
 const CERT_DIR      = path.join(__dirname, "certs");
+function sanitizeUsernameToFile(username) {
+  if (!username || typeof username !== "string") return null;
+  const safe = username.replace(/[^a-z0-9_-]/gi, "_");
+  return safe ? path.join(__dirname, `${safe}.json`) : null;
+}
+
+function loadUserSettings(username) {
+  const filePath = sanitizeUsernameToFile(username);
+  if (!filePath || !fs.existsSync(filePath)) return {};
+  try {
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch (err) {
+    Log.error(`MMM-Chores: Failed to read user settings for ${username}`, err);
+    return {};
+  }
+}
+
+function saveUserSettings(username, data) {
+  const filePath = sanitizeUsernameToFile(username);
+  if (!filePath) throw new Error("Invalid username for user settings");
+  const snapshot = JSON.stringify(data || {}, null, 2);
+  writeDataFileAtomic(filePath, snapshot);
+}
+
+function findPersonIdForUsername(username) {
+  if (!username) return null;
+  const lower = username.toLowerCase();
+  const match = people.find(p => (p.name || "").toLowerCase() === lower);
+  return match ? match.id : null;
+}
 
 let tasks = [];
 let people = [];
@@ -1525,7 +1555,7 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
         ...user,
         expires: Date.now() + SESSION_DURATION_MS
       };
-      res.json({ token, permission: user.permission });
+      res.json({ token, permission: user.permission, username: user.username });
     });
 
       app.get("/api/login", (req, res) => {
@@ -1534,7 +1564,7 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
         const user = sessions[token];
         if (user && user.expires > Date.now()) {
           user.expires = Date.now() + SESSION_DURATION_MS;
-          return res.json({ loginRequired: true, loggedIn: true, permission: user.permission });
+          return res.json({ loginRequired: true, loggedIn: true, permission: user.permission, username: user.username });
         }
         if (token && sessions[token]) delete sessions[token];
         res.json({ loginRequired: true, loggedIn: false });
@@ -1571,11 +1601,26 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
       next();
     }
 
+    function requireTaskWrite(req, res, next) {
+      if (!self.config.login) return next();
+      if (!req.user || (req.user.permission !== "write" && req.user.permission !== "regular")) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      next();
+    }
+
     app.get("/", (req, res) => {
       res.sendFile(path.join(__dirname, "public", "admin.html"));
     });
 
-    app.get("/api/people", (req, res) => res.json(people));
+    app.get("/api/people", (req, res) => {
+      if (req.user && req.user.permission === "regular") {
+        const id = findPersonIdForUsername(req.user.username);
+        const filtered = id ? people.filter(p => p.id === id) : [];
+        return res.json(filtered);
+      }
+      res.json(people);
+    });
     app.post("/api/people", requireWrite, (req, res) => {
       const { name } = req.body;
       if (!name) return res.status(400).json({ error: "Name is required" });
@@ -1620,7 +1665,7 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
       }
       res.json(tasks);
     });
-    app.post("/api/tasks", requireWrite, (req, res) => {
+    app.post("/api/tasks", requireTaskWrite, (req, res) => {
       const now = new Date();
       const fallbackAnchor = getNextSeriesAnchorValue();
       const newTask = {
@@ -1661,7 +1706,7 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
     });
 
     // Reorder tasks
-    app.put("/api/tasks/reorder", requireWrite, (req, res) => {
+    app.put("/api/tasks/reorder", requireTaskWrite, (req, res) => {
       const ids = req.body;
       if (!Array.isArray(ids)) {
         return res.status(400).json({ error: "Expected an array of task ids" });
@@ -1716,7 +1761,7 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
       }
       res.json({ success: true });
     });
-    app.put("/api/tasks/:id", requireWrite, (req, res) => {
+    app.put("/api/tasks/:id", requireTaskWrite, (req, res) => {
       const id   = parseInt(req.params.id, 10);
       const task = tasks.find(t => t.id === id);
       if (!task) return res.status(404).json({ error: "Task not found" });
@@ -1792,7 +1837,7 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
       if (!ok) return res.status(500).json({ error: "Failed to save data" });
       res.json(task);
     });
-    app.delete("/api/tasks/:id", requireWrite, (req, res) => {
+    app.delete("/api/tasks/:id", requireTaskWrite, (req, res) => {
       const id = parseInt(req.params.id, 10);
       const task = tasks.find(t => t.id === id);
       if (!task) return res.status(404).json({ error: "Task not found" });
@@ -1820,7 +1865,22 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
       delete safeSettings.openaiApiKey;
       delete safeSettings.pushoverApiKey;
       delete safeSettings.pushoverUser;
-      res.json({ ...safeSettings, leveling: safeSettings.leveling, settings: self.config.settings });
+
+      const currentUser = req.user ? req.user.username : null;
+      const userSettings = currentUser ? loadUserSettings(currentUser) : {};
+      const effectiveSettings = { ...safeSettings, ...userSettings };
+      const currentPersonId = findPersonIdForUsername(currentUser);
+
+      res.json({
+        ...safeSettings,
+        leveling: safeSettings.leveling,
+        settings: self.config.settings,
+        userSettings,
+        effectiveSettings,
+        currentUser,
+        currentPersonId,
+        permission: req.user ? req.user.permission : (self.config.login ? "write" : "write")
+      });
     });
     app.post("/api/datafix", requireWrite, (req, res) => {
       const result = performTemporaryDataFix();
@@ -1844,11 +1904,44 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
       const message = parts.length ? parts.join(", ") : "Temporary fix completed.";
       res.status(ok ? 200 : 500).json({ success: ok, ...result, message });
     });
-    app.put("/api/settings", requireWrite, (req, res) => {
+    app.put("/api/settings", requireTaskWrite, (req, res) => {
       const newSettings = req.body;
       const wasAutoUpdate = settings.autoUpdate;
       const wasCoinSystem = settings.useCoinSystem ?? settings.usePointSystem ?? false;
       let taskPointsRulesUpdated = false;
+      const currentUser = req.user ? req.user.username : null;
+
+      const allowedUserKeys = new Set([
+        "background",
+        "showRewardsTab",
+        "useAI",
+        "chatbotEnabled",
+        "chatbotTtsEnabled",
+        "chatbotVoice",
+        "useCoinSystem",
+        "usePointSystem"
+      ]);
+
+      if (newSettings && typeof newSettings.userSettings === "object") {
+        if (!currentUser) return res.status(401).json({ error: "Unauthorized" });
+        const payload = {};
+        Object.entries(newSettings.userSettings).forEach(([k, v]) => {
+          if (allowedUserKeys.has(k)) {
+            payload[k] = v;
+          }
+        });
+        try {
+          saveUserSettings(currentUser, payload);
+          return res.json({ success: true, userSettings: payload });
+        } catch (err) {
+          Log.error("MMM-Chores: Failed saving user settings", err);
+          return res.status(500).json({ error: "Failed to save user settings" });
+        }
+      }
+
+      if (req.user && req.user.permission === "regular") {
+        return res.status(403).json({ error: "Forbidden" });
+      }
       
       if (typeof newSettings !== "object") {
         return res.status(400).json({ error: "Invalid settings data" });
@@ -1962,7 +2055,7 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
       scheduleReminder(self);
     });
 
-    app.post("/api/ai-chat", requireWrite, async (req, res) => {
+    app.post("/api/ai-chat", requireTaskWrite, async (req, res) => {
       if (!settings.chatbotEnabled) {
         return res.status(400).json({ error: "AI chatbot is disabled in settings" });
       }
@@ -2178,7 +2271,7 @@ Task Rules (Points): ${taskRulesSummary || "none"}.`;
       }
     });
 
-    app.post("/api/ai-generate", requireWrite, (req, res) => self.aiGenerateTasks(req, res));
+    app.post("/api/ai-generate", requireTaskWrite, (req, res) => self.aiGenerateTasks(req, res));
 
     // Rewards API
     app.get("/api/rewards", (req, res) => res.json(coinStore.rewards));
