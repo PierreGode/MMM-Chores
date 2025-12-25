@@ -67,6 +67,11 @@ Module.register("MMM-Chores", {
       ttsPitch: 1.0,
       showTranscription: true,
       wakeWord: null  // Optional wake word like "hey chores"
+    },
+    ttsAudio: {
+      volume: 0.7,
+      pauseMs: 500,
+      fadeMs: 120
     }
   },
 
@@ -565,6 +570,9 @@ Module.register("MMM-Chores", {
       window.speechSynthesis.cancel();
 
       // Add a slight pause/padding at the start to prevent the first word from being cut off
+      const cfg = this.config.ttsAudio || {};
+      const pauseMs = Number.isFinite(cfg.pauseMs) ? cfg.pauseMs : 500;
+      const volume = Number.isFinite(cfg.volume) ? cfg.volume : 0.7;
       const utterance = new SpeechSynthesisUtterance(" " + text);
       const config = this.config.voiceAssistant;
       
@@ -577,7 +585,7 @@ Module.register("MMM-Chores", {
       utterance.rate = config.ttsRate || 1.0;
       utterance.pitch = config.ttsPitch || 1.0;
       utterance.lang = this.resolveVoiceLocale(config.language);
-      utterance.volume = 1.0;
+      utterance.volume = Math.min(Math.max(volume, 0), 1);
 
       // Temporarily stop recognition to prevent feedback/ducking
       const wasListening = this.isListening;
@@ -594,7 +602,7 @@ Module.register("MMM-Chores", {
       // Small delay to allow mic to fully close and audio context to settle
       setTimeout(() => {
         window.speechSynthesis.speak(utterance);
-      }, 200);
+      }, pauseMs);
     }
   },
 

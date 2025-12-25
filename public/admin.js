@@ -34,6 +34,8 @@ let aiChatEnabled = false;
 let aiChatTtsEnabled = false;
 let aiResponseAudio = new Audio(); // Global audio object for AI responses
 let aiAutoStopTimer = null;
+const DEFAULT_TTS_AUDIO = { volume: 0.7, pauseMs: 500, fadeMs: 120 };
+let ttsAudio = { ...DEFAULT_TTS_AUDIO };
 const TASK_SERIES_FILTER_KEY = 'mmm-chores-series-filter';
 let showTaskSeriesRootsOnly = localStorage.getItem(TASK_SERIES_FILTER_KEY) === '1';
 const personRewardsModalEl = document.getElementById('personRewardsModal');
@@ -183,6 +185,10 @@ function initSettingsForm(settings) {
   if (!settingsContainer) return;
   const settingsSaveBtn = settingsContainer.querySelector('#settingsSaveBtn');
   if (!settingsSaveBtn) return;
+
+  // Normalize shared TTS audio settings
+  ttsAudio = parseTtsAudio(settings);
+  aiResponseAudio.volume = ttsAudio.volume;
 
   // Load task coin rules
   if (settings.taskPointsRules && Array.isArray(settings.taskPointsRules)) {
@@ -488,7 +494,8 @@ function initSettingsForm(settings) {
       chatbotVoice: chatbotVoiceSelect ? chatbotVoiceSelect.value : 'nova',
       pushoverEnabled: pushoverEnable ? pushoverEnable.checked : false,
       reminderTime: reminderTime ? reminderTime.value : '',
-      background: backgroundSelect ? backgroundSelect.value : ''
+      background: backgroundSelect ? backgroundSelect.value : '',
+      ttsAudio
     };
 
     try {
@@ -527,6 +534,7 @@ function initSettingsForm(settings) {
       settings.chatbotEnabled = newSettings.chatbotEnabled;
       settings.chatbotTtsEnabled = newSettings.chatbotTtsEnabled;
       settings.chatbotVoice = newSettings.chatbotVoice;
+      settings.ttsAudio = newSettings.ttsAudio;
 
       toggleAiChat(newSettings.chatbotEnabled && newSettings.useAI !== false);
       aiChatTtsEnabled = !!newSettings.chatbotEnabled && !!newSettings.chatbotTtsEnabled && newSettings.useAI !== false;
@@ -651,6 +659,38 @@ function setAiChatStatus(message, variant = 'muted') {
   status.textContent = message || '';
 }
 
+function clamp(val, min, max) {
+  return Math.min(Math.max(val, min), max);
+}
+
+function parseTtsAudio(settings) {
+  const cfg = (settings && settings.ttsAudio) || {};
+  return {
+    volume: Number.isFinite(cfg.volume) ? clamp(cfg.volume, 0, 1) : DEFAULT_TTS_AUDIO.volume,
+    pauseMs: Number.isFinite(cfg.pauseMs) ? Math.max(0, cfg.pauseMs) : DEFAULT_TTS_AUDIO.pauseMs,
+    fadeMs: Number.isFinite(cfg.fadeMs) ? Math.max(0, cfg.fadeMs) : DEFAULT_TTS_AUDIO.fadeMs
+  };
+}
+
+function waitMs(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function fadeInAudioElement(el, targetVolume, durationMs) {
+  const target = clamp(targetVolume, 0, 1);
+  const steps = Math.max(2, Math.ceil(durationMs / 30));
+  const stepDur = durationMs / steps;
+  let current = 0;
+  el.volume = 0;
+  const id = setInterval(() => {
+    current += target / steps;
+    el.volume = current >= target ? target : current;
+    if (current >= target) {
+      clearInterval(id);
+    }
+  }, stepDur);
+}
+
 function resolveAiChatLocale() {
   const map = {
     sv: 'sv-SE',
@@ -695,6 +735,11 @@ function stopAiChatListeningSession() {
   }
   aiChatListening = false;
   updateAiMicState(false);
+}
+
+async function ensureMicStoppedPause() {
+  stopAiChatListeningSession();
+  await waitMs(ttsAudio.pauseMs || DEFAULT_TTS_AUDIO.pauseMs);
 }
 
 function isIosDevice() {
@@ -769,9 +814,9 @@ function initAiChatSpeechRecognition() {
   };
 }
 
-function speakAiResponse(text, audioBase64, onComplete) {
+async function speakAiResponse(text, audioBase64, onComplete) {
   // Ensure mic is stopped before speaking to prevent feedback
-  stopAiChatListeningSession();
+  await ensureMicStoppedPause();
 
   if (!aiChatTtsEnabled) {
     if (onComplete) onComplete();
@@ -795,15 +840,32 @@ function speakAiResponse(text, audioBase64, onComplete) {
       
       // Use the global audio object
       aiResponseAudio.src = audioUrl;
-      
-      // Small delay to allow mic to fully close and audio context to settle
-      setTimeout(() => {
-        aiResponseAudio.play().catch(err => {
-          console.error('Failed to play audio:', err);
-          // Fallback to browser TTS
-          fallbackToWebSpeech(text, onComplete);
-        });
-      }, 300);
+      aiResponseAudio.volume = 0;
+
+      // Wait for media to be ready
+      await new Promise(resolve => {
+        const ready = () => {
+          aiResponseAudio.removeEventListener('canplaythrough', ready);
+          aiResponseAudio.removeEventListener('loadeddata', ready);
+          resolve();
+        };
+        aiResponseAudio.addEventListener('canplaythrough', ready, { once: true });
+        aiResponseAudio.addEventListener('loadeddata', ready, { once: true });
+        // Fallback timeout
+        setTimeout(resolve, 800);
+      });
+
+      // Play after configured pause; apply fade-in for softer start
+      await waitMs(ttsAudio.pauseMs || DEFAULT_TTS_AUDIO.pauseMs);
+      const targetVol = clamp(ttsAudio.volume, 0, 1);
+      const fadeMs = ttsAudio.fadeMs || DEFAULT_TTS_AUDIO.fadeMs;
+      aiResponseAudio.play().then(() => {
+        fadeInAudioElement(aiResponseAudio, targetVol, fadeMs);
+      }).catch(err => {
+        console.error('Failed to play audio:', err);
+        // Fallback to browser TTS
+        fallbackToWebSpeech(text, onComplete);
+      });
       
       // Clean up blob url when done
       aiResponseAudio.onended = () => {
@@ -820,23 +882,28 @@ function speakAiResponse(text, audioBase64, onComplete) {
   fallbackToWebSpeech(text, onComplete);
 }
 
-function fallbackToWebSpeech(text, onComplete) {
+async function fallbackToWebSpeech(text, onComplete) {
   if (!text || !aiChatTtsEnabled) {
     if (onComplete) onComplete();
     return;
   }
   if ('speechSynthesis' in window) {
-    // Add padding to prevent first word cutoff
+    // Ensure any ongoing speech is cancelled and mic is paused
+    window.speechSynthesis.cancel();
+    await ensureMicStoppedPause();
+
+    const pauseMs = ttsAudio.pauseMs || DEFAULT_TTS_AUDIO.pauseMs;
     const utterance = new SpeechSynthesisUtterance(" " + text);
     utterance.lang = resolveAiChatLocale();
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
+    utterance.volume = clamp(ttsAudio.volume, 0, 1);
     utterance.onend = () => {
       if (onComplete) onComplete();
     };
-    setTimeout(() => {
-      speechSynthesis.speak(utterance);
-    }, 200);
+
+    await waitMs(pauseMs);
+    speechSynthesis.speak(utterance);
   } else {
     if (onComplete) onComplete();
   }
@@ -1560,6 +1627,10 @@ async function applySettings(newSettings) {
   if (newSettings.chatbotEnabled !== undefined || newSettings.useAI !== undefined) {
     const allowChat = (newSettings.chatbotEnabled ?? aiChatEnabled) && (newSettings.useAI ?? true);
     toggleAiChat(allowChat);
+  }
+  if (newSettings.ttsAudio !== undefined) {
+    ttsAudio = parseTtsAudio({ ttsAudio: newSettings.ttsAudio });
+    aiResponseAudio.volume = ttsAudio.volume;
   }
   if (newSettings.dateFormatting !== undefined) {
     dateFormatting = newSettings.dateFormatting;
