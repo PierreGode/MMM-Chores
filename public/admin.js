@@ -34,7 +34,7 @@ let aiChatEnabled = false;
 let aiChatTtsEnabled = false;
 let aiResponseAudio = new Audio(); // Global audio object for AI responses
 let aiAutoStopTimer = null;
-const DEFAULT_TTS_AUDIO = { volume: 0.7, pauseMs: 500, fadeMs: 120 };
+const DEFAULT_TTS_AUDIO = { volume: 0.7, pauseMs: 600, fadeMs: 120 };
 let ttsAudio = { ...DEFAULT_TTS_AUDIO };
 const TASK_SERIES_FILTER_KEY = 'mmm-chores-series-filter';
 let showTaskSeriesRootsOnly = localStorage.getItem(TASK_SERIES_FILTER_KEY) === '1';
@@ -678,13 +678,13 @@ function waitMs(ms) {
 
 function fadeInAudioElement(el, targetVolume, durationMs) {
   const target = clamp(targetVolume, 0, 1);
-  const steps = Math.max(2, Math.ceil(durationMs / 30));
+  const steps = Math.max(4, Math.ceil(durationMs / 25));
   const stepDur = durationMs / steps;
   let current = 0;
   el.volume = 0;
   const id = setInterval(() => {
     current += target / steps;
-    el.volume = current >= target ? target : current;
+    el.volume = Math.min(current, target);
     if (current >= target) {
       clearInterval(id);
     }
@@ -893,7 +893,7 @@ async function fallbackToWebSpeech(text, onComplete) {
     await ensureMicStoppedPause();
 
     const pauseMs = ttsAudio.pauseMs || DEFAULT_TTS_AUDIO.pauseMs;
-    const utterance = new SpeechSynthesisUtterance(" " + text);
+    const utterance = new SpeechSynthesisUtterance(". . . " + text);
     utterance.lang = resolveAiChatLocale();
     utterance.rate = 1.0;
     utterance.pitch = 1.0;

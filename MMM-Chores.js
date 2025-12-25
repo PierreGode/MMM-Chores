@@ -70,7 +70,7 @@ Module.register("MMM-Chores", {
     },
     ttsAudio: {
       volume: 0.7,
-      pauseMs: 500,
+      pauseMs: 600,
       fadeMs: 120
     }
   },
@@ -573,7 +573,7 @@ Module.register("MMM-Chores", {
       const cfg = this.config.ttsAudio || {};
       const pauseMs = Number.isFinite(cfg.pauseMs) ? cfg.pauseMs : 500;
       const volume = Number.isFinite(cfg.volume) ? cfg.volume : 0.7;
-      const utterance = new SpeechSynthesisUtterance(" " + text);
+      const utterance = new SpeechSynthesisUtterance(". . . " + text);
       const config = this.config.voiceAssistant;
       
       if (config.ttsVoice && config.ttsVoice !== 'default') {
