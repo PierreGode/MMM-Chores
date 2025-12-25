@@ -41,10 +41,6 @@ let audioContext = null;
 let silenceAudioBuffer = null;
 const TASK_SERIES_FILTER_KEY = 'mmm-chores-series-filter';
 let showTaskSeriesRootsOnly = localStorage.getItem(TASK_SERIES_FILTER_KEY) === '1';
-const TASK_USER_FILTER_KEY = 'mmm-chores-user-filter';
-let showUserTasksOnly = localStorage.getItem(TASK_USER_FILTER_KEY) === '1';
-let currentUserSettings = {};
-let linkedPersonId = null;
 const personRewardsModalEl = document.getElementById('personRewardsModal');
 const personRewardTitlesContainer = document.getElementById('personRewardTitlesContainer');
 const personRewardTitleInputs = [];
@@ -103,43 +99,6 @@ function setBackground(image) {
   }
 }
 
-async function loadAndApplyUserSettings() {
-  if (!authToken) return;
-  currentUserSettings = await fetchUserSpecificSettings();
-  
-  // Apply background
-  if (currentUserSettings.background) {
-    setBackground(currentUserSettings.background);
-  } else {
-    // Fallback to global setting or default
-    const savedBg = localStorage.getItem('choresBackground');
-    setBackground(savedBg === null ? 'forest.png' : savedBg);
-  }
-
-  // Set linked person
-  linkedPersonId = currentUserSettings.linkedPersonId ? Number(currentUserSettings.linkedPersonId) : null;
-  
-  // Show/Hide "My Tasks" filter
-  const userFilterWrapper = document.getElementById('taskUserFilterWrapper');
-  if (userFilterWrapper) {
-    userFilterWrapper.style.display = linkedPersonId ? '' : 'none';
-  }
-  
-  // Update filter checkbox state
-  const userFilter = document.getElementById('tasksUserFilter');
-  if (userFilter) {
-    userFilter.checked = showUserTasksOnly;
-    // If we are filtering but no linked person, disable filter
-    if (showUserTasksOnly && !linkedPersonId) {
-      showUserTasksOnly = false;
-      userFilter.checked = false;
-      localStorage.setItem(TASK_USER_FILTER_KEY, '0');
-    }
-  }
-  
-  renderTasks();
-}
-
 async function checkLogin() {
   const savedBg = localStorage.getItem('choresBackground');
   setBackground(savedBg === null ? 'forest.png' : savedBg);
@@ -161,7 +120,6 @@ async function checkLogin() {
     if (loginDiv) loginDiv.style.display = 'none';
     if (app) app.style.display = '';
     initApp();
-    loadAndApplyUserSettings();
     return;
   }
   if (loginDiv) loginDiv.style.display = '';
@@ -184,7 +142,6 @@ async function checkLogin() {
         loginDiv.style.display = 'none';
         if (app) app.style.display = '';
         initApp();
-        loadAndApplyUserSettings();
       } else {
         const err = document.getElementById('loginError');
         if (err) err.textContent = out.error || LANGUAGES[currentLang].loginError || 'Login failed';
@@ -224,33 +181,6 @@ async function saveUserLanguage(lang) {
 }
 
 // ==========================
-// API: User Specific Settings
-// ==========================
-async function fetchUserSpecificSettings() {
-  try {
-    const res = await authFetch('/api/user-settings');
-    if (!res.ok) return {};
-    const data = await res.json();
-    return data;
-  } catch (e) {
-    console.warn('Could not fetch user specific settings:', e);
-    return {};
-  }
-}
-
-async function saveUserSpecificSettings(settings) {
-  try {
-    await authFetch('/api/user-settings', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(settings)
-    });
-  } catch (e) {
-    console.error('Failed saving user specific settings:', e);
-  }
-}
-
-// ==========================
 // Init settings form and save handler
 // ==========================
 function initSettingsForm(settings) {
@@ -258,37 +188,6 @@ function initSettingsForm(settings) {
   if (!settingsContainer) return;
   const settingsSaveBtn = settingsContainer.querySelector('#settingsSaveBtn');
   if (!settingsSaveBtn) return;
-
-  // User Specific Settings
-  const userSettingsCard = document.getElementById('userSettingsCard');
-  const userLinkedPerson = document.getElementById('userLinkedPerson');
-  const userBackground = document.getElementById('userBackground');
-  
-  if (userSettingsCard) {
-    // Only show if logged in
-    userSettingsCard.style.display = authToken ? '' : 'none';
-    
-    if (authToken) {
-      // Populate person dropdown
-      if (userLinkedPerson) {
-        userLinkedPerson.innerHTML = '<option value="">(Not linked)</option>';
-        peopleCache.forEach(p => {
-          const opt = document.createElement('option');
-          opt.value = p.id;
-          opt.textContent = p.name;
-          userLinkedPerson.appendChild(opt);
-        });
-        if (currentUserSettings.linkedPersonId) {
-          userLinkedPerson.value = currentUserSettings.linkedPersonId;
-        }
-      }
-      
-      // Set background
-      if (userBackground && currentUserSettings.background) {
-        userBackground.value = currentUserSettings.background;
-      }
-    }
-  }
 
   // Normalize shared TTS audio settings
   ttsAudio = parseTtsAudio(settings);
@@ -642,36 +541,6 @@ function initSettingsForm(settings) {
 
       toggleAiChat(newSettings.chatbotEnabled && newSettings.useAI !== false);
       aiChatTtsEnabled = !!newSettings.chatbotEnabled && !!newSettings.chatbotTtsEnabled && newSettings.useAI !== false;
-
-      // Save user specific settings
-      if (authToken) {
-        const userLinkedPerson = document.getElementById('userLinkedPerson');
-        const userBackground = document.getElementById('userBackground');
-        const userSettings = {
-          linkedPersonId: userLinkedPerson ? userLinkedPerson.value : null,
-          background: userBackground ? userBackground.value : ''
-        };
-        
-        await saveUserSpecificSettings(userSettings);
-        
-        // Update local state
-        currentUserSettings = userSettings;
-        linkedPersonId = userSettings.linkedPersonId ? Number(userSettings.linkedPersonId) : null;
-        
-        // Apply background immediately if set
-        if (userSettings.background) {
-          setBackground(userSettings.background);
-        }
-        
-        // Update filter visibility
-        const userFilterWrapper = document.getElementById('taskUserFilterWrapper');
-        if (userFilterWrapper) {
-          userFilterWrapper.style.display = linkedPersonId ? '' : 'none';
-        }
-        
-        // Refresh tasks to apply filter if needed
-        renderTasks();
-      }
 
       showToast('Settings saved successfully', 'success');
       const settingsModal = document.getElementById('settingsModal');
@@ -1687,19 +1556,6 @@ function setLanguage(lang) {
     }
   }
 
-  const taskUserFilterToggle = document.getElementById('tasksUserFilter');
-  if (taskUserFilterToggle) {
-    taskUserFilterToggle.checked = showUserTasksOnly;
-    if (!taskUserFilterToggle.dataset.bound) {
-      taskUserFilterToggle.addEventListener('change', (event) => {
-        showUserTasksOnly = event.target.checked;
-        localStorage.setItem(TASK_USER_FILTER_KEY, showUserTasksOnly ? '1' : '0');
-        renderTasks();
-      });
-      taskUserFilterToggle.dataset.bound = 'true';
-    }
-  }
-
   const analyticsHeader = document.getElementById("analyticsHeader");
   if (analyticsHeader) analyticsHeader.textContent = t.analyticsTitle;
   const addChartSelect = document.getElementById("addChartSelect");
@@ -2215,12 +2071,7 @@ function renderTasks() {
   }
 
   const recurringTasks = activeTasks.filter(task => task.recurring && task.recurring !== 'none'); // only keep recurring entries
-  let visibleTasks = showTaskSeriesRootsOnly ? recurringTasks : activeTasks;
-
-  // Apply user filter
-  if (showUserTasksOnly && linkedPersonId) {
-    visibleTasks = visibleTasks.filter(task => Number(task.assignee) === linkedPersonId);
-  }
+  const visibleTasks = showTaskSeriesRootsOnly ? recurringTasks : activeTasks;
 
   if (visibleTasks.length === 0) {
     const li = document.createElement("li");
