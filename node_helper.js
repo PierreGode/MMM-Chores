@@ -36,6 +36,7 @@ const DATA_FILE_BAK = `${DATA_FILE}.bak`;
 const COINS_FILE    = path.join(__dirname, "rewards.json");
 const COINS_FILE_BAK = `${COINS_FILE}.bak`;
 const CERT_DIR      = path.join(__dirname, "certs");
+const USER_SETTINGS_SUFFIX = ".json"; // Per-user settings stored next to main files
 
 let tasks = [];
 let people = [];
@@ -71,6 +72,38 @@ function getLanguageStrings(langCode) {
   if (!langCode || typeof langCode !== "string") return fallback;
   const normalized = langCode.split("-")[0];
   return LANGUAGES[normalized] || fallback;
+}
+
+function getPersonIdForUser(username) {
+  if (!username) return null;
+  const lower = username.toLowerCase();
+  const direct = people.find(p => p.name && p.name.toLowerCase() === lower);
+  return direct ? direct.id : null;
+}
+
+function loadUserSettings(username) {
+  if (!username) return {};
+  const file = path.join(__dirname, `${username}${USER_SETTINGS_SUFFIX}`);
+  if (!fs.existsSync(file)) return {};
+  try {
+    const parsed = JSON.parse(fs.readFileSync(file, "utf8"));
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (e) {
+    Log.error(`MMM-Chores: Failed to read user settings for ${username}`, e);
+    return {};
+  }
+}
+
+function saveUserSettings(username, data) {
+  if (!username) return false;
+  const file = path.join(__dirname, `${username}${USER_SETTINGS_SUFFIX}`);
+  try {
+    writeDataFileAtomic(file, JSON.stringify(data, null, 2));
+    return true;
+  } catch (e) {
+    Log.error(`MMM-Chores: Failed to save user settings for ${username}`, e);
+    return false;
+  }
 }
 
 function formatTemplate(template, values = {}) {
@@ -1525,7 +1558,7 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
         ...user,
         expires: Date.now() + SESSION_DURATION_MS
       };
-      res.json({ token, permission: user.permission });
+      res.json({ token, permission: user.permission, username: user.username, personId: getPersonIdForUser(user.username) });
     });
 
       app.get("/api/login", (req, res) => {
@@ -1534,7 +1567,13 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
         const user = sessions[token];
         if (user && user.expires > Date.now()) {
           user.expires = Date.now() + SESSION_DURATION_MS;
-          return res.json({ loginRequired: true, loggedIn: true, permission: user.permission });
+          return res.json({
+            loginRequired: true,
+            loggedIn: true,
+            permission: user.permission,
+            username: user.username,
+            personId: getPersonIdForUser(user.username)
+          });
         }
         if (token && sessions[token]) delete sessions[token];
         res.json({ loginRequired: true, loggedIn: false });
@@ -1565,7 +1604,7 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
 
     function requireWrite(req, res, next) {
       if (!self.config.login) return next();
-      if (!req.user || req.user.permission !== "write") {
+      if (!req.user || (req.user.permission !== "write" && req.user.permission !== "regular")) {
         return res.status(403).json({ error: "Forbidden" });
       }
       next();
@@ -1820,7 +1859,9 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
       delete safeSettings.openaiApiKey;
       delete safeSettings.pushoverApiKey;
       delete safeSettings.pushoverUser;
-      res.json({ ...safeSettings, leveling: safeSettings.leveling, settings: self.config.settings });
+      const username = req.user?.username;
+      const userSettings = username ? loadUserSettings(username) : {};
+      res.json({ ...safeSettings, userSettings, leveling: safeSettings.leveling, settings: self.config.settings });
     });
     app.post("/api/datafix", requireWrite, (req, res) => {
       const result = performTemporaryDataFix();
@@ -1960,6 +2001,35 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
         }
       }
       scheduleReminder(self);
+    });
+
+    // Per-user settings CRUD
+    app.get("/api/user-settings", (req, res) => {
+      if (!req.user || !req.user.username) return res.status(401).json({ error: "Unauthorized" });
+      const data = loadUserSettings(req.user.username);
+      res.json(data);
+    });
+
+    app.put("/api/user-settings", (req, res) => {
+      if (!req.user || !req.user.username) return res.status(401).json({ error: "Unauthorized" });
+      const allowedKeys = [
+        "background",
+        "showRewardsTab",
+        "useAI",
+        "chatbotEnabled",
+        "ttsAudio",
+        "aiVoice"
+      ];
+      const incoming = req.body && typeof req.body === "object" ? req.body : {};
+      const current = loadUserSettings(req.user.username).settings || {};
+      const merged = { ...current };
+      allowedKeys.forEach(k => {
+        if (incoming[k] !== undefined) merged[k] = incoming[k];
+      });
+      const payload = { settings: merged };
+      const ok = saveUserSettings(req.user.username, payload);
+      if (!ok) return res.status(500).json({ error: "Failed to save user settings" });
+      res.json({ success: true, settings: merged });
     });
 
     app.post("/api/ai-chat", requireWrite, async (req, res) => {
