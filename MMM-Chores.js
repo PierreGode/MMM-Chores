@@ -564,7 +564,8 @@ Module.register("MMM-Chores", {
       // Cancel any ongoing speech to prevent overlap
       window.speechSynthesis.cancel();
 
-      const utterance = new SpeechSynthesisUtterance(text);
+      // Add a slight pause/padding at the start to prevent the first word from being cut off
+      const utterance = new SpeechSynthesisUtterance("..." + text);
       const config = this.config.voiceAssistant;
       
       if (config.ttsVoice && config.ttsVoice !== 'default') {

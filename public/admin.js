@@ -819,7 +819,8 @@ function fallbackToWebSpeech(text, onComplete) {
     return;
   }
   if ('speechSynthesis' in window) {
-    const utterance = new SpeechSynthesisUtterance(text);
+    // Add padding to prevent first word cutoff
+    const utterance = new SpeechSynthesisUtterance("..." + text);
     utterance.lang = resolveAiChatLocale();
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
