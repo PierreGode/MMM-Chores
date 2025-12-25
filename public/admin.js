@@ -1683,7 +1683,8 @@ function setLanguage(lang) {
   if (taskMyFilterToggle && taskMyFilterWrapper) {
     taskMyFilterToggle.checked = showMyTasksOnly;
     const hasPerson = Boolean(currentPersonId);
-    taskMyFilterWrapper.style.display = hasPerson ? '' : 'none';
+    // Hide if no person selected OR if user is regular (since it's enforced)
+    taskMyFilterWrapper.style.display = (hasPerson && userPermission !== 'regular') ? '' : 'none';
     if (!taskMyFilterToggle.dataset.bound) {
       taskMyFilterToggle.addEventListener('change', (event) => {
         showMyTasksOnly = event.target.checked;
@@ -2234,7 +2235,7 @@ function renderTasks() {
   const recurringTasks = activeTasks.filter(task => task.recurring && task.recurring !== 'none'); // only keep recurring entries
   let visibleTasks = showTaskSeriesRootsOnly ? recurringTasks : activeTasks;
 
-  if (showMyTasksOnly && currentPersonId) {
+  if ((showMyTasksOnly || userPermission === 'regular') && currentPersonId) {
     visibleTasks = visibleTasks.filter(task => task.assignedTo === currentPersonId);
   }
 
