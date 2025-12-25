@@ -1650,9 +1650,15 @@ function setLanguage(lang) {
   if (taskSeriesFilterLabel) {
     taskSeriesFilterLabel.textContent = t.taskSeriesFilterLabel || 'Show recurring tasks only';
   }
+  
+  const groupByPersonLabel = document.querySelector('label[for="tasksGroupByPerson"]');
+  if (groupByPersonLabel) {
+    groupByPersonLabel.textContent = t.groupByPersonLabel || 'Group by person';
+  }
+
   const taskMyFilterLabel = document.getElementById('taskMyFilterLabel');
   if (taskMyFilterLabel) {
-    taskMyFilterLabel.textContent = t.taskMyFilterLabel || 'Show only my tasks';
+    taskMyFilterLabel.textContent = t.showMyTasksLabel || 'Show only my tasks';
   }
   const taskSeriesFilterToggle = document.getElementById('tasksSeriesFilter');
   if (taskSeriesFilterToggle) {

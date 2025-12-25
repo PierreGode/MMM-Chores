@@ -11,6 +11,8 @@ const LANGUAGES = {
     taskPendingLabel: "pending",
     taskSeriesFilterLabel: "Show recurring tasks only",
     taskSeriesFilterEmpty: "No recurring template tasks are available",
+    groupByPersonLabel: "Group by person",
+    showMyTasksLabel: "Show only my tasks",
     taskNamePlaceholder: "Task name…",
     taskRecurring: {
       none: "One time",
@@ -272,6 +274,8 @@ const LANGUAGES = {
     taskPendingLabel: "pågående",
     taskSeriesFilterLabel: "Visa bara återkommande uppgifter",
     taskSeriesFilterEmpty: "Inga återkommande mallar att visa",
+    groupByPersonLabel: "Gruppera efter person",
+    showMyTasksLabel: "Visa bara mina uppgifter",
     taskNamePlaceholder: "Uppgiftsnamn…",
     taskRecurring: {
       none: "Engång",
@@ -535,6 +539,8 @@ const LANGUAGES = {
     taskPendingLabel: "en attente",
     taskSeriesFilterLabel: "Afficher uniquement les tâches récurrentes",
     taskSeriesFilterEmpty: "Aucune tâche récurrente d'origine à afficher",
+    groupByPersonLabel: "Grouper par personne",
+    showMyTasksLabel: "Afficher uniquement mes tâches",
     taskNamePlaceholder: "Nom de la tâche…",
     taskRecurring: {
       none: "Unique",
@@ -791,6 +797,8 @@ const LANGUAGES = {
     taskPendingLabel: "pendientes",
     taskSeriesFilterLabel: "Mostrar solo tareas recurrentes",
     taskSeriesFilterEmpty: "No hay tareas base recurrentes disponibles",
+    groupByPersonLabel: "Agrupar por persona",
+    showMyTasksLabel: "Mostrar solo mis tareas",
     taskNamePlaceholder: "Nombre de tarea…",
     taskRecurring: {
       none: "Una vez",
@@ -1047,6 +1055,8 @@ const LANGUAGES = {
     taskPendingLabel: "offen",
     taskSeriesFilterLabel: "Nur wiederkehrende Aufgaben anzeigen",
     taskSeriesFilterEmpty: "Keine wiederkehrenden Stammaufgaben verfügbar",
+    groupByPersonLabel: "Nach Person gruppieren",
+    showMyTasksLabel: "Nur meine Aufgaben anzeigen",
     taskNamePlaceholder: "Aufgabenname…",
     taskRecurring: {
       none: "Einmalig",
@@ -1303,6 +1313,8 @@ const LANGUAGES = {
     taskPendingLabel: "in sospeso",
     taskSeriesFilterLabel: "Mostra solo le attività ricorrenti",
     taskSeriesFilterEmpty: "Nessuna attività ricorrente principale disponibile",
+    groupByPersonLabel: "Raggruppa per persona",
+    showMyTasksLabel: "Mostra solo i miei compiti",
     taskNamePlaceholder: "Nome del compito…",
     taskRecurring: {
       none: "Una tantum",
@@ -1559,6 +1571,8 @@ const LANGUAGES = {
     taskPendingLabel: "in behandeling",
     taskSeriesFilterLabel: "Toon alleen terugkerende taken",
     taskSeriesFilterEmpty: "Geen terugkerende hoofdtaken beschikbaar",
+    groupByPersonLabel: "Groeperen op persoon",
+    showMyTasksLabel: "Toon alleen mijn taken",
     taskNamePlaceholder: "Taaknaam…",
     taskRecurring: {
       none: "Eenmalig",
@@ -1815,6 +1829,8 @@ const LANGUAGES = {
     taskPendingLabel: "oczekujące",
     taskSeriesFilterLabel: "Pokaż tylko zadania cykliczne",
     taskSeriesFilterEmpty: "Brak bazowych zadań cyklicznych do wyświetlenia",
+    groupByPersonLabel: "Grupuj według osoby",
+    showMyTasksLabel: "Pokaż tylko moje zadania",
     taskNamePlaceholder: "Nazwa zadania…",
     taskRecurring: {
       none: "Jednorazowe",
