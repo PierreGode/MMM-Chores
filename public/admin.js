@@ -46,6 +46,8 @@ let audioContext = null;
 let silenceAudioBuffer = null;
 const TASK_SERIES_FILTER_KEY = 'mmm-chores-series-filter';
 let showTaskSeriesRootsOnly = localStorage.getItem(TASK_SERIES_FILTER_KEY) === '1';
+const TASK_GROUP_FILTER_KEY = 'mmm-chores-group-filter';
+let showTaskGroupByPerson = localStorage.getItem(TASK_GROUP_FILTER_KEY) === '1';
 const personRewardsModalEl = document.getElementById('personRewardsModal');
 const personRewardTitlesContainer = document.getElementById('personRewardTitlesContainer');
 const personRewardTitleInputs = [];
@@ -1658,6 +1660,24 @@ function setLanguage(lang) {
       taskSeriesFilterToggle.dataset.bound = 'true';
     }
   }
+
+  const taskGroupByPersonToggle = document.getElementById('tasksGroupByPerson');
+  const taskGroupByPersonWrapper = document.getElementById('taskGroupByPersonWrapper');
+  if (taskGroupByPersonToggle && taskGroupByPersonWrapper) {
+    taskGroupByPersonToggle.checked = showTaskGroupByPerson;
+    // Only show for write users
+    taskGroupByPersonWrapper.style.display = (userPermission === 'write') ? '' : 'none';
+    
+    if (!taskGroupByPersonToggle.dataset.bound) {
+      taskGroupByPersonToggle.addEventListener('change', (event) => {
+        showTaskGroupByPerson = event.target.checked;
+        localStorage.setItem(TASK_GROUP_FILTER_KEY, showTaskGroupByPerson ? '1' : '0');
+        renderTasks();
+      });
+      taskGroupByPersonToggle.dataset.bound = 'true';
+    }
+  }
+
   const taskMyFilterToggle = document.getElementById('tasksMyFilter');
   const taskMyFilterWrapper = document.getElementById('taskMyFilterWrapper');
   if (taskMyFilterToggle && taskMyFilterWrapper) {
@@ -2226,7 +2246,126 @@ function renderTasks() {
     return;
   }
 
+  if (showTaskGroupByPerson && !showMyTasksOnly) {
+    // Group tasks by person
+    const grouped = {};
+    const unassigned = [];
+    
+    visibleTasks.forEach(task => {
+      if (task.assignedTo) {
+        if (!grouped[task.assignedTo]) grouped[task.assignedTo] = [];
+        grouped[task.assignedTo].push(task);
+      } else {
+        unassigned.push(task);
+      }
+    });
+
+    // Render groups
+    Object.keys(grouped).forEach(personId => {
+      const pid = parseInt(personId, 10);
+      const person = peopleCache.find(p => p.id === pid);
+      const name = person ? person.name : (t.unknownPerson || 'Unknown');
+      
+      renderTaskGroup(list, name, grouped[personId], t, canWrite, canDelete, isCoinSystemActive);
+    });
+
+    if (unassigned.length > 0) {
+      renderTaskGroup(list, t.unassigned || 'Unassigned', unassigned, t, canWrite, canDelete, isCoinSystemActive);
+    }
+
+    // Disable sortable when grouped
+    if (taskSortable) {
+      taskSortable.destroy();
+      taskSortable = null;
+    }
+    return;
+  }
+
   for (const task of visibleTasks) {
+    const li = createTaskElement(task, t, canWrite, canDelete, isCoinSystemActive);
+    list.appendChild(li);
+  }
+
+  if (taskSortable) {
+    taskSortable.destroy();
+    taskSortable = null;
+  }
+  if (canWrite && !showTaskGroupByPerson) {
+    taskSortable = new Sortable(list, {
+      handle: '.drag-handle',
+      animation: 150,
+      onEnd: async (evt) => {
+        const activeSnapshot = tasksCache.filter(task => !task.deleted);
+        let reordered;
+        if (showTaskSeriesRootsOnly) {
+          const displayed = visibleTasks.slice();
+          const movedRoot = displayed.splice(evt.oldIndex, 1)[0];
+          displayed.splice(evt.newIndex, 0, movedRoot);
+          const grouped = activeSnapshot.reduce((map, task) => {
+            const seriesId = task.seriesId || task.id;
+            if (!map.has(seriesId)) map.set(seriesId, []);
+            map.get(seriesId).push(task);
+            return map;
+          }, new Map());
+          const seriesOrder = displayed.map(task => task.seriesId || task.id);
+          const usedSeries = new Set();
+          reordered = [];
+          seriesOrder.forEach(seriesId => {
+            const group = grouped.get(seriesId) || [];
+            group.forEach(item => reordered.push(item));
+            usedSeries.add(seriesId);
+          });
+          activeSnapshot.forEach(task => {
+            const seriesId = task.seriesId || task.id;
+            if (!usedSeries.has(seriesId)) {
+              reordered.push(task);
+              usedSeries.add(seriesId);
+            }
+          });
+        } else {
+          reordered = activeSnapshot.slice();
+          const moved = reordered.splice(evt.oldIndex, 1)[0];
+          reordered.splice(evt.newIndex, 0, moved);
+        }
+
+        let i = 0;
+        tasksCache = tasksCache.map(task => task.deleted ? task : reordered[i++]);
+        const ids = reordered.map(task => task.id);
+        await authFetch('/api/tasks/reorder', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(ids)
+        });
+      }
+    });
+  }
+}
+
+function renderTaskGroup(container, title, tasks, t, canWrite, canDelete, isCoinSystemActive) {
+  const card = document.createElement('div');
+  card.className = 'card mb-3 border-0 shadow-sm';
+  
+  const header = document.createElement('div');
+  header.className = 'card-header bg-light fw-bold';
+  header.textContent = title;
+  
+  const body = document.createElement('div');
+  body.className = 'card-body p-0';
+  
+  const ul = document.createElement('ul');
+  ul.className = 'list-group list-group-flush';
+  
+  tasks.forEach(task => {
+    ul.appendChild(createTaskElement(task, t, canWrite, canDelete, isCoinSystemActive));
+  });
+  
+  body.appendChild(ul);
+  card.appendChild(header);
+  card.appendChild(body);
+  container.appendChild(card);
+}
+
+function createTaskElement(task, t, canWrite, canDelete, isCoinSystemActive) {
     const li = document.createElement("li");
     li.className = "list-group-item d-flex align-items-center";
     li.dataset.id = task.id;
@@ -2284,9 +2423,13 @@ function renderTasks() {
       span.innerHTML += ` <span class="badge bg-warning text-dark">${task.points} ${t.pointsLabel || 'coins'}</span>`;
     }
     if (task.done) span.classList.add("task-done");
-    const person = peopleCache.find(p => p.id === task.assignedTo);
-    const personName = person ? person.name : t.unassigned;
-    span.innerHTML += ` - ${personName}`;
+    
+    // Only show assigned person if NOT grouping by person
+    if (!showTaskGroupByPerson) {
+      const person = peopleCache.find(p => p.id === task.assignedTo);
+      const personName = person ? person.name : t.unassigned;
+      span.innerHTML += ` - ${personName}`;
+    }
 
     left.appendChild(chk);
     left.appendChild(span);
@@ -2321,63 +2464,8 @@ function renderTasks() {
     } else {
       li.append(left);
     }
-
-    list.appendChild(li);
-  }
-
-  if (taskSortable) {
-    taskSortable.destroy();
-    taskSortable = null;
-  }
-  if (canWrite) {
-    taskSortable = new Sortable(list, {
-      handle: '.drag-handle',
-      animation: 150,
-      onEnd: async (evt) => {
-        const activeSnapshot = tasksCache.filter(task => !task.deleted);
-        let reordered;
-        if (showTaskSeriesRootsOnly) {
-          const displayed = visibleTasks.slice();
-          const movedRoot = displayed.splice(evt.oldIndex, 1)[0];
-          displayed.splice(evt.newIndex, 0, movedRoot);
-          const grouped = activeSnapshot.reduce((map, task) => {
-            const seriesId = task.seriesId || task.id;
-            if (!map.has(seriesId)) map.set(seriesId, []);
-            map.get(seriesId).push(task);
-            return map;
-          }, new Map());
-          const seriesOrder = displayed.map(task => task.seriesId || task.id);
-          const usedSeries = new Set();
-          reordered = [];
-          seriesOrder.forEach(seriesId => {
-            const group = grouped.get(seriesId) || [];
-            group.forEach(item => reordered.push(item));
-            usedSeries.add(seriesId);
-          });
-          activeSnapshot.forEach(task => {
-            const seriesId = task.seriesId || task.id;
-            if (!usedSeries.has(seriesId)) {
-              reordered.push(task);
-              usedSeries.add(seriesId);
-            }
-          });
-        } else {
-          reordered = activeSnapshot.slice();
-          const moved = reordered.splice(evt.oldIndex, 1)[0];
-          reordered.splice(evt.newIndex, 0, moved);
-        }
-
-        let i = 0;
-        tasksCache = tasksCache.map(task => task.deleted ? task : reordered[i++]);
-        const ids = reordered.map(task => task.id);
-        await authFetch('/api/tasks/reorder', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(ids)
-        });
-      }
-    });
-  }
+    
+    return li;
 }
 
 function openEditModal(task) {
