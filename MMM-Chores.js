@@ -565,7 +565,7 @@ Module.register("MMM-Chores", {
       window.speechSynthesis.cancel();
 
       // Add a slight pause/padding at the start to prevent the first word from being cut off
-      const utterance = new SpeechSynthesisUtterance("..." + text);
+      const utterance = new SpeechSynthesisUtterance(" " + text);
       const config = this.config.voiceAssistant;
       
       if (config.ttsVoice && config.ttsVoice !== 'default') {
@@ -591,7 +591,10 @@ Module.register("MMM-Chores", {
         // No auto-restart of listening. User must press mic button.
       };
       
-      window.speechSynthesis.speak(utterance);
+      // Small delay to allow mic to fully close and audio context to settle
+      setTimeout(() => {
+        window.speechSynthesis.speak(utterance);
+      }, 200);
     }
   },
 

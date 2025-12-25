@@ -795,11 +795,15 @@ function speakAiResponse(text, audioBase64, onComplete) {
       
       // Use the global audio object
       aiResponseAudio.src = audioUrl;
-      aiResponseAudio.play().catch(err => {
-        console.error('Failed to play audio:', err);
-        // Fallback to browser TTS
-        fallbackToWebSpeech(text, onComplete);
-      });
+      
+      // Small delay to allow mic to fully close and audio context to settle
+      setTimeout(() => {
+        aiResponseAudio.play().catch(err => {
+          console.error('Failed to play audio:', err);
+          // Fallback to browser TTS
+          fallbackToWebSpeech(text, onComplete);
+        });
+      }, 300);
       
       // Clean up blob url when done
       aiResponseAudio.onended = () => {
@@ -823,14 +827,16 @@ function fallbackToWebSpeech(text, onComplete) {
   }
   if ('speechSynthesis' in window) {
     // Add padding to prevent first word cutoff
-    const utterance = new SpeechSynthesisUtterance("..." + text);
+    const utterance = new SpeechSynthesisUtterance(" " + text);
     utterance.lang = resolveAiChatLocale();
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
     utterance.onend = () => {
       if (onComplete) onComplete();
     };
-    speechSynthesis.speak(utterance);
+    setTimeout(() => {
+      speechSynthesis.speak(utterance);
+    }, 200);
   } else {
     if (onComplete) onComplete();
   }
