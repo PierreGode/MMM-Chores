@@ -1039,6 +1039,18 @@ function sendRedemptionEmail(person, reward, redemption) {
   redemption.emailSent = true;
 }
 
+function getUserSettingsFile(username) {
+  // Sanitize username to be safe for filename
+  const safeUsername = username.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+  return path.join(__dirname, `user_${safeUsername}.json`);
+}
+
+function getUserSettingsFile(username) {
+  // Sanitize username to be safe for filename
+  const safeUsername = username.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+  return path.join(__dirname, `user_${safeUsername}.json`);
+}
+
 module.exports = NodeHelper.create({
   start() {
     Log.log("MMM-Chores helper started...");
@@ -1503,6 +1515,41 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
     app.use(express.static(path.join(__dirname, "public")));
     app.use("/img", express.static(path.join(__dirname, "img")));
     app.use("/MMM-Chores/img", express.static(path.join(__dirname, "img")));
+
+    // --- User Settings API ---
+    app.get("/api/user-settings", (req, res) => {
+      if (!self.config.login) return res.json({});
+      const token = req.headers["x-auth-token"];
+      const user = sessions[token];
+      if (!user) return res.status(401).json({ error: "Unauthorized" });
+
+      const file = getUserSettingsFile(user.username);
+      if (fs.existsSync(file)) {
+        try {
+          const data = fs.readFileSync(file, "utf8");
+          res.json(JSON.parse(data));
+        } catch (e) {
+          res.json({});
+        }
+      } else {
+        res.json({});
+      }
+    });
+
+    app.put("/api/user-settings", (req, res) => {
+      if (!self.config.login) return res.json({ success: true });
+      const token = req.headers["x-auth-token"];
+      const user = sessions[token];
+      if (!user) return res.status(401).json({ error: "Unauthorized" });
+
+      const file = getUserSettingsFile(user.username);
+      try {
+        fs.writeFileSync(file, JSON.stringify(req.body, null, 2), "utf8");
+        res.json({ success: true });
+      } catch (e) {
+        res.status(500).json({ error: "Failed to save settings" });
+      }
+    });
 
     const users = Array.isArray(self.config.users) ? self.config.users : [];
     if (self.config.login) {

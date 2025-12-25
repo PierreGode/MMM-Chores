@@ -91,6 +91,10 @@
                     <input class="form-check-input" type="checkbox" role="switch" id="tasksSeriesFilter">
                     <label class="form-check-label small text-muted" for="tasksSeriesFilter" id="taskSeriesFilterLabel">Show recurring roots only</label>
                   </div>
+                  <div class="form-check form-switch m-0 ms-3" id="taskUserFilterWrapper" style="display:none;">
+                    <input class="form-check-input" type="checkbox" role="switch" id="tasksUserFilter">
+                    <label class="form-check-label small text-muted" for="tasksUserFilter">Show only my tasks</label>
+                  </div>
                   <span class="badge bg-light text-dark fw-normal">
                     <i class="bi bi-check2-square text-success me-1"></i><span id="doneLabel"> done</span>&nbsp;&nbsp;
                     <i class="bi bi-square text-muted me-1"></i><span id="pendingLabel"> pending</span>
@@ -334,6 +338,35 @@
           </div>
           <div id="settingsForm" class="d-none" autocomplete="off">
             
+            <!-- User Specific Settings -->
+            <div class="card mb-4" id="userSettingsCard" style="display:none;">
+              <div class="card-header">
+                <h6 class="card-title mb-0">
+                  <i class="bi bi-person-circle me-2"></i><span>User Settings</span>
+                </h6>
+              </div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label for="userLinkedPerson" class="form-label">I am this person:</label>
+                  <select id="userLinkedPerson" class="form-select">
+                    <option value="">(Not linked)</option>
+                  </select>
+                  <div class="form-text">Link your login to a person to filter tasks.</div>
+                </div>
+                <div class="mb-3">
+                  <label for="userBackground" class="form-label">My Background Image</label>
+                  <select id="userBackground" class="form-select">
+                    <option value="">Default (Use Global)</option>
+                    <option value="forest.png">Forest</option>
+                    <option value="mountains.png">Mountains</option>
+                    <option value="beach.png">Beach</option>
+                    <option value="night.png">Night</option>
+                    <option value="abstract.png">Abstract</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
             <!-- Reward System Selection -->
             <div class="card mb-4">
               <div class="card-header">
