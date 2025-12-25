@@ -238,12 +238,18 @@ function initSettingsForm(settings) {
       'levelSystemCard', 'coinSystemCard', 'levelSettings', 'coinSettings', 'settingsShowPast',
       'settingsShowAnalytics', 'settingsShowRedeemedRewards', 'settingsPushoverEnable',
       'settingsReminderTime', 'settingsAutoUpdate', 'settingsTextSize', 'settingsDateFmt',
-      'settingsShowCoinsOnMirror', 'maintenanceToolsCard'
+      'settingsShowCoinsOnMirror', 'maintenanceToolsCard', 'advancedFeaturesCard', 'notificationsCard'
     ].forEach(id => {
       const el = document.getElementById(id);
       if (el) {
-        const wrap = el.closest('.form-check') || el.closest('.mb-3') || el.closest('[class*="col-"]') || el.closest('.card');
-        if (wrap) wrap.style.display = 'none';
+        // If the element itself is a card (like advancedFeaturesCard), hide it directly.
+        // Otherwise look for a wrapper.
+        if (el.classList.contains('card')) {
+          el.style.display = 'none';
+        } else {
+          const wrap = el.closest('.form-check') || el.closest('.mb-3') || el.closest('[class*="col-"]') || el.closest('.card');
+          if (wrap) wrap.style.display = 'none';
+        }
       }
     });
   }
