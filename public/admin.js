@@ -1808,7 +1808,7 @@ async function applySettings(newSettings) {
     if (aiButton) aiButton.style.display = newSettings.useAI === false ? 'none' : '';
   }
   if (newSettings.chatbotEnabled !== undefined || newSettings.useAI !== undefined) {
-    const allowChat = (newSettings.chatbotEnabled ?? aiChatEnabled) && (newSettings.useAI ?? true);
+    const allowChat = (newSettings.chatbotEnabled ?? aiChatEnabled) && (newSettings.useAI ?? true) && userPermission !== 'screen';
     toggleAiChat(allowChat);
   }
   if (newSettings.ttsAudio !== undefined) {
@@ -3056,6 +3056,13 @@ async function initApp() {
     if (peopleCol) peopleCol.style.display = 'none';
     const settingsBtn = document.getElementById('settingsBtn');
     if (settingsBtn) settingsBtn.style.display = 'none';
+    const mainTabs = document.getElementById('mainTabs');
+    if (mainTabs) mainTabs.style.display = 'none';
+    const tasksCol = document.getElementById('tasksCardCol');
+    if (tasksCol) {
+      tasksCol.classList.remove('col-lg-8');
+      tasksCol.classList.add('col-12');
+    }
   }
 
   if (typeof effectiveSettings.levelingEnabled === "boolean") {
