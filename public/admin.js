@@ -675,7 +675,7 @@ function updateAiMicState(listening) {
     mic.setAttribute('aria-pressed', listening ? 'true' : 'false');
   }
   if (micIcon) {
-    micIcon.className = listening ? 'bi bi-stop-fill' : 'bi bi-mic-fill';
+    micIcon.className = listening ? 'bi bi-stop-fill' : 'bi bi-soundwave';
   }
 }
 
