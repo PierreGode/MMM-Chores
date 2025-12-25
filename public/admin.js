@@ -930,9 +930,7 @@ async function sendAiChatMessage(isVoice = false) {
     speakAiResponse(reply, data.audio, () => {
       playbackCompleted = true;
       releaseMic();
-      if (isVoice) {
-        startListeningWithTimeout();
-      }
+      // Auto-listen removed. User must press mic button.
     });
     
     setAiChatStatus(t.aiChatReady || 'Ready', 'success');

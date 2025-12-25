@@ -585,9 +585,7 @@ Module.register("MMM-Chores", {
       }
 
       utterance.onend = () => {
-        if (wasListening || config.continuous) {
-           this.startListening();
-        }
+        // No auto-restart of listening. User must press mic button.
       };
       
       window.speechSynthesis.speak(utterance);
