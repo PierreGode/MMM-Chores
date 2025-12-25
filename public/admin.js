@@ -112,6 +112,35 @@ async function checkLogin() {
   const res = await fetch('/api/login', { headers: authHeaders() });
   const data = await res.json();
   loginEnabled = data.loginRequired;
+
+  const screenBtn = document.getElementById('screenLoginBtn');
+  if (screenBtn) {
+    screenBtn.style.display = data.screenEnabled ? '' : 'none';
+    screenBtn.onclick = async () => {
+      try {
+        const resp = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: 'screen', password: '' })
+        });
+        const out = await resp.json();
+        if (resp.ok && out.token) {
+          authToken = out.token;
+          localStorage.setItem('choresToken', authToken);
+          userPermission = out.permission || 'screen';
+          if (loginDiv) loginDiv.style.display = 'none';
+          if (app) app.style.display = '';
+          initApp();
+        } else {
+          const err = document.getElementById('loginError');
+          if (err) err.textContent = out.error || 'Screen login failed';
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+  }
+
   if (!loginEnabled) {
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) logoutBtn.style.display = 'none';
@@ -2166,7 +2195,8 @@ function formatDate(dateStr) {
 
 function renderTasks() {
   const t = LANGUAGES[currentLang];
-  const canWrite = userPermission === 'write';
+  const canWrite = userPermission === 'write' || userPermission === 'regular';
+  const canDelete = userPermission === 'write';
   const list = document.getElementById("taskList");
   list.innerHTML = "";
   const useCoinSystem = document.getElementById('useCoinSystem');
@@ -2262,11 +2292,14 @@ function renderTasks() {
     left.appendChild(span);
 
     if (canWrite) {
-      const del = document.createElement("button");
-      del.className = "btn btn-sm btn-outline-danger";
-      del.title = t.remove;
-      del.innerHTML = '<i class="bi bi-trash"></i>';
-      del.addEventListener("click", () => deleteTask(task.id));
+      if (canDelete) {
+        const del = document.createElement("button");
+        del.className = "btn btn-sm btn-outline-danger";
+        del.title = t.remove;
+        del.innerHTML = '<i class="bi bi-trash"></i>';
+        del.addEventListener("click", () => deleteTask(task.id));
+        actions.appendChild(del);
+      }
 
       const dragBtn = document.createElement("button");
       dragBtn.className = "btn btn-sm btn-outline-secondary drag-handle";
@@ -2280,7 +2313,6 @@ function renderTasks() {
         edit.addEventListener("click", () => openEditModal(task));
         actions.appendChild(edit);
       }
-      actions.appendChild(del);
       actions.appendChild(dragBtn);
     }
 
@@ -3011,18 +3043,32 @@ async function initApp() {
   const settingsResponse = await fetchUserSettings();
   const effectiveSettings = settingsResponse.effectiveSettings || settingsResponse;
   customLevelTitles = effectiveSettings.customLevelTitles || {};
+  
   if (userPermission !== 'write' && userPermission !== 'regular') {
     const personForm = document.getElementById('personForm');
     if (personForm) personForm.style.display = 'none';
     const taskForm = document.getElementById('taskForm');
     if (taskForm) taskForm.style.display = 'none';
   }
+
+  if (userPermission === 'screen') {
+    const peopleCol = document.getElementById('peopleCardCol');
+    if (peopleCol) peopleCol.style.display = 'none';
+    const settingsBtn = document.getElementById('settingsBtn');
+    if (settingsBtn) settingsBtn.style.display = 'none';
+  }
+
   if (typeof effectiveSettings.levelingEnabled === "boolean") {
     levelingEnabled = effectiveSettings.levelingEnabled;
   }
-  if (effectiveSettings.settings) {
+  
+  // Fix PIN logic: prioritize settings from config (settingsResponse.settings)
+  if (settingsResponse.settings) {
+    settingsMode = settingsResponse.settings;
+  } else if (effectiveSettings.settings) {
     settingsMode = effectiveSettings.settings;
   }
+
   if (effectiveSettings.language && LANGUAGES[effectiveSettings.language]) {
     currentLang = effectiveSettings.language;
   } else {
@@ -3074,7 +3120,8 @@ async function initApp() {
 
   setLanguage(currentLang);
   setupAiChat();
-  toggleAiChat(effectiveSettings.chatbotEnabled && effectiveSettings.useAI !== false);
+  const allowChat = effectiveSettings.chatbotEnabled && effectiveSettings.useAI !== false && userPermission !== 'screen';
+  toggleAiChat(allowChat);
   await applySettings(effectiveSettings);
 
   // Initialize rewards system visibility

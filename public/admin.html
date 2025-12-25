@@ -25,6 +25,9 @@
           <input type="password" id="loginPass" class="form-control" placeholder="Password" />
         </div>
         <button type="submit" id="loginBtn" class="btn btn-primary w-100">Login</button>
+        <button type="button" id="screenLoginBtn" class="btn btn-outline-secondary w-100 mt-2" style="display:none;">
+          <i class="bi bi-display me-2"></i>Screen Mode
+        </button>
         <div id="loginError" class="text-danger mt-2"></div>
       </form>
     </div>
@@ -68,7 +71,7 @@
       <!-- Dashboard Tab -->
       <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
         <div class="row g-4">
-          <div class="col-lg-4">
+          <div class="col-lg-4" id="peopleCardCol">
             <div class="card card-shadow h-100">
               <div class="card-header" id="peopleHeader">People</div>
               <div class="card-body">

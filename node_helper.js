@@ -1548,6 +1548,19 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
     app.post("/api/login", (req, res) => {
       if (!self.config.login) return res.json({ loginRequired: false });
       const { username, password } = req.body;
+
+      // Screen user login
+      const screenEnabled = self.config.screen || settings.screen;
+      if (username === "screen" && screenEnabled) {
+        const token = Math.random().toString(36).slice(2);
+        sessions[token] = {
+          username: "screen",
+          permission: "screen",
+          expires: Date.now() + SESSION_DURATION_MS
+        };
+        return res.json({ token, permission: "screen", username: "screen" });
+      }
+
       const user = users.find(u => u.username === username && u.password === password);
       if (!user) return res.status(401).json({ error: "Invalid credentials" });
       const token = Math.random().toString(36).slice(2);
@@ -1560,14 +1573,17 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
 
       app.get("/api/login", (req, res) => {
         if (!self.config.login) return res.json({ loginRequired: false });
+        
+        const screenEnabled = !!(self.config.screen || settings.screen);
+
         const token = req.headers["x-auth-token"];
         const user = sessions[token];
         if (user && user.expires > Date.now()) {
           user.expires = Date.now() + SESSION_DURATION_MS;
-          return res.json({ loginRequired: true, loggedIn: true, permission: user.permission, username: user.username });
+          return res.json({ loginRequired: true, loggedIn: true, permission: user.permission, username: user.username, screenEnabled });
         }
         if (token && sessions[token]) delete sessions[token];
-        res.json({ loginRequired: true, loggedIn: false });
+        res.json({ loginRequired: true, loggedIn: false, screenEnabled });
       });
 
       app.post("/api/logout", (req, res) => {
