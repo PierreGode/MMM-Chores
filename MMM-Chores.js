@@ -561,11 +561,14 @@ Module.register("MMM-Chores", {
     }
 
     if ('speechSynthesis' in window) {
+      // Cancel any ongoing speech to prevent overlap
+      window.speechSynthesis.cancel();
+
       const utterance = new SpeechSynthesisUtterance(text);
       const config = this.config.voiceAssistant;
       
       if (config.ttsVoice && config.ttsVoice !== 'default') {
-        const voices = speechSynthesis.getVoices();
+        const voices = window.speechSynthesis.getVoices();
         const voice = voices.find(v => v.name === config.ttsVoice);
         if (voice) utterance.voice = voice;
       }
@@ -573,8 +576,21 @@ Module.register("MMM-Chores", {
       utterance.rate = config.ttsRate || 1.0;
       utterance.pitch = config.ttsPitch || 1.0;
       utterance.lang = this.resolveVoiceLocale(config.language);
+      utterance.volume = 1.0;
+
+      // Temporarily stop recognition to prevent feedback/ducking
+      const wasListening = this.isListening;
+      if (this.voiceRecognition && wasListening) {
+        this.voiceRecognition.abort();
+      }
+
+      utterance.onend = () => {
+        if (wasListening || config.continuous) {
+           this.startListening();
+        }
+      };
       
-      speechSynthesis.speak(utterance);
+      window.speechSynthesis.speak(utterance);
     }
   },
 
