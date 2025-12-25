@@ -240,7 +240,7 @@ function initSettingsForm(settings) {
     ].forEach(id => {
       const el = document.getElementById(id);
       if (el) {
-        const wrap = el.closest('.form-check') || el.closest('.mb-3') || el.closest('.card');
+        const wrap = el.closest('.form-check') || el.closest('.mb-3') || el.closest('[class*="col-"]') || el.closest('.card');
         if (wrap) wrap.style.display = 'none';
       }
     });
