@@ -207,7 +207,7 @@ function initSettingsForm(settings) {
       'levelSystemCard', 'coinSystemCard', 'levelSettings', 'coinSettings', 'settingsShowPast',
       'settingsShowAnalytics', 'settingsShowRedeemedRewards', 'settingsPushoverEnable',
       'settingsReminderTime', 'settingsAutoUpdate', 'settingsTextSize', 'settingsDateFmt',
-      'settingsShowCoinsOnMirror'
+      'settingsShowCoinsOnMirror', 'maintenanceToolsCard'
     ].forEach(id => {
       const el = document.getElementById(id);
       if (el) {
