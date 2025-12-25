@@ -34,6 +34,7 @@ let aiChatEnabled = false;
 let aiChatTtsEnabled = false;
 let aiResponseAudio = new Audio(); // Global audio object for AI responses
 let aiAutoStopTimer = null;
+window.isAiSpeaking = false;
 const DEFAULT_TTS_AUDIO = { volume: 0.7, pauseMs: 600, fadeMs: 120 };
 let ttsAudio = { ...DEFAULT_TTS_AUDIO };
 let audioContext = null;
@@ -807,7 +808,7 @@ function initAiChatSpeechRecognition() {
   }
 
   aiChatRecognizer = new Recognition();
-  aiChatRecognizer.continuous = false;
+  aiChatRecognizer.continuous = true; // Keep listening like a Teams call
   aiChatRecognizer.interimResults = true;
 
   aiChatRecognizer.onstart = () => {
@@ -818,6 +819,8 @@ function initAiChatSpeechRecognition() {
   };
 
   aiChatRecognizer.onerror = (event) => {
+    // If it's a "no-speech" error and we are in continuous mode, we might want to ignore it or restart?
+    // But usually on error we stop.
     aiChatListening = false;
     updateAiMicState(false);
     const t = LANGUAGES[currentLang] || {};
@@ -828,13 +831,10 @@ function initAiChatSpeechRecognition() {
   aiChatRecognizer.onend = () => {
     aiChatListening = false;
     updateAiMicState(false);
-    const { input } = getAiChatNodes();
-    if (input && input.value.trim()) {
-      sendAiChatMessage(true);
-    } else {
-      const t = LANGUAGES[currentLang] || {};
-      setAiChatStatus(t.aiChatReady || 'Ready');
-    }
+    // In continuous mode, onend means the session really ended (error or manual stop).
+    // We don't automatically send here because we send on 'isFinal' in onresult.
+    const t = LANGUAGES[currentLang] || {};
+    setAiChatStatus(t.aiChatReady || 'Ready');
     aiChatRecognizer = null;
   };
 
@@ -843,26 +843,47 @@ function initAiChatSpeechRecognition() {
       clearTimeout(aiAutoStopTimer);
       aiAutoStopTimer = null;
     }
-    let transcript = '';
-    for (let i = 0; i < event.results.length; i++) {
-      const res = event.results[i];
-      if (res && res[0]) {
-        transcript += res[0].transcript + ' ';
+    
+    // If AI is speaking, ignore input to prevent echo loop
+    if (window.isAiSpeaking) return;
+
+    const { input, send } = getAiChatNodes();
+    // If we are already processing a request (Thinking...), ignore new input
+    if (send && send.disabled) return;
+
+    let finalTranscript = '';
+    let interimTranscript = '';
+
+    for (let i = event.resultIndex; i < event.results.length; ++i) {
+      if (event.results[i].isFinal) {
+        finalTranscript += event.results[i][0].transcript;
+      } else {
+        interimTranscript += event.results[i][0].transcript;
       }
     }
-    const { input } = getAiChatNodes();
+
     if (input) {
-      input.value = transcript.trim();
+      if (finalTranscript) {
+        input.value = finalTranscript.trim();
+        sendAiChatMessage(true);
+      } else if (interimTranscript) {
+        input.value = interimTranscript;
+      }
     }
   };
 }
 
 async function speakAiResponse(text, audioBase64, onComplete) {
-  // Ensure mic is stopped before speaking to prevent feedback
-  await ensureMicStoppedPause();
+  // Do NOT stop the mic. Just flag that AI is speaking so we ignore input.
+  window.isAiSpeaking = true;
+
+  const finishSpeaking = () => {
+    window.isAiSpeaking = false;
+    if (onComplete) onComplete();
+  };
 
   if (!aiChatTtsEnabled) {
-    if (onComplete) onComplete();
+    finishSpeaking();
     return;
   }
   
@@ -897,7 +918,7 @@ async function speakAiResponse(text, audioBase64, onComplete) {
       gainNode.gain.linearRampToValueAtTime(targetVol, now + (fadeMs / 1000));
       
       source.onended = () => {
-        if (onComplete) onComplete();
+        finishSpeaking();
       };
       
       // Start playback - silence will play first
@@ -905,11 +926,13 @@ async function speakAiResponse(text, audioBase64, onComplete) {
       return;
     } catch (err) {
       console.error('Failed to process audio:', err);
+      // Fallback if audio processing fails
+      window.isAiSpeaking = false; // Reset flag before fallback
     }
   }
   
   // Fallback to browser TTS if no audio provided
-  fallbackToWebSpeech(text, onComplete);
+  fallbackToWebSpeech(text, finishSpeaking);
 }
 
 async function fallbackToWebSpeech(text, onComplete) {
@@ -918,9 +941,9 @@ async function fallbackToWebSpeech(text, onComplete) {
     return;
   }
   if ('speechSynthesis' in window) {
-    // Ensure any ongoing speech is cancelled and mic is paused
+    // Ensure any ongoing speech is cancelled
     window.speechSynthesis.cancel();
-    await ensureMicStoppedPause();
+    // Do NOT stop mic here either.
 
     const pauseMs = ttsAudio.pauseMs || DEFAULT_TTS_AUDIO.pauseMs;
     const utterance = new SpeechSynthesisUtterance(text);
@@ -1010,14 +1033,19 @@ async function sendAiChatMessage(isVoice = false) {
   const prompt = (input && input.value ? input.value.trim() : '');
   if (!prompt) return;
 
-  stopAiChatListeningSession();
+  // Do NOT stop listening session. We want continuous listening.
+  // stopAiChatListeningSession();
 
   const t = LANGUAGES[currentLang] || {};
   appendAiChatBubble('user', prompt);
   aiChatHistory.push({ role: 'user', content: prompt });
   if (input) input.value = '';
   if (send) send.disabled = true;
-  if (mic) mic.disabled = true;
+  // Do not disable mic button, so user can stop if they want?
+  // But we might want to prevent toggling while sending?
+  // Let's keep mic enabled but maybe ignore input in onresult if send is disabled.
+  // if (mic) mic.disabled = true; 
+  
   setAiChatStatus(t.aiChatWorking || 'Thinking...');
   let micReleased = false;
   let playbackCompleted = false;
@@ -1045,7 +1073,6 @@ async function sendAiChatMessage(isVoice = false) {
     speakAiResponse(reply, data.audio, () => {
       playbackCompleted = true;
       releaseMic();
-      // Auto-listen removed. User must press mic button.
     });
     
     setAiChatStatus(t.aiChatReady || 'Ready', 'success');
