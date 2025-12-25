@@ -18,8 +18,6 @@ let settingsSaved = false;
 let dateFormatting = '';
 let authToken = localStorage.getItem('choresToken') || null;
 let userPermission = 'write';
-let currentUsername = null;
-let currentUserPersonId = null;
 let loginEnabled = true;
 let editTaskId = null;
 let editTaskModal = null;
@@ -43,27 +41,6 @@ let audioContext = null;
 let silenceAudioBuffer = null;
 const TASK_SERIES_FILTER_KEY = 'mmm-chores-series-filter';
 let showTaskSeriesRootsOnly = localStorage.getItem(TASK_SERIES_FILTER_KEY) === '1';
-const TASK_MY_FILTER_PREFIX = 'mmm-chores-my-tasks-';
-let showMyTasksOnly = false;
-
-function myTasksFilterKey() {
-  return `${TASK_MY_FILTER_PREFIX}${currentUsername || 'guest'}`;
-}
-
-function loadMyTasksFilter() {
-  const stored = localStorage.getItem(myTasksFilterKey());
-  showMyTasksOnly = stored === '1';
-}
-
-function persistMyTasksFilter() {
-  localStorage.setItem(myTasksFilterKey(), showMyTasksOnly ? '1' : '0');
-}
-
-function getCurrentUserPerson() {
-  if (!currentUsername) return null;
-  const normalized = currentUsername.toLowerCase();
-  return peopleCache.find(p => (p.name || '').toLowerCase() === normalized) || null;
-}
 const personRewardsModalEl = document.getElementById('personRewardsModal');
 const personRewardTitlesContainer = document.getElementById('personRewardTitlesContainer');
 const personRewardTitleInputs = [];
@@ -140,8 +117,6 @@ async function checkLogin() {
   }
   if (data.loggedIn) {
     userPermission = data.permission || 'write';
-    currentUsername = data.username || null;
-    loadMyTasksFilter();
     if (loginDiv) loginDiv.style.display = 'none';
     if (app) app.style.display = '';
     initApp();
@@ -164,8 +139,6 @@ async function checkLogin() {
         authToken = out.token;
         localStorage.setItem('choresToken', authToken);
         userPermission = out.permission || 'write';
-        currentUsername = username || null;
-        loadMyTasksFilter();
         loginDiv.style.display = 'none';
         if (app) app.style.display = '';
         initApp();
@@ -185,10 +158,6 @@ async function fetchUserSettings() {
     const res = await authFetch('/api/settings');
     if (!res.ok) throw new Error('Failed fetching user settings');
     const data = await res.json();
-    if (data.currentUser) {
-      currentUsername = data.currentUser;
-      loadMyTasksFilter();
-    }
     return data;
   } catch (e) {
     console.warn('Could not fetch user settings:', e);
@@ -544,37 +513,34 @@ function initSettingsForm(settings) {
         throw new Error(error.error || 'Failed to save settings');
       }
 
-      const payload = await res.json();
-      const appliedSettings = payload.settings || newSettings;
-
       settingsSaved = true;
-      setBackground(appliedSettings.background);
-      localStorage.setItem('choresBackground', appliedSettings.background || '');
+      setBackground(newSettings.background);
+      localStorage.setItem('choresBackground', newSettings.background || '');
       
       // Update rewards tab based on new system
-      updateRewardsTabVisibility(appliedSettings.useCoinSystem, appliedSettings.showRewardsTab);
+      updateRewardsTabVisibility(newSettings.useCoinSystem, newSettings.showRewardsTab);
       
       // Refresh data if switching systems
       const previousCoinSetting = settings.useCoinSystem ?? settings.usePointSystem ?? false;
-      if (previousCoinSetting !== appliedSettings.useCoinSystem) {
-        if (appliedSettings.useCoinSystem) {
+      if (previousCoinSetting !== newSettings.useCoinSystem) {
+        if (newSettings.useCoinSystem) {
           await fetchRewards();
           await fetchRedemptions();
         }
         await fetchPeople();
       }
 
-      settings.useCoinSystem = appliedSettings.useCoinSystem;
-      settings.usePointSystem = appliedSettings.useCoinSystem;
-      settings.showCoinsOnMirror = appliedSettings.showCoinsOnMirror;
-      settings.useAI = appliedSettings.useAI;
-      settings.chatbotEnabled = appliedSettings.chatbotEnabled;
-      settings.chatbotTtsEnabled = appliedSettings.chatbotTtsEnabled;
-      settings.chatbotVoice = appliedSettings.chatbotVoice;
-      settings.ttsAudio = appliedSettings.ttsAudio;
+      settings.useCoinSystem = newSettings.useCoinSystem;
+      settings.usePointSystem = newSettings.useCoinSystem;
+      settings.showCoinsOnMirror = newSettings.showCoinsOnMirror;
+      settings.useAI = newSettings.useAI;
+      settings.chatbotEnabled = newSettings.chatbotEnabled;
+      settings.chatbotTtsEnabled = newSettings.chatbotTtsEnabled;
+      settings.chatbotVoice = newSettings.chatbotVoice;
+      settings.ttsAudio = newSettings.ttsAudio;
 
-      toggleAiChat(appliedSettings.chatbotEnabled && appliedSettings.useAI !== false);
-      aiChatTtsEnabled = !!appliedSettings.chatbotEnabled && !!appliedSettings.chatbotTtsEnabled && appliedSettings.useAI !== false;
+      toggleAiChat(newSettings.chatbotEnabled && newSettings.useAI !== false);
+      aiChatTtsEnabled = !!newSettings.chatbotEnabled && !!newSettings.chatbotTtsEnabled && newSettings.useAI !== false;
 
       showToast('Settings saved successfully', 'success');
       const settingsModal = document.getElementById('settingsModal');
@@ -1590,28 +1556,6 @@ function setLanguage(lang) {
     }
   }
 
-  const taskMineFilterLabel = document.getElementById('taskMineFilterLabel');
-  if (taskMineFilterLabel) {
-    taskMineFilterLabel.textContent = t.taskMineFilterLabel || 'Show only my tasks';
-  }
-  const taskMineFilterWrapper = document.getElementById('taskMineFilterWrapper');
-  const taskMineFilterToggle = document.getElementById('tasksMineFilter');
-  const canShowMineFilter = Boolean(currentUsername);
-  if (taskMineFilterWrapper) {
-    taskMineFilterWrapper.style.display = canShowMineFilter ? '' : 'none';
-  }
-  if (taskMineFilterToggle && canShowMineFilter) {
-    taskMineFilterToggle.checked = showMyTasksOnly;
-    if (!taskMineFilterToggle.dataset.bound) {
-      taskMineFilterToggle.addEventListener('change', (event) => {
-        showMyTasksOnly = event.target.checked;
-        persistMyTasksFilter();
-        renderTasks();
-      });
-      taskMineFilterToggle.dataset.bound = 'true';
-    }
-  }
-
   const analyticsHeader = document.getElementById("analyticsHeader");
   if (analyticsHeader) analyticsHeader.textContent = t.analyticsTitle;
   const addChartSelect = document.getElementById("addChartSelect");
@@ -1718,8 +1662,6 @@ function setLanguage(lang) {
 async function fetchPeople() {
   const res = await authFetch("/api/people");
   peopleCache = await res.json();
-  const selfPerson = getCurrentUserPerson();
-  currentUserPersonId = selfPerson ? selfPerson.id : null;
   renderPeople();
   renderPeoplePoints(); // Update coin display when people data changes
   populateGiftPersonSelect(); // Update gift points dropdown
@@ -2006,18 +1948,8 @@ function renderPeople() {
   // Check if coin system is active
   const useCoinSystem = document.getElementById('useCoinSystem');
   const isCoinSystemActive = useCoinSystem && useCoinSystem.checked;
-  const isSuperUser = userPermission === 'superuser';
-  const isWriteOnly = userPermission === 'write';
 
-  let visiblePeople = peopleCache;
-  if (isWriteOnly && !isSuperUser) {
-    const selfPerson = getCurrentUserPerson();
-    visiblePeople = selfPerson ? [selfPerson] : [];
-  } else if (!isSuperUser && !isWriteOnly) {
-    visiblePeople = [];
-  }
-
-  if (visiblePeople.length === 0) {
+  if (peopleCache.length === 0) {
     const li = document.createElement("li");
     li.className = "list-group-item text-center text-muted";
     li.textContent = LANGUAGES[currentLang].noPeople;
@@ -2025,7 +1957,7 @@ function renderPeople() {
     return;
   }
 
-  for (const person of visiblePeople) {
+  for (const person of peopleCache) {
     const li = document.createElement("li");
     li.className = "list-group-item d-flex justify-content-between align-items-center";
     const info = document.createElement("span");
@@ -2048,7 +1980,7 @@ function renderPeople() {
 
     li.appendChild(info);
 
-    if (isSuperUser || isWriteOnly) {
+    if (userPermission === 'write') {
       const actions = document.createElement('div');
       actions.className = 'btn-group btn-group-sm';
       
@@ -2068,14 +2000,13 @@ function renderPeople() {
         viewBtn.onclick = () => showPersonRewards(person);
         actions.appendChild(viewBtn);
       }
-      if (isSuperUser) {
-        const delBtn = document.createElement('button');
-        delBtn.className = 'btn btn-outline-danger';
-        delBtn.title = LANGUAGES[currentLang].remove;
-        delBtn.innerHTML = '<i class="bi bi-trash"></i>';
-        delBtn.onclick = () => deletePerson(person.id);
-        actions.appendChild(delBtn);
-      }
+      
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn btn-outline-danger';
+      delBtn.title = LANGUAGES[currentLang].remove;
+      delBtn.innerHTML = '<i class="bi bi-trash"></i>';
+      delBtn.onclick = () => deletePerson(person.id);
+      actions.appendChild(delBtn);
       li.appendChild(actions);
     }
     list.appendChild(li);
@@ -2085,14 +2016,14 @@ function renderPeople() {
   if (taskPerson) {
     taskPerson.innerHTML = '';
     taskPerson.add(new Option(LANGUAGES[currentLang].unassigned, ''));
-    visiblePeople.forEach(p => {
+    peopleCache.forEach(p => {
       taskPerson.add(new Option(p.name, p.id));
     });
   }
   if (editPerson) {
     editPerson.innerHTML = '';
     editPerson.add(new Option(LANGUAGES[currentLang].unassigned, ''));
-    visiblePeople.forEach(p => {
+    peopleCache.forEach(p => {
       editPerson.add(new Option(p.name, p.id));
     });
   }
@@ -2124,7 +2055,7 @@ function formatDate(dateStr) {
 
 function renderTasks() {
   const t = LANGUAGES[currentLang];
-  const canWrite = userPermission === 'write' || userPermission === 'superuser';
+  const canWrite = userPermission === 'write';
   const list = document.getElementById("taskList");
   list.innerHTML = "";
   const useCoinSystem = document.getElementById('useCoinSystem');
@@ -2140,12 +2071,7 @@ function renderTasks() {
   }
 
   const recurringTasks = activeTasks.filter(task => task.recurring && task.recurring !== 'none'); // only keep recurring entries
-  const baseTasks = showTaskSeriesRootsOnly ? recurringTasks : activeTasks;
-
-  const selfPerson = getCurrentUserPerson();
-  const visibleTasks = (showMyTasksOnly && selfPerson)
-    ? baseTasks.filter(task => task.assignedTo === selfPerson.id)
-    : baseTasks;
+  const visibleTasks = showTaskSeriesRootsOnly ? recurringTasks : activeTasks;
 
   if (visibleTasks.length === 0) {
     const li = document.createElement("li");
@@ -2969,13 +2895,9 @@ function setIcon(theme) {
 async function initApp() {
   const userSettings = await fetchUserSettings();
   customLevelTitles = userSettings.customLevelTitles || {};
-  const canWriteTasks = userPermission === 'write' || userPermission === 'superuser';
-  const isSuperUser = userPermission === 'superuser';
-  if (!isSuperUser) {
+  if (userPermission !== 'write') {
     const personForm = document.getElementById('personForm');
     if (personForm) personForm.style.display = 'none';
-  }
-  if (!canWriteTasks) {
     const taskForm = document.getElementById('taskForm');
     if (taskForm) taskForm.style.display = 'none';
   }

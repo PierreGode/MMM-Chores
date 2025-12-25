@@ -35,8 +35,6 @@ const DATA_FILE     = path.join(__dirname, "data.json");
 const DATA_FILE_BAK = `${DATA_FILE}.bak`;
 const COINS_FILE    = path.join(__dirname, "rewards.json");
 const COINS_FILE_BAK = `${COINS_FILE}.bak`;
-const USER_SETTINGS_FILE = path.join(__dirname, "user-settings.json");
-const USER_SETTINGS_BAK = `${USER_SETTINGS_FILE}.bak`;
 const CERT_DIR      = path.join(__dirname, "certs");
 
 let tasks = [];
@@ -54,9 +52,6 @@ let coinStore = {
 let sessions = {};
 const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 let legacyCoinState = null;
-let userSettings = {};
-
-const USER_SETTING_KEYS = ["background", "language", "dateFormatting", "textMirrorSize", "showPast"]; // Safe per-user overrides
 
 const DEFAULT_TITLES = [
   "Junior",
@@ -206,12 +201,6 @@ function normalizeBooleanInput(value) {
 function getSeriesId(task) {
   if (!task) return null;
   return task.seriesId || task.id;
-}
-
-function findPersonByUsername(username) {
-  if (!username) return null;
-  const normalized = username.toLowerCase();
-  return people.find(p => (p.name || "").toLowerCase() === normalized) || null;
 }
 
 function getNextSeriesAnchorValue() {
@@ -430,39 +419,6 @@ function loadData() {
   }
 
   loadCoinData();
-  loadUserSettings();
-}
-
-function loadUserSettings() {
-  try {
-    if (fs.existsSync(USER_SETTINGS_FILE)) {
-      userSettings = JSON.parse(fs.readFileSync(USER_SETTINGS_FILE, "utf8")) || {};
-      return;
-    }
-    if (fs.existsSync(USER_SETTINGS_BAK)) {
-      userSettings = JSON.parse(fs.readFileSync(USER_SETTINGS_BAK, "utf8")) || {};
-      return;
-    }
-  } catch (err) {
-    Log.error("MMM-Chores: Error reading user-settings.json:", err);
-  }
-  userSettings = {};
-}
-
-function persistUserSettings() {
-  try {
-    const payload = JSON.stringify(userSettings || {}, null, 2);
-    if (fs.existsSync(USER_SETTINGS_FILE)) {
-      try {
-        fs.copyFileSync(USER_SETTINGS_FILE, USER_SETTINGS_BAK);
-      } catch (backupErr) {
-        Log.error("MMM-Chores: Failed to create user settings backup:", backupErr);
-      }
-    }
-    writeDataFileAtomic(USER_SETTINGS_FILE, payload);
-  } catch (err) {
-    Log.error("MMM-Chores: Failed to persist user settings:", err);
-  }
 }
 
 function applyCoinStoreData(data, sourceLabel = "rewards.json") {
@@ -508,16 +464,6 @@ function updateCoinStoreFromPeople() {
     coins[person.id] = Number.isFinite(normalized) ? normalized : 0;
   });
   coinStore.peopleCoins = coins;
-}
-
-function pickUserSettingOverrides(source = {}) {
-  const out = {};
-  USER_SETTING_KEYS.forEach(key => {
-    if (source[key] !== undefined) {
-      out[key] = source[key];
-    }
-  });
-  return out;
 }
 
 function buildCoinStoreFromLegacy() {
@@ -1579,7 +1525,7 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
         ...user,
         expires: Date.now() + SESSION_DURATION_MS
       };
-      res.json({ token, permission: user.permission, username: user.username });
+      res.json({ token, permission: user.permission });
     });
 
       app.get("/api/login", (req, res) => {
@@ -1588,7 +1534,7 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
         const user = sessions[token];
         if (user && user.expires > Date.now()) {
           user.expires = Date.now() + SESSION_DURATION_MS;
-          return res.json({ loginRequired: true, loggedIn: true, permission: user.permission, username: user.username });
+          return res.json({ loginRequired: true, loggedIn: true, permission: user.permission });
         }
         if (token && sessions[token]) delete sessions[token];
         res.json({ loginRequired: true, loggedIn: false });
@@ -1617,39 +1563,20 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
       next();
     });
 
-    function hasWriteAccess(req) {
-      if (!self.config.login) return true;
-      return req.user && (req.user.permission === "write" || req.user.permission === "superuser");
-    }
-
-    function isSuperUser(req) {
-      if (!self.config.login) return true;
-      return req.user && req.user.permission === "superuser";
-    }
-
     function requireWrite(req, res, next) {
-      if (hasWriteAccess(req)) return next();
-      return res.status(403).json({ error: "Forbidden" });
-    }
-
-    function requireSuperuser(req, res, next) {
-      if (isSuperUser(req)) return next();
-      return res.status(403).json({ error: "Superuser permission required" });
+      if (!self.config.login) return next();
+      if (!req.user || req.user.permission !== "write") {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      next();
     }
 
     app.get("/", (req, res) => {
       res.sendFile(path.join(__dirname, "public", "admin.html"));
     });
 
-    app.get("/api/people", (req, res) => {
-      if (!self.config.login || isSuperUser(req)) {
-        return res.json(people);
-      }
-      const current = findPersonByUsername(req.user?.username);
-      const filtered = current ? [current] : [];
-      return res.json(filtered);
-    });
-    app.post("/api/people", requireSuperuser, (req, res) => {
+    app.get("/api/people", (req, res) => res.json(people));
+    app.post("/api/people", requireWrite, (req, res) => {
       const { name } = req.body;
       if (!name) return res.status(400).json({ error: "Name is required" });
 
@@ -1668,7 +1595,7 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
       self.sendSocketNotification("PEOPLE_UPDATE", people);
       res.status(201).json(newPerson);
     });
-    app.delete("/api/people/:id", requireSuperuser, (req, res) => {
+    app.delete("/api/people/:id", requireWrite, (req, res) => {
       const id = parseInt(req.params.id, 10);
       people = people.filter(p => p.id !== id);
       tasks  = tasks.map(t => t.assignedTo === id ? { ...t, assignedTo: null } : t);
@@ -1893,12 +1820,7 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
       delete safeSettings.openaiApiKey;
       delete safeSettings.pushoverApiKey;
       delete safeSettings.pushoverUser;
-
-      const currentUser = req.user?.username;
-      const perUser = currentUser ? pickUserSettingOverrides(userSettings[currentUser] || {}) : {};
-      const merged = { ...safeSettings, ...perUser };
-
-      res.json({ ...merged, leveling: merged.leveling, settings: self.config.settings, currentUser });
+      res.json({ ...safeSettings, leveling: safeSettings.leveling, settings: self.config.settings });
     });
     app.post("/api/datafix", requireWrite, (req, res) => {
       const result = performTemporaryDataFix();
@@ -1927,25 +1849,9 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
       const wasAutoUpdate = settings.autoUpdate;
       const wasCoinSystem = settings.useCoinSystem ?? settings.usePointSystem ?? false;
       let taskPointsRulesUpdated = false;
-      const currentUser = req.user?.username;
-      const isSuper = isSuperUser(req);
       
       if (typeof newSettings !== "object") {
         return res.status(400).json({ error: "Invalid settings data" });
-      }
-
-      const perUserOverrides = pickUserSettingOverrides(newSettings);
-      if (currentUser && Object.keys(perUserOverrides).length) {
-        userSettings[currentUser] = {
-          ...(userSettings[currentUser] || {}),
-          ...perUserOverrides
-        };
-        persistUserSettings();
-      }
-
-      // Non-super users can only update their personal settings
-      if (self.config.login && !isSuper) {
-        return res.json({ success: true, settings: { ...settings, ...perUserOverrides } });
       }
       
       // Handle manual coin editing
