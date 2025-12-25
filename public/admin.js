@@ -697,6 +697,10 @@ function initAudioContext() {
   if (!audioContext) {
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
   }
+  // Ensure context is running
+  if (audioContext.state === 'suspended') {
+    audioContext.resume();
+  }
   return audioContext;
 }
 
@@ -877,21 +881,26 @@ async function speakAiResponse(text, audioBase64, onComplete) {
       source.buffer = audioBufferWithSilence;
       
       const gainNode = ctx.createGain();
-      gainNode.gain.value = 0;
       source.connect(gainNode);
       gainNode.connect(ctx.destination);
       
-      // Apply fade-in for softer start
+      // Ensure context is resumed
+      if (ctx.state === 'suspended') {
+        await ctx.resume();
+      }
+      
+      // Start at zero volume and fade in
       const targetVol = clamp(ttsAudio.volume, 0, 1);
       const fadeMs = ttsAudio.fadeMs || DEFAULT_TTS_AUDIO.fadeMs;
       const now = ctx.currentTime;
       gainNode.gain.setValueAtTime(0, now);
-      gainNode.gain.linearRampToValueAtTime(targetVol, now + fadeMs / 1000);
+      gainNode.gain.linearRampToValueAtTime(targetVol, now + (fadeMs / 1000));
       
       source.onended = () => {
         if (onComplete) onComplete();
       };
       
+      // Start playback - silence will play first
       source.start(0);
       return;
     } catch (err) {
@@ -951,6 +960,11 @@ function startListeningWithTimeout() {
 function toggleAiChatListening() {
   if (!aiChatEnabled) return;
   
+  // Warm up audio context on user interaction
+  if (audioContext && audioContext.state === 'suspended') {
+    audioContext.resume().catch(e => console.log('Audio context resume failed', e));
+  }
+  
   // Unlock/warm up the global audio object with silence
   aiResponseAudio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==";
   aiResponseAudio.play().catch(e => console.log("Audio unlock failed", e));
@@ -986,6 +1000,9 @@ async function sendAiChatMessage(isVoice = false) {
   if (!aiChatEnabled) return;
   
   // Try to warm up audio if this was a click interaction
+  if (audioContext && audioContext.state === 'suspended') {
+    audioContext.resume().catch(e => {});
+  }
   aiResponseAudio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==";
   aiResponseAudio.play().catch(e => {}); // Ignore errors if not a user interaction
 
