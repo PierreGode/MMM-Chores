@@ -36,6 +36,8 @@ let aiResponseAudio = new Audio(); // Global audio object for AI responses
 let aiAutoStopTimer = null;
 const DEFAULT_TTS_AUDIO = { volume: 0.7, pauseMs: 600, fadeMs: 120 };
 let ttsAudio = { ...DEFAULT_TTS_AUDIO };
+let audioContext = null;
+let silenceAudioBuffer = null;
 const TASK_SERIES_FILTER_KEY = 'mmm-chores-series-filter';
 let showTaskSeriesRootsOnly = localStorage.getItem(TASK_SERIES_FILTER_KEY) === '1';
 const personRewardsModalEl = document.getElementById('personRewardsModal');
@@ -691,6 +693,43 @@ function fadeInAudioElement(el, targetVolume, durationMs) {
   }, stepDur);
 }
 
+function initAudioContext() {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  return audioContext;
+}
+
+function createSilentBuffer(durationMs) {
+  const ctx = initAudioContext();
+  const sampleRate = ctx.sampleRate;
+  const numSamples = Math.ceil((durationMs / 1000) * sampleRate);
+  const buffer = ctx.createBuffer(2, numSamples, sampleRate);
+  return buffer;
+}
+
+async function prependSilenceToAudio(audioBlob, silenceDurationMs) {
+  const ctx = initAudioContext();
+  const arrayBuffer = await audioBlob.arrayBuffer();
+  const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+  
+  const silentBuffer = createSilentBuffer(silenceDurationMs);
+  const totalLength = silentBuffer.length + audioBuffer.length;
+  const combined = ctx.createBuffer(
+    audioBuffer.numberOfChannels,
+    totalLength,
+    audioBuffer.sampleRate
+  );
+  
+  for (let channel = 0; channel < audioBuffer.numberOfChannels; channel++) {
+    const outputData = combined.getChannelData(channel);
+    const audioData = audioBuffer.getChannelData(channel);
+    outputData.set(audioData, silentBuffer.length);
+  }
+  
+  return combined;
+}
+
 function resolveAiChatLocale() {
   const map = {
     sv: 'sv-SE',
@@ -826,55 +865,37 @@ async function speakAiResponse(text, audioBase64, onComplete) {
   // If we have OpenAI TTS audio, play it
   if (audioBase64) {
     try {
-      try {
-        aiResponseAudio.pause();
-        aiResponseAudio.currentTime = 0;
-      } catch (e) {}
-      aiResponseAudio.onended = null;
-
       const audioBlob = new Blob(
         [Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0))],
         { type: 'audio/mpeg' }
       );
-      const audioUrl = URL.createObjectURL(audioBlob);
       
-      // Use the global audio object
-      aiResponseAudio.src = audioUrl;
-      aiResponseAudio.volume = 0;
-
-      // Wait for media to be ready
-      await new Promise(resolve => {
-        const ready = () => {
-          aiResponseAudio.removeEventListener('canplaythrough', ready);
-          aiResponseAudio.removeEventListener('loadeddata', ready);
-          resolve();
-        };
-        aiResponseAudio.addEventListener('canplaythrough', ready, { once: true });
-        aiResponseAudio.addEventListener('loadeddata', ready, { once: true });
-        // Fallback timeout
-        setTimeout(resolve, 800);
-      });
-
-      // Play after configured pause; apply fade-in for softer start
-      await waitMs(ttsAudio.pauseMs || DEFAULT_TTS_AUDIO.pauseMs);
+      // Prepend 500ms of silence to prevent clipping
+      const audioBufferWithSilence = await prependSilenceToAudio(audioBlob, 500);
+      const ctx = initAudioContext();
+      const source = ctx.createBufferSource();
+      source.buffer = audioBufferWithSilence;
+      
+      const gainNode = ctx.createGain();
+      gainNode.gain.value = 0;
+      source.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      // Apply fade-in for softer start
       const targetVol = clamp(ttsAudio.volume, 0, 1);
       const fadeMs = ttsAudio.fadeMs || DEFAULT_TTS_AUDIO.fadeMs;
-      aiResponseAudio.play().then(() => {
-        fadeInAudioElement(aiResponseAudio, targetVol, fadeMs);
-      }).catch(err => {
-        console.error('Failed to play audio:', err);
-        // Fallback to browser TTS
-        fallbackToWebSpeech(text, onComplete);
-      });
+      const now = ctx.currentTime;
+      gainNode.gain.setValueAtTime(0, now);
+      gainNode.gain.linearRampToValueAtTime(targetVol, now + fadeMs / 1000);
       
-      // Clean up blob url when done
-      aiResponseAudio.onended = () => {
-        URL.revokeObjectURL(audioUrl);
+      source.onended = () => {
         if (onComplete) onComplete();
       };
+      
+      source.start(0);
       return;
     } catch (err) {
-      console.error('Failed to decode audio:', err);
+      console.error('Failed to process audio:', err);
     }
   }
   
@@ -893,7 +914,7 @@ async function fallbackToWebSpeech(text, onComplete) {
     await ensureMicStoppedPause();
 
     const pauseMs = ttsAudio.pauseMs || DEFAULT_TTS_AUDIO.pauseMs;
-    const utterance = new SpeechSynthesisUtterance(". . . " + text);
+    const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = resolveAiChatLocale();
     utterance.rate = 1.0;
     utterance.pitch = 1.0;

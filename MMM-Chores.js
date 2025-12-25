@@ -569,11 +569,11 @@ Module.register("MMM-Chores", {
       // Cancel any ongoing speech to prevent overlap
       window.speechSynthesis.cancel();
 
-      // Add a slight pause/padding at the start to prevent the first word from being cut off
+      // Add a pause before speaking to prevent the first word from being cut off
       const cfg = this.config.ttsAudio || {};
-      const pauseMs = Number.isFinite(cfg.pauseMs) ? cfg.pauseMs : 500;
+      const pauseMs = Number.isFinite(cfg.pauseMs) ? cfg.pauseMs : 600;
       const volume = Number.isFinite(cfg.volume) ? cfg.volume : 0.7;
-      const utterance = new SpeechSynthesisUtterance(". . . " + text);
+      const utterance = new SpeechSynthesisUtterance(text);
       const config = this.config.voiceAssistant;
       
       if (config.ttsVoice && config.ttsVoice !== 'default') {
