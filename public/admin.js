@@ -2343,10 +2343,10 @@ function renderTasks() {
 
 function renderTaskGroup(container, title, tasks, t, canWrite, canDelete, isCoinSystemActive) {
   const card = document.createElement('div');
-  card.className = 'card mb-3 border-0 shadow-sm';
+  card.className = 'card mb-3 task-group-card';
   
   const header = document.createElement('div');
-  header.className = 'card-header bg-light fw-bold';
+  header.className = 'card-header task-group-header fw-bold';
   header.textContent = title;
   
   const body = document.createElement('div');

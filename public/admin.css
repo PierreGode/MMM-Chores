@@ -729,3 +729,22 @@ select#taskRecurring option[value="first_monday_month"] {
   margin-bottom: 0;
   padding-bottom: 0;
 }
+
+/* Task Group Cards */
+.task-group-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.task-group-header {
+  background-color: rgba(0, 0, 0, 0.03);
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+[data-theme="dark"] .task-group-header {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border);
+}
+
