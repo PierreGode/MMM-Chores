@@ -3233,10 +3233,11 @@ async function initApp() {
   await applySettings(effectiveSettings);
 
   // Initialize rewards system visibility
-  const userCoinSystemEnabled = userSettings.useCoinSystem ?? userSettings.usePointSystem ?? false;
-  updateRewardsTabVisibility(userCoinSystemEnabled, userSettings.showRewardsTab !== false);
+  const coinSystemEnabled = effectiveSettings.useCoinSystem ?? effectiveSettings.usePointSystem ?? false;
+  const rewardsTabVisible = effectiveSettings.showRewardsTab !== false;
+  updateRewardsTabVisibility(coinSystemEnabled, rewardsTabVisible);
   
-  if (userCoinSystemEnabled) {
+  if (coinSystemEnabled) {
     await fetchRewards();
     await fetchRedemptions();
   }
