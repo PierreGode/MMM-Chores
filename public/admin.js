@@ -1633,12 +1633,18 @@ function setLanguage(lang) {
   if (pendingLabel) pendingLabel.textContent = ` ${t.taskPendingLabel}`;
   const taskInput = document.getElementById("taskName");
   if (taskInput) taskInput.placeholder = t.taskNamePlaceholder;
-  const recurringSelect = document.getElementById("taskRecurring");
-  if (recurringSelect && t.taskRecurring) {
-    Array.from(recurringSelect.options).forEach(opt => {
+  const updateRecurringSelectText = (selectEl) => {
+    if (!selectEl || !t.taskRecurring) return;
+    Array.from(selectEl.options).forEach(opt => {
       const key = opt.value || "none";
       if (t.taskRecurring[key]) opt.textContent = t.taskRecurring[key];
     });
+  };
+  updateRecurringSelectText(document.getElementById("taskRecurring"));
+  updateRecurringSelectText(document.getElementById("editTaskRecurring"));
+  const editTaskRecurringLabel = document.getElementById("editTaskRecurringLabel");
+  if (editTaskRecurringLabel && t.taskRecurringLabel) {
+    editTaskRecurringLabel.textContent = t.taskRecurringLabel;
   }
   const taskAddBtn = document.getElementById("btnAddTask");
   if (taskAddBtn) taskAddBtn.innerHTML = `<i class='bi bi-plus-lg me-1'></i>${t.taskAddButton}`;
@@ -2486,9 +2492,11 @@ function openEditModal(task) {
   const nameInput = document.getElementById('editTaskName');
   const dateInput = document.getElementById('editTaskDate');
   const personSelect = document.getElementById('editTaskPerson');
+  const recurringSelect = document.getElementById('editTaskRecurring');
   if (nameInput) nameInput.value = task.name;
   if (dateInput) dateInput.value = task.date || '';
   if (personSelect) personSelect.value = task.assignedTo || '';
+  if (recurringSelect) recurringSelect.value = task.recurring || 'none';
   if (!editTaskModal) {
     const modalEl = document.getElementById('editTaskModal');
     if (modalEl) editTaskModal = new bootstrap.Modal(modalEl);
@@ -2718,10 +2726,12 @@ document.getElementById('editTaskForm').addEventListener('submit', async e => {
   const name = document.getElementById('editTaskName').value.trim();
   const date = document.getElementById('editTaskDate').value;
   const assigned = document.getElementById('editTaskPerson').value;
+  const recurring = document.getElementById('editTaskRecurring').value || 'none';
   await updateTask(editTaskId, {
     name,
     date,
-    assignedTo: assigned ? parseInt(assigned) : null
+    assignedTo: assigned ? parseInt(assigned) : null,
+    recurring
   });
   if (editTaskModal) editTaskModal.hide();
   editTaskId = null;

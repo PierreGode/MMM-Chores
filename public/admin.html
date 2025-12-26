@@ -131,7 +131,7 @@
                   </div>
                   <div class="col-sm-auto">
                     <select id="taskRecurring" class="form-select">
-                      <option value="">One time</option>
+                      <option value="none">One time</option>
                       <option value="daily">Daily</option>
                       <option value="weekly">Weekly</option>
                       <option value="weekdays">Weekdays (Mon-Fri)</option>
@@ -308,6 +308,23 @@
                 <label for="editTaskPerson" class="form-label">Person</label>
                 <select id="editTaskPerson" class="form-select">
                   <option value="">Unassigned</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="editTaskRecurring" class="form-label" id="editTaskRecurringLabel">Recurring</label>
+                <select id="editTaskRecurring" class="form-select">
+                  <option value="none">One time</option>
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="weekdays">Weekdays (Mon-Fri)</option>
+                  <option value="weekends">Weekends (Sat-Sun)</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="yearly">Yearly</option>
+                  <option value="every_X_days_2">Every 2 Days</option>
+                  <option value="every_X_days_3">Every 3 Days</option>
+                  <option value="every_X_weeks_2">Every 2 Weeks</option>
+                  <option value="every_X_weeks_3">Every 3 Weeks</option>
+                  <option value="first_monday_month">First Monday of Month</option>
                 </select>
               </div>
               <div class="mb-3">
