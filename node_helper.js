@@ -7,6 +7,15 @@ const fs         = require("fs");
 const https      = require("https");
 const { exec }   = require("child_process");
 
+let LANGUAGES = {};
+try {
+  // Reuse the same translations as the admin UI when running in Node.
+  LANGUAGES = require(path.join(__dirname, "public", "lang.js"));
+} catch (err) {
+  Log.warn("MMM-Chores: Failed to load translations for backend notifications", err);
+  LANGUAGES = {};
+}
+
 // Use built-in fetch if available (Node 18+) otherwise fall back to node-fetch
 let fetchFn = global.fetch;
 if (!fetchFn) {
@@ -27,6 +36,36 @@ const DATA_FILE_BAK = `${DATA_FILE}.bak`;
 const COINS_FILE    = path.join(__dirname, "rewards.json");
 const COINS_FILE_BAK = `${COINS_FILE}.bak`;
 const CERT_DIR      = path.join(__dirname, "certs");
+function sanitizeUsernameToFile(username) {
+  if (!username || typeof username !== "string") return null;
+  const safe = username.replace(/[^a-z0-9_-]/gi, "_");
+  return safe ? path.join(__dirname, `${safe}.json`) : null;
+}
+
+function loadUserSettings(username) {
+  const filePath = sanitizeUsernameToFile(username);
+  if (!filePath || !fs.existsSync(filePath)) return {};
+  try {
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch (err) {
+    Log.error(`MMM-Chores: Failed to read user settings for ${username}`, err);
+    return {};
+  }
+}
+
+function saveUserSettings(username, data) {
+  const filePath = sanitizeUsernameToFile(username);
+  if (!filePath) throw new Error("Invalid username for user settings");
+  const snapshot = JSON.stringify(data || {}, null, 2);
+  writeDataFileAtomic(filePath, snapshot);
+}
+
+function findPersonIdForUsername(username) {
+  if (!username) return null;
+  const lower = username.toLowerCase();
+  const match = people.find(p => (p.name || "").toLowerCase() === lower);
+  return match ? match.id : null;
+}
 
 let tasks = [];
 let people = [];
@@ -56,6 +95,23 @@ const DEFAULT_TITLES = [
   "Legend",
   "Mythic"
 ];
+
+function getLanguageStrings(langCode) {
+  const fallback = LANGUAGES.en || {};
+  if (!langCode || typeof langCode !== "string") return fallback;
+  const normalized = langCode.split("-")[0];
+  return LANGUAGES[normalized] || fallback;
+}
+
+function formatTemplate(template, values = {}) {
+  if (typeof template !== "string") return "";
+  return template.replace(/\{(\w+)\}/g, (_, key) => {
+    const value = values[key];
+    return value === undefined || value === null ? "" : String(value);
+  });
+}
+
+const DEFAULT_PUSHOVER_CONFIG_ERROR = "Please set pushoverApiKey and pushoverUser in config.js to use Pushover notifications.";
 
 let settings = {};
 let autoUpdateTimer = null;
@@ -312,12 +368,11 @@ function scheduleReminder(self) {
     reminderTimer = null;
   }
   if (!settings.reminderTime || !settings.pushoverEnabled) return;
+  const t = getLanguageStrings(settings.language);
+  const configError = t.pushoverConfigError || DEFAULT_PUSHOVER_CONFIG_ERROR;
   if (!self.config || !self.config.pushoverApiKey || !self.config.pushoverUser) {
     Log.error("MMM-Chores: pushoverApiKey and pushoverUser must be set in config.js when Pushover is enabled");
-    self.sendSocketNotification(
-      "PUSHOVER_CONFIG_ERROR",
-      "Please set pushoverApiKey and pushoverUser in config.js to use Pushover notifications."
-    );
+    self.sendSocketNotification("PUSHOVER_CONFIG_ERROR", configError);
     return;
   }
   const [h, m] = settings.reminderTime.split(":").map(n => parseInt(n, 10));
@@ -338,7 +393,8 @@ function scheduleReminder(self) {
     );
     if (unfinished.length) {
       const list = unfinished.map(t => `• ${t.name}`).join("\n");
-      sendPushover(self, settings, `Uncompleted tasks:\n${list}`);
+      const header = t.pushoverUnfinishedTitle || "Uncompleted tasks:";
+      sendPushover(self, settings, `${header}\n${list}`);
     }
     scheduleReminder(self);
   }, delay);
@@ -347,12 +403,11 @@ function scheduleReminder(self) {
 function sendPushover(self, settings, message) {
   const config = self.config || {};
   if (!settings.pushoverEnabled) return;
+  const t = getLanguageStrings(settings.language);
+  const configError = t.pushoverConfigError || DEFAULT_PUSHOVER_CONFIG_ERROR;
   if (!config.pushoverApiKey || !config.pushoverUser) {
     Log.error("MMM-Chores: pushoverApiKey and pushoverUser must be set in config.js when Pushover is enabled");
-    self.sendSocketNotification(
-      "PUSHOVER_CONFIG_ERROR",
-      "Please set pushoverApiKey and pushoverUser in config.js to use Pushover notifications."
-    );
+    self.sendSocketNotification("PUSHOVER_CONFIG_ERROR", configError);
     return;
   }
   const params = new URLSearchParams({
@@ -659,17 +714,53 @@ function broadcastTasks(helper) {
   helper.sendSocketNotification("CHORES_DATA", analyticsData);
   helper.sendSocketNotification("LEVEL_INFO", getLevelInfo(helper.config || {}));
   helper.sendSocketNotification("PEOPLE_UPDATE", people);
+  helper.sendSocketNotification("REDEMPTIONS_UPDATE", coinStore.redemptions || []);
   const ok = saveData();
   Log.log(`broadcastTasks: saveData returned ${ok}`);
   return ok;
 }
 
+function normalizeRecurringStartDate(dateStr, recurring) {
+  if (!dateStr || !recurring || recurring === "none") return dateStr;
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return dateStr;
+
+  const isWeekend = day => day === 0 || day === 6;
+
+  if (recurring === "weekdays") {
+    while (isWeekend(d.getDay())) {
+      d.setDate(d.getDate() + 1);
+    }
+  } else if (recurring === "weekends") {
+    while (!isWeekend(d.getDay())) {
+      d.setDate(d.getDate() + 1);
+    }
+  }
+
+  return d.toISOString().slice(0, 10);
+}
+
 function getNextDate(dateStr, recurring) {
   const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return null;
+
+  const addDays = days => d.setDate(d.getDate() + days);
+  const isWeekend = day => day === 0 || day === 6;
+
   if (recurring === "daily") {
-    d.setDate(d.getDate() + 1);
+    addDays(1);
   } else if (recurring === "weekly") {
-    d.setDate(d.getDate() + 7);
+    addDays(7);
+  } else if (recurring === "weekdays") {
+    // Advance to next weekday
+    do {
+      addDays(1);
+    } while (isWeekend(d.getDay()));
+  } else if (recurring === "weekends") {
+    // Advance to next weekend day
+    do {
+      addDays(1);
+    } while (!isWeekend(d.getDay()));
   } else if (recurring === "monthly") {
     d.setMonth(d.getMonth() + 1);
   } else if (recurring === "yearly") {
@@ -679,17 +770,17 @@ function getNextDate(dateStr, recurring) {
     const parts = recurring.split("_");
     if (parts[1] === "X" && parts[2] === "days") {
       const days = parseInt(parts[3]) || 2;
-      d.setDate(d.getDate() + days);
+      addDays(days);
     } else if (parts[1] === "X" && parts[2] === "weeks") {
       const weeks = parseInt(parts[3]) || 2;
-      d.setDate(d.getDate() + (weeks * 7));
+      addDays(weeks * 7);
     } else if (recurring === "first_monday_month") {
       // First Monday of next month
       d.setMonth(d.getMonth() + 1);
       d.setDate(1);
       // Find first Monday
       while (d.getDay() !== 1) {
-        d.setDate(d.getDate() + 1);
+        addDays(1);
       }
     } else {
       return null;
@@ -1008,6 +1099,8 @@ module.exports = NodeHelper.create({
         showPast: previousSettings.showPast ?? payload.showPast,
         showAnalyticsOnMirror: previousSettings.showAnalyticsOnMirror ?? payload.showAnalyticsOnMirror,
         useAI: previousSettings.useAI ?? payload.useAI,
+        chatbotEnabled: previousSettings.chatbotEnabled ?? payload.chatbotEnabled ?? false,
+        chatbotVoice: previousSettings.chatbotVoice ?? payload.chatbotVoice ?? "nova",
         autoUpdate: previousSettings.autoUpdate ?? payload.autoUpdate,
         pushoverEnabled: previousSettings.pushoverEnabled ?? payload.pushoverEnabled,
         reminderTime: previousSettings.reminderTime ?? payload.reminderTime,
@@ -1049,6 +1142,171 @@ module.exports = NodeHelper.create({
     }
     if (notification === "USER_TOGGLE_CHORE") {
       this.handleUserToggle(payload);
+    }
+    if (notification === "VOICE_COMMAND") {
+      this.handleVoiceCommand(payload);
+    }
+  },
+
+  async handleVoiceCommand(payload) {
+    const { transcript, people: currentPeople, tasks: currentTasks } = payload;
+    
+    if (!this.config || !this.config.openaiApiKey) {
+      Log.warn("MMM-Chores: Voice commands require OpenAI API key");
+      return;
+    }
+
+    if (!openaiLoaded) {
+      Log.warn("MMM-Chores: OpenAI package not installed. Run: npm install openai");
+      return;
+    }
+
+    try {
+      const client = new OpenAI({ apiKey: this.config.openaiApiKey });
+      
+      // Build context about current state
+      const context = {
+        people: people.map(p => ({
+          id: p.id,
+          name: p.name,
+          points: coinStore.peopleCoins?.[p.id] || 0
+        })),
+        tasks: tasks.filter(t => !t.deleted).map(t => ({
+          id: t.id,
+          name: t.name,
+          assignedTo: t.assignedTo,
+          done: t.done,
+          date: t.date
+        }))
+      };
+
+      // Ask GPT to parse the intent
+      const langCode = (settings.language || "en").toLowerCase();
+      const systemPrompt = `You are a voice assistant for a chore management system. Parse user commands and return JSON with the intent. Always respond in ${langCode}.
+
+Available actions:
+- list_tasks: Show tasks (filters: today, week, person_name, all)
+- mark_done: Mark task as complete (needs task name or id)
+- mark_undone: Mark task as incomplete
+- add_task: Create new task (needs task name, optional: assignee, date)
+- check_stats: Show statistics (person's points, level, completed tasks)
+- redeem_reward: Redeem a reward (needs reward name)
+- check_reward: Check reward details (needs reward name)
+- halp user caulculare remaining coins to get reward (needs reward name)
+- do not return full dates only day for upcomming tasks 
+
+
+Current people: ${context.people.map(p => p.name).join(", ")}
+Current tasks: ${context.tasks.slice(0, 10).map(t => `"${t.name}"`).join(", ")}
+
+Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natural language response"}`;
+
+      const completion = await client.chat.completions.create({
+        model: "gpt-5-nano",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: transcript }
+        ],
+        response_format: { type: "json_object" }
+      });
+
+      const result = JSON.parse(completion.choices[0].message.content);
+      
+      // Execute the action
+      const actionResult = await this.executeVoiceAction(result, context);
+      
+      // Send response back to frontend
+      this.sendSocketNotification("VOICE_RESPONSE", {
+        text: actionResult.response || result.response,
+        action: actionResult.action
+      });
+
+    } catch (error) {
+      Log.error("MMM-Chores: Voice command error", error);
+      this.sendSocketNotification("VOICE_RESPONSE", {
+        text: "Sorry, I couldn't process that command.",
+        action: null
+      });
+    }
+  },
+
+  async executeVoiceAction(intent, context) {
+    const { action, params, response } = intent;
+    let actionPayload = null;
+
+    switch (action) {
+      case "list_tasks": {
+        const filter = params.filter || "today";
+        const today = new Date().toISOString().split("T")[0];
+        let filtered = context.tasks;
+
+        if (filter === "today") {
+          filtered = filtered.filter(t => t.date === today && !t.done);
+        } else if (filter === "week") {
+          const weekFromNow = new Date();
+          weekFromNow.setDate(weekFromNow.getDate() + 7);
+          filtered = filtered.filter(t => !t.done && new Date(t.date) <= weekFromNow);
+        } else if (filter !== "all") {
+          // Filter by person name
+          const person = context.people.find(p => p.name.toLowerCase() === filter.toLowerCase());
+          if (person) {
+            filtered = filtered.filter(t => t.assignedTo === person.id && !t.done);
+          }
+        }
+
+        const taskList = filtered.map(t => {
+          const assignee = context.people.find(p => p.id === t.assignedTo);
+          return `${t.name}${assignee ? ` for ${assignee.name}` : ""}`;
+        }).join(", ");
+
+        return {
+          response: filtered.length > 0 
+            ? `You have ${filtered.length} task${filtered.length > 1 ? "s" : ""}: ${taskList}`
+            : "No tasks found.",
+          action: null
+        };
+      }
+
+      case "mark_done":
+      case "mark_undone": {
+        const taskName = params.task_name?.toLowerCase();
+        const task = context.tasks.find(t => 
+          t.name.toLowerCase().includes(taskName) || t.id === params.task_id
+        );
+
+        if (task) {
+          const isDone = action === "mark_done";
+          this.handleUserToggle({ id: task.id, done: isDone });
+          
+          return {
+            response: `Marked "${task.name}" as ${isDone ? "complete" : "incomplete"}.`,
+            action: { type: "TOGGLE_TASK", taskId: task.id, done: isDone }
+          };
+        }
+        return { response: "I couldn't find that task.", action: null };
+      }
+
+      case "check_stats": {
+        const personName = params.person_name;
+        const person = context.people.find(p => 
+          p.name.toLowerCase() === personName?.toLowerCase()
+        );
+
+        if (person) {
+          const completedCount = context.tasks.filter(t => 
+            t.assignedTo === person.id && t.done
+          ).length;
+          
+          return {
+            response: `${person.name} has ${person.points} coins and has completed ${completedCount} tasks.`,
+            action: null
+          };
+        }
+        return { response: "I couldn't find that person.", action: null };
+      }
+
+      default:
+        return { response: response || "I'm not sure how to help with that.", action: null };
     }
   },
 
@@ -1138,7 +1396,7 @@ module.exports = NodeHelper.create({
           { role: "user", content: prompt }
         ],
 
-        max_tokens: 5000,
+        max_completion_tokens: 5000,
         temperature: 0.1
       });
 
@@ -1290,6 +1548,19 @@ module.exports = NodeHelper.create({
     app.post("/api/login", (req, res) => {
       if (!self.config.login) return res.json({ loginRequired: false });
       const { username, password } = req.body;
+
+      // Screen user login
+      const screenEnabled = self.config.screen || settings.screen;
+      if (username === "screen" && screenEnabled) {
+        const token = Math.random().toString(36).slice(2);
+        sessions[token] = {
+          username: "screen",
+          permission: "screen",
+          expires: Date.now() + SESSION_DURATION_MS
+        };
+        return res.json({ token, permission: "screen", username: "screen" });
+      }
+
       const user = users.find(u => u.username === username && u.password === password);
       if (!user) return res.status(401).json({ error: "Invalid credentials" });
       const token = Math.random().toString(36).slice(2);
@@ -1297,19 +1568,22 @@ module.exports = NodeHelper.create({
         ...user,
         expires: Date.now() + SESSION_DURATION_MS
       };
-      res.json({ token, permission: user.permission });
+      res.json({ token, permission: user.permission, username: user.username });
     });
 
       app.get("/api/login", (req, res) => {
         if (!self.config.login) return res.json({ loginRequired: false });
+        
+        const screenEnabled = !!(self.config.screen || settings.screen);
+
         const token = req.headers["x-auth-token"];
         const user = sessions[token];
         if (user && user.expires > Date.now()) {
           user.expires = Date.now() + SESSION_DURATION_MS;
-          return res.json({ loginRequired: true, loggedIn: true, permission: user.permission });
+          return res.json({ loginRequired: true, loggedIn: true, permission: user.permission, username: user.username, screenEnabled });
         }
         if (token && sessions[token]) delete sessions[token];
-        res.json({ loginRequired: true, loggedIn: false });
+        res.json({ loginRequired: true, loggedIn: false, screenEnabled });
       });
 
       app.post("/api/logout", (req, res) => {
@@ -1343,11 +1617,26 @@ module.exports = NodeHelper.create({
       next();
     }
 
+    function requireTaskWrite(req, res, next) {
+      if (!self.config.login) return next();
+      if (!req.user || (req.user.permission !== "write" && req.user.permission !== "regular")) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      next();
+    }
+
     app.get("/", (req, res) => {
       res.sendFile(path.join(__dirname, "public", "admin.html"));
     });
 
-    app.get("/api/people", (req, res) => res.json(people));
+    app.get("/api/people", (req, res) => {
+      if (req.user && req.user.permission === "regular") {
+        const id = findPersonIdForUsername(req.user.username);
+        const filtered = id ? people.filter(p => p.id === id) : [];
+        return res.json(filtered);
+      }
+      res.json(people);
+    });
     app.post("/api/people", requireWrite, (req, res) => {
       const { name } = req.body;
       if (!name) return res.status(400).json({ error: "Name is required" });
@@ -1392,7 +1681,7 @@ module.exports = NodeHelper.create({
       }
       res.json(tasks);
     });
-    app.post("/api/tasks", requireWrite, (req, res) => {
+    app.post("/api/tasks", requireTaskWrite, (req, res) => {
       const now = new Date();
       const fallbackAnchor = getNextSeriesAnchorValue();
       const newTask = {
@@ -1404,6 +1693,10 @@ module.exports = NodeHelper.create({
         assignedTo: req.body.assignedTo ? parseInt(req.body.assignedTo, 10) : null,
         recurring: req.body.recurring || "none",
       };
+
+      if (newTask.date) {
+        newTask.date = normalizeRecurringStartDate(newTask.date, newTask.recurring);
+      }
 
       if (newTask.points !== undefined) {
         const numericPoints = Number(newTask.points);
@@ -1421,13 +1714,15 @@ module.exports = NodeHelper.create({
       }
       Log.log("POST /api/tasks", newTask);
       tasks.push(newTask);
-      sendPushover(self, settings, `New task: ${newTask.name}`);
+      const t = getLanguageStrings(settings.language);
+      const newTaskMsg = formatTemplate(t.pushoverNewTask || "New task: {task}", { task: newTask.name });
+      sendPushover(self, settings, newTaskMsg);
       const ok = broadcastTasks(self);
       res.status(ok ? 201 : 500).json(ok ? newTask : { error: "Failed to save data" });
     });
 
     // Reorder tasks
-    app.put("/api/tasks/reorder", requireWrite, (req, res) => {
+    app.put("/api/tasks/reorder", requireTaskWrite, (req, res) => {
       const ids = req.body;
       if (!Array.isArray(ids)) {
         return res.status(400).json({ error: "Expected an array of task ids" });
@@ -1482,7 +1777,7 @@ module.exports = NodeHelper.create({
       }
       res.json({ success: true });
     });
-    app.put("/api/tasks/:id", requireWrite, (req, res) => {
+    app.put("/api/tasks/:id", requireTaskWrite, (req, res) => {
       const id   = parseInt(req.params.id, 10);
       const task = tasks.find(t => t.id === id);
       if (!task) return res.status(404).json({ error: "Task not found" });
@@ -1547,13 +1842,18 @@ module.exports = NodeHelper.create({
       const ok = broadcastTasks(self);
       if (!prevDone && task.done) {
         const assignee = task.assignedTo ? people.find(p => p.id === task.assignedTo) : null;
-        const completedBy = assignee ? ` by ${assignee.name}` : "";
-        sendPushover(self, settings, `Task completed: ${task.name}${completedBy}`);
+        const t = getLanguageStrings(settings.language);
+        const byText = assignee ? formatTemplate(t.pushoverTaskBy || " by {name}", { name: assignee.name }) : "";
+        const completedMsg = formatTemplate(t.pushoverTaskCompleted || "Task completed: {task}{by}", {
+          task: task.name,
+          by: byText
+        });
+        sendPushover(self, settings, completedMsg);
       }
       if (!ok) return res.status(500).json({ error: "Failed to save data" });
       res.json(task);
     });
-    app.delete("/api/tasks/:id", requireWrite, (req, res) => {
+    app.delete("/api/tasks/:id", requireTaskWrite, (req, res) => {
       const id = parseInt(req.params.id, 10);
       const task = tasks.find(t => t.id === id);
       if (!task) return res.status(404).json({ error: "Task not found" });
@@ -1581,7 +1881,22 @@ module.exports = NodeHelper.create({
       delete safeSettings.openaiApiKey;
       delete safeSettings.pushoverApiKey;
       delete safeSettings.pushoverUser;
-      res.json({ ...safeSettings, leveling: safeSettings.leveling, settings: self.config.settings });
+
+      const currentUser = req.user ? req.user.username : null;
+      const userSettings = currentUser ? loadUserSettings(currentUser) : {};
+      const effectiveSettings = { ...safeSettings, ...userSettings };
+      const currentPersonId = findPersonIdForUsername(currentUser);
+
+      res.json({
+        ...safeSettings,
+        leveling: safeSettings.leveling,
+        settings: self.config.settings,
+        userSettings,
+        effectiveSettings,
+        currentUser,
+        currentPersonId,
+        permission: req.user ? req.user.permission : (self.config.login ? "write" : "write")
+      });
     });
     app.post("/api/datafix", requireWrite, (req, res) => {
       const result = performTemporaryDataFix();
@@ -1605,11 +1920,44 @@ module.exports = NodeHelper.create({
       const message = parts.length ? parts.join(", ") : "Temporary fix completed.";
       res.status(ok ? 200 : 500).json({ success: ok, ...result, message });
     });
-    app.put("/api/settings", requireWrite, (req, res) => {
+    app.put("/api/settings", requireTaskWrite, (req, res) => {
       const newSettings = req.body;
       const wasAutoUpdate = settings.autoUpdate;
       const wasCoinSystem = settings.useCoinSystem ?? settings.usePointSystem ?? false;
       let taskPointsRulesUpdated = false;
+      const currentUser = req.user ? req.user.username : null;
+
+      const allowedUserKeys = new Set([
+        "background",
+        "showRewardsTab",
+        "useAI",
+        "chatbotEnabled",
+        "chatbotTtsEnabled",
+        "chatbotVoice",
+        "useCoinSystem",
+        "usePointSystem"
+      ]);
+
+      if (newSettings && typeof newSettings.userSettings === "object") {
+        if (!currentUser) return res.status(401).json({ error: "Unauthorized" });
+        const payload = {};
+        Object.entries(newSettings.userSettings).forEach(([k, v]) => {
+          if (allowedUserKeys.has(k)) {
+            payload[k] = v;
+          }
+        });
+        try {
+          saveUserSettings(currentUser, payload);
+          return res.json({ success: true, userSettings: payload });
+        } catch (err) {
+          Log.error("MMM-Chores: Failed saving user settings", err);
+          return res.status(500).json({ error: "Failed to save user settings" });
+        }
+      }
+
+      if (req.user && req.user.permission === "regular") {
+        return res.status(403).json({ error: "Forbidden" });
+      }
       
       if (typeof newSettings !== "object") {
         return res.status(400).json({ error: "Invalid settings data" });
@@ -1723,7 +2071,224 @@ module.exports = NodeHelper.create({
       scheduleReminder(self);
     });
 
-    app.post("/api/ai-generate", requireWrite, (req, res) => self.aiGenerateTasks(req, res));
+    app.post("/api/ai-chat", requireTaskWrite, async (req, res) => {
+      if (!settings.chatbotEnabled) {
+        return res.status(400).json({ error: "AI chatbot is disabled in settings" });
+      }
+      if (!self.config || !self.config.openaiApiKey) {
+        return res.status(400).json({ error: "OpenAI API key missing" });
+      }
+      if (!openaiLoaded) {
+        return res.status(500).json({ error: "OpenAI package not installed. Run npm install openai." });
+      }
+
+      const { message, history } = req.body || {};
+      const prompt = typeof message === "string" ? message.trim() : "";
+      if (!prompt) {
+        return res.status(400).json({ error: "Message is required" });
+      }
+
+      const langCode = (settings.language || "en").toLowerCase();
+      const useCoins = settings.useCoinSystem !== false; // Default to true if undefined, or check logic elsewhere
+      const useLevels = settings.levelingEnabled !== false; // Default to true if undefined
+
+      const peopleSummary = people
+        .map(p => {
+          const coins = coinStore.peopleCoins?.[p.id] ?? p.points;
+          const parts = [p.name];
+          if (useLevels && p.level !== undefined) parts.push(`level ${p.level}`);
+          if (useCoins && coins !== undefined) parts.push(`${coins} coins`);
+          return parts.join(" - ");
+        })
+        .slice(0, 15)
+        .join("; ");
+
+      const upcomingTasks = tasks
+        .filter(t => !t.deleted && !t.done)
+        .slice(0, 20)
+        .map(t => {
+          const assignee = people.find(p => p.id === t.assignedTo);
+          const date = t.date ? ` on ${t.date}` : "";
+          return `${t.name}${assignee ? ` for ${assignee.name}` : ""}${date}`;
+        })
+        .join("; ");
+
+      const rewardSummary = (coinStore.rewards || [])
+        .slice(0, 10)
+        .map(r => `${r.name} (${r.pointCost} coins)`)
+        .join("; ");
+
+      const taskRulesSummary = (settings.taskPointsRules || [])
+        .map(r => `${r.pattern} (${r.points} coins)`)
+        .join("; ");
+
+      const safeHistory = Array.isArray(history)
+        ? history
+            .filter(msg => msg && (msg.role === "user" || msg.role === "assistant") && typeof msg.content === "string")
+            .slice(-6)
+            .map(msg => ({ role: msg.role, content: msg.content.slice(0, 800) }))
+        : [];
+
+      const currentUser = (req.user && req.user.username) ? req.user.username : null;
+      const currentDate = new Date().toLocaleDateString(langCode, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      const systemPrompt = `You are an assistant for the MMM-Chores admin dashboard, Be gentle, uplifting, and encouraging. Use a friendly tone. Respond in ${langCode}. 
+Current Date: ${currentDate} (YYYY-MM-DD: ${new Date().toISOString().split('T')[0]}).
+Current User: ${currentUser || "Guest"}.
+Active Reward System: ${useCoins ? "Coins/Points" : "Levels"}. Do not mention levels if the Coin system is active, unless specifically asked.
+You can answer questions about:
+1. Managing tasks, rewards, and people in this dashboard.
+2. General advice on how to perform household chores (e.g., "how to clean a window", "how to start a dishwasher")
+If a user asks about unrelated topics (e.g., "best places to visit in New York", "how to climb a mountain"), politely decline.
+When a user asks about a reward or their stats (e.g. "I want the PS5"), try to identify the person. If 'Current User' matches a name in 'People', assume that person. Otherwise, ask "Who are you?" or "Which person are you checking for?".
+Once identified, check if they have enough coins. If not, calculate and state exactly how many more coins they need.
+You can create tasks. If a user wants to create a task, ensure you have the task name, person, and date. If any are missing, ask for them.
+Don't get hooked up with words try to understand them, for example  Chores, Shores, they all mean tasks.
+Context: People: ${peopleSummary || "none"}. 
+Upcoming tasks: ${upcomingTasks || "none"}. 
+Rewards: ${rewardSummary || "none"}.
+Task Rules (Points): ${taskRulesSummary || "none"}.`;
+
+      function extractChatContent(content) {
+        if (!content) return "";
+        if (typeof content === "string") return content.trim();
+        if (Array.isArray(content)) {
+          return content
+            .map(part => extractChatContent(part))
+            .filter(Boolean)
+            .join("")
+            .trim();
+        }
+        if (typeof content === "object") {
+          if (typeof content.text?.value === "string") return content.text.value.trim();
+          if (typeof content.text === "string") return content.text.trim();
+          if (Array.isArray(content.text)) return extractChatContent(content.text);
+          if (typeof content.value === "string") return content.value.trim();
+          if (typeof content.content === "string") return content.content.trim();
+          if (Array.isArray(content.content)) return extractChatContent(content.content);
+        }
+        return "";
+      }
+
+      try {
+        const client = new OpenAI({ apiKey: self.config.openaiApiKey });
+        const messages = [{ role: "system", content: systemPrompt }, ...safeHistory, { role: "user", content: prompt }];
+        
+        const tools = [
+          {
+            type: "function",
+            function: {
+              name: "create_task",
+              description: "Create a new household chore task for a person",
+              parameters: {
+                type: "object",
+                properties: {
+                  taskName: { type: "string", description: "The name of the task" },
+                  personName: { type: "string", description: "The name of the person" },
+                  date: { type: "string", description: "YYYY-MM-DD" }
+                },
+                required: ["taskName", "personName", "date"]
+              }
+            }
+          }
+        ];
+
+        let completion = await client.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages,
+          tools,
+          tool_choice: "auto",
+          max_tokens: 512,
+          temperature: 0.7
+        });
+
+        const choice = completion.choices[0];
+        let reply = "";
+        let dataChanged = false;
+
+        if (choice.message.tool_calls) {
+          const toolCall = choice.message.tool_calls[0];
+          if (toolCall.function.name === "create_task") {
+            const args = JSON.parse(toolCall.function.arguments);
+            const person = people.find(p => p.name.toLowerCase() === args.personName.toLowerCase());
+            
+            if (person) {
+              const newTask = {
+                id: Date.now(),
+                name: args.taskName,
+                assignedTo: person.id,
+                date: args.date,
+                created: getLocalISO(new Date()),
+                done: false
+              };
+              // Auto-assign points if rule matches
+              autoAssignTaskPoints(newTask, { force: true });
+              tasks.push(newTask);
+              saveData();
+              dataChanged = true;
+              
+              messages.push(choice.message);
+              messages.push({
+                role: "tool",
+                tool_call_id: toolCall.id,
+                content: `Task created: ${args.taskName} for ${person.name} on ${args.date}. Points: ${newTask.points || 0}`
+              });
+              
+              const followUp = await client.chat.completions.create({
+                model: "gpt-4o-mini",
+                messages,
+                max_tokens: 512
+              });
+              reply = extractChatContent(followUp.choices[0].message.content);
+            } else {
+              messages.push(choice.message);
+              messages.push({
+                role: "tool",
+                tool_call_id: toolCall.id,
+                content: `Error: Person '${args.personName}' not found.`
+              });
+              const followUp = await client.chat.completions.create({
+                model: "gpt-4o-mini",
+                messages,
+                max_tokens: 512
+              });
+              reply = extractChatContent(followUp.choices[0].message.content);
+            }
+          }
+        } else {
+          reply = extractChatContent(choice.message.content);
+        }
+
+        if (!reply) {
+          reply = "I processed your request.";
+        }
+
+        // Generate audio if chatbot is enabled
+        let audioBase64 = null;
+        if (settings.chatbotEnabled && settings.chatbotTtsEnabled) {
+          try {
+            const selectedVoice = settings.chatbotVoice || "nova";
+            const ttsResponse = await client.audio.speech.create({
+              model: "tts-1",
+              voice: selectedVoice,
+              input: reply
+            });
+            const buffer = Buffer.from(await ttsResponse.arrayBuffer());
+            audioBase64 = buffer.toString("base64");
+            Log.log("MMM-Chores: Generated TTS audio, size:", buffer.length);
+          } catch (ttsError) {
+            Log.error("MMM-Chores: TTS generation failed", ttsError);
+            // Continue without audio if TTS fails
+          }
+        }
+
+        res.json({ reply, audio: audioBase64, dataChanged });
+      } catch (error) {
+        Log.error("MMM-Chores: AI chat failed", error);
+        res.status(500).json({ error: "Failed to generate AI response" });
+      }
+    });
+
+    app.post("/api/ai-generate", requireTaskWrite, (req, res) => self.aiGenerateTasks(req, res));
 
     // Rewards API
     app.get("/api/rewards", (req, res) => res.json(coinStore.rewards));
@@ -1811,9 +2376,18 @@ module.exports = NodeHelper.create({
       }
       
       // Notify via Pushover that someone claimed a reward
-      sendPushover(self, settings, `${person.name} redeemed ${reward.name} for ${reward.pointCost} coins`);
+      const t = getLanguageStrings(settings.language);
+      const coinWord = t.pointsLabel || "coins";
+      const redeemMsg = formatTemplate(t.pushoverRewardRedeemed || "{person} redeemed {reward} for {cost} {coins}", {
+        person: person.name,
+        reward: reward.name,
+        cost: reward.pointCost,
+        coins: coinWord
+      });
+      sendPushover(self, settings, redeemMsg);
 
       self.sendSocketNotification("PEOPLE_UPDATE", people);
+      self.sendSocketNotification("REDEMPTIONS_UPDATE", coinStore.redemptions);
       res.status(201).json(redemption);
     });
     
@@ -1825,6 +2399,7 @@ module.exports = NodeHelper.create({
       redemption.used = true;
       redemption.usedDate = getLocalISO(new Date());
       saveData();
+      self.sendSocketNotification("REDEMPTIONS_UPDATE", coinStore.redemptions);
       res.json(redemption);
     });
 
@@ -1847,6 +2422,7 @@ module.exports = NodeHelper.create({
       self.sendSocketNotification("PEOPLE_UPDATE", people);
       self.sendSocketNotification("ANALYTICS_UPDATE", analyticsBoards);
       self.sendSocketNotification("SETTINGS_UPDATE", settings);
+        self.sendSocketNotification("REDEMPTIONS_UPDATE", coinStore.redemptions || []);
     });
 
     const httpsPort = port + 1;

@@ -11,11 +11,15 @@ const LANGUAGES = {
     taskPendingLabel: "pending",
     taskSeriesFilterLabel: "Show recurring tasks only",
     taskSeriesFilterEmpty: "No recurring template tasks are available",
+    groupByPersonLabel: "Group by person",
+    showMyTasksLabel: "Show only my tasks",
     taskNamePlaceholder: "Task name…",
     taskRecurring: {
       none: "One time",
       daily: "Daily",
       weekly: "Weekly",
+      weekdays: "Weekdays (Mon-Fri)",
+      weekends: "Weekends (Sat-Sun)",
       monthly: "Monthly",
       yearly: "Yearly",
       "every_X_days_2": "Every 2 Days",
@@ -69,7 +73,26 @@ const LANGUAGES = {
     viewRewardsButton: "Rewards",
     showPastLabel: "Show past tasks",
     analyticsOnMirrorLabel: "Analytics on mirror",
+    showRedeemedRewardsLabel: "Show redeemed rewards on mirror",
+    notificationsTitle: "Notifications",
     useAiLabel: "Use AI features",
+    chatbotToggleLabel: "Enable AI chatbot in admin",
+    chatbotToggleHelp: "Show a chat box with text and microphone support on the dashboard.",
+    chatbotVoiceLabel: "Voice",
+    chatbotVoiceHelp: "Choose the AI voice for spoken responses.",
+    aiChatTitle: "AI Chatbot",
+    aiChatSubtitle: "Ask questions about your chores, people, and schedule.",
+    aiChatSendLabel: "Send",
+    aiChatBadge: "Beta",
+    aiChatPlaceholder: "Type your question...",
+    aiChatMicTitle: "Speak to the assistant",
+    aiChatWelcome: "I am ready to help with chores, people, and schedules.",
+    aiChatListening: "Listening...",
+    aiChatListenError: "Speech recognition error",
+    aiChatNoSpeech: "Speech recognition not supported in this browser.",
+    aiChatWorking: "Thinking...",
+    aiChatReady: "Ready",
+    aiChatNoReply: "No response from AI.",
     textSizeLabel: "Mirror text size",
     textSizeOptions: {
       small: "Small",
@@ -95,6 +118,12 @@ const LANGUAGES = {
     customRewardsLabel: "Custom rewards per person",
     levelRangeLabel: "Levels",
     pushoverEnabledLabel: "Enable Pushover",
+    pushoverConfigError: "Please set pushoverApiKey and pushoverUser in config.js to use Pushover notifications.",
+    pushoverUnfinishedTitle: "Uncompleted tasks:",
+    pushoverNewTask: "New task: {task}",
+    pushoverTaskCompleted: "Task completed: {task}{by}",
+    pushoverTaskBy: " by {name}",
+    pushoverRewardRedeemed: "{person} redeemed {reward} for {cost} {coins}",
     reminderTimeLabel: "Reminder time",
     logout: "Logout",
     backgroundLabel: "Background",
@@ -111,6 +140,48 @@ const LANGUAGES = {
     loginButton: "Login",
     loginError: "Login failed",
     
+    // Settings Modal - Reward System
+    rewardSystemTitle: "Reward System",
+    rewardSystemInfo: "Choose how rewards and progress are calculated. You can switch between systems at any time.",
+    levelSystemLabel: "Level System (Default)",
+    levelSystemDesc: "Traditional level-based progression with titles like 'Junior', 'Expert', 'Master' based on completed tasks.",
+    defaultBadge: "Default",
+    coinSystemLabel: "Coins System (Advanced)",
+    coinSystemDesc: "Earn coins for tasks and spend them on custom rewards. More flexible and customizable.",
+    newFeatureBadge: "New Feature",
+    migrationWarning: "Migration Notice: Switching to the coins system will recalculate balances based on your completed tasks. You can switch back to the level system anytime without losing data.",
+    
+    // Settings Modal - Display
+    displaySettingsTitle: "Display Settings",
+    showRewardsTabLabel: "Show Rewards tab",
+    showCoinsOnMirrorLabel: "Show coins on mirror",
+    
+    // Settings Modal - Level System
+    levelSystemSettingsTitle: "Level System Settings",
+    configureLevelTitlesBtn: "Configure Level Titles & Rewards",
+    
+    // Settings Modal - Coins System
+    coinsSystemSettingsTitle: "Coins System Settings",
+    
+    // Settings Modal - AI Features
+    aiFeaturesTitle: "AI Features",
+    aiAudioLabel: "Enable AI audio",
+    aiAudioHelp: "Enable text-to-speech responses.",
+    voiceNova: "Nova - Friendly female",
+    voiceAlloy: "Alloy - Neutral",
+    voiceEcho: "Echo - Male",
+    voiceFable: "Fable - Expressive",
+    voiceOnyx: "Onyx - Deep male",
+    voiceShimmer: "Shimmer - Warm female",
+    
+    // Settings Modal - Advanced Features
+    advancedFeaturesTitle: "Advanced Features",
+    
+    // Settings Modal - Maintenance
+    maintenanceToolsTitle: "Maintenance Tools",
+    maintenanceToolsDesc: "Recurring chores stuck in the past? Run this temporary fixer to archive overdue duplicates and keep only upcoming tasks.",
+    runDataFixBtn: "Run Temporary Data Fix",
+
     // New Rewards System
     rewardsTitle: "Rewards Management", 
     usePointSystemLabel: "Use Coin System",
@@ -203,11 +274,15 @@ const LANGUAGES = {
     taskPendingLabel: "pågående",
     taskSeriesFilterLabel: "Visa bara återkommande uppgifter",
     taskSeriesFilterEmpty: "Inga återkommande mallar att visa",
+    groupByPersonLabel: "Gruppera efter person",
+    showMyTasksLabel: "Visa bara mina uppgifter",
     taskNamePlaceholder: "Uppgiftsnamn…",
     taskRecurring: {
       none: "Engång",
       daily: "Dagligen",
       weekly: "Veckovis",
+      weekdays: "Vardagar (mån-fre)",
+      weekends: "Helg (lör-sön)",
       monthly: "Månadsvis",
       yearly: "Årligen",
       "every_X_days_2": "Varannan dag",
@@ -261,6 +336,8 @@ const LANGUAGES = {
     viewRewardsButton: "Belöningar",
     showPastLabel: "Visa tidigare uppgifter",
     analyticsOnMirrorLabel: "Analys på spegeln",
+    showRedeemedRewardsLabel: "Visa inlösta belöningar på spegeln",
+    notificationsTitle: "Aviseringar",
     useAiLabel: "Använd AI-funktioner",
     textSizeLabel: "Textstorlek i spegeln",
     textSizeOptions: {
@@ -287,6 +364,12 @@ const LANGUAGES = {
     customRewardsLabel: "Anpassade belöningar per person",
     levelRangeLabel: "Nivåer",
     pushoverEnabledLabel: "Aktivera Pushover",
+    pushoverConfigError: "Ange pushoverApiKey och pushoverUser i config.js för att använda Pushover-aviseringar.",
+    pushoverUnfinishedTitle: "Ej slutförda uppgifter:",
+    pushoverNewTask: "Ny uppgift: {task}",
+    pushoverTaskCompleted: "Uppgift klar: {task}{by}",
+    pushoverTaskBy: " av {name}",
+    pushoverRewardRedeemed: "{person} löste in {reward} för {cost} {coins}",
     reminderTimeLabel: "Påminnelsetid",
     logout: "Logga ut",
     backgroundLabel: "Bakgrund",
@@ -302,6 +385,68 @@ const LANGUAGES = {
     loginPassword: "Lösenord",
     loginButton: "Logga in",
     loginError: "Inloggning misslyckades",
+    
+    // Inställningar - Belöningssystem
+    rewardSystemTitle: "Belöningssystem",
+    rewardSystemInfo: "Välj hur belöningar och framsteg beräknas. Du kan byta system när som helst.",
+    levelSystemLabel: "Nivåsystem (Standard)",
+    levelSystemDesc: "Traditionell nivåbaserad progression med titlar som 'Junior', 'Expert', 'Mästare' baserat på slutförda uppgifter.",
+    defaultBadge: "Standard",
+    coinSystemLabel: "Myntsystem (Avancerat)",
+    coinSystemDesc: "Tjäna mynt för uppgifter och spendera dem på anpassade belöningar. Mer flexibelt och anpassningsbart.",
+    newFeatureBadge: "Ny funktion",
+    migrationWarning: "Migreringsnotis: Att byta till myntsystemet kommer att räkna om saldon baserat på dina slutförda uppgifter. Du kan byta tillbaka till nivåsystemet när som helst utan att förlora data.",
+    
+    // Inställningar - Visning
+    displaySettingsTitle: "Visningsinställningar",
+    showRewardsTabLabel: "Visa fliken Belöningar",
+    showCoinsOnMirrorLabel: "Visa mynt på spegeln",
+    
+    // AI Chatbot
+    chatbotToggleLabel: "Aktivera AI-chatbot i admin",
+    chatbotToggleHelp: "Visa en chattruta med text- och mikrofonstöd på instrumentpanelen.",
+    chatbotVoiceLabel: "Röst",
+    chatbotVoiceHelp: "Välj AI-röst för talade svar.",
+    aiChatTitle: "AI-chatbot",
+    aiChatSubtitle: "Ställ frågor om dina sysslor, personer och schema.",
+    aiChatSendLabel: "Skicka",
+    aiChatBadge: "Beta",
+    aiChatPlaceholder: "Skriv din fråga...",
+    aiChatMicTitle: "Tala med assistenten",
+    aiChatWelcome: "Jag är redo att hjälpa till med sysslor, personer och scheman.",
+    aiChatListening: "Lyssnar...",
+    aiChatListenError: "Fel vid taligenkänning",
+    aiChatNoSpeech: "Taligenkänning stöds inte i denna webbläsare.",
+    aiChatWorking: "Tänker...",
+    aiChatReady: "Redo",
+    aiChatNoReply: "Inget svar från AI.",
+    
+    // Inställningar - Nivåsystem
+    levelSystemSettingsTitle: "Inställningar för nivåsystem",
+    configureLevelTitlesBtn: "Konfigurera nivåtitlar & belöningar",
+    
+    // Inställningar - Myntsystem
+    coinsSystemSettingsTitle: "Inställningar för myntsystem",
+    
+    // Inställningar - AI-funktioner
+    aiFeaturesTitle: "AI-funktioner",
+    aiAudioLabel: "Aktivera AI-ljud",
+    aiAudioHelp: "Aktivera text-till-tal-svar.",
+    voiceNova: "Nova - Vänlig kvinna",
+    voiceAlloy: "Alloy - Neutral",
+    voiceEcho: "Echo - Manlig",
+    voiceFable: "Fable - Uttrycksfull",
+    voiceOnyx: "Onyx - Djup manlig",
+    voiceShimmer: "Shimmer - Varm kvinna",
+    
+    // Inställningar - Avancerade funktioner
+    advancedFeaturesTitle: "Avancerade funktioner",
+    
+    // Inställningar - Underhåll
+    maintenanceToolsTitle: "Underhållsverktyg",
+    maintenanceToolsDesc: "Återkommande sysslor fast i det förflutna? Kör denna tillfälliga fixare för att arkivera förfallna dubbletter och behålla endast kommande uppgifter.",
+    runDataFixBtn: "Kör tillfällig datafix",
+
     // Nytt belöningssystem
     rewardsTitle: "Belöningshantering",
     usePointSystemLabel: "Använd myntsystemet",
@@ -394,11 +539,15 @@ const LANGUAGES = {
     taskPendingLabel: "en attente",
     taskSeriesFilterLabel: "Afficher uniquement les tâches récurrentes",
     taskSeriesFilterEmpty: "Aucune tâche récurrente d'origine à afficher",
+    groupByPersonLabel: "Grouper par personne",
+    showMyTasksLabel: "Afficher uniquement mes tâches",
     taskNamePlaceholder: "Nom de la tâche…",
     taskRecurring: {
       none: "Unique",
       daily: "Quotidien",
       weekly: "Hebdomadaire",
+      weekdays: "Jours de semaine (lun-ven)",
+      weekends: "Week-end (sam-dim)",
       monthly: "Mensuel",
       yearly: "Annuel"
     },
@@ -447,6 +596,7 @@ const LANGUAGES = {
     viewRewardsButton: "Récompenses",
     showPastLabel: "Afficher les tâches passées",
     analyticsOnMirrorLabel: "Analytique sur le miroir",
+    notificationsTitle: "Notifications",
     useAiLabel: "Utiliser les fonctions IA",
     textSizeLabel: "Taille du texte sur le miroir",
     textSizeOptions: {
@@ -473,6 +623,12 @@ const LANGUAGES = {
     customRewardsLabel: "Récompenses personnalisées par personne",
     levelRangeLabel: "Niveaux",
     pushoverEnabledLabel: "Activer Pushover",
+    pushoverConfigError: "Veuillez définir pushoverApiKey et pushoverUser dans config.js pour utiliser les notifications Pushover.",
+    pushoverUnfinishedTitle: "Tâches non terminées :",
+    pushoverNewTask: "Nouvelle tâche : {task}",
+    pushoverTaskCompleted: "Tâche terminée : {task}{by}",
+    pushoverTaskBy: " par {name}",
+    pushoverRewardRedeemed: "{person} a échangé {reward} contre {cost} {coins}",
     reminderTimeLabel: "Heure de rappel",
     logout: "Déconnexion",
     backgroundLabel: "Arrière-plan",
@@ -488,6 +644,67 @@ const LANGUAGES = {
       loginPassword: "Mot de passe",
       loginButton: "Se connecter",
       loginError: "Échec de la connexion",
+    // Paramètres - Système de récompenses
+    rewardSystemTitle: "Système de récompenses",
+    rewardSystemInfo: "Choisissez comment les récompenses et la progression sont calculées. Vous pouvez changer de système à tout moment.",
+    levelSystemLabel: "Système de niveaux (Par défaut)",
+    levelSystemDesc: "Progression traditionnelle par niveaux avec des titres comme 'Junior', 'Expert', 'Maître' basés sur les tâches terminées.",
+    defaultBadge: "Défaut",
+    coinSystemLabel: "Système de pièces (Avancé)",
+    coinSystemDesc: "Gagnez des pièces pour les tâches et dépensez-les pour des récompenses personnalisées. Plus flexible et personnalisable.",
+    newFeatureBadge: "Nouvelle fonctionnalité",
+    migrationWarning: "Avis de migration : Passer au système de pièces recalculera les soldes en fonction de vos tâches terminées. Vous pouvez revenir au système de niveaux à tout moment sans perdre de données.",
+    
+    // Paramètres - Affichage
+    displaySettingsTitle: "Paramètres d'affichage",
+    showRewardsTabLabel: "Afficher l'onglet Récompenses",
+    showCoinsOnMirrorLabel: "Afficher les pièces sur le miroir",
+    
+    // Chatbot IA
+    chatbotToggleLabel: "Activer le chatbot IA dans l'admin",
+    chatbotToggleHelp: "Afficher une boîte de discussion avec support texte et microphone sur le tableau de bord.",
+    chatbotVoiceLabel: "Voix",
+    chatbotVoiceHelp: "Choisissez la voix IA pour les réponses vocales.",
+    aiChatTitle: "Chatbot IA",
+    aiChatSubtitle: "Posez des questions sur vos corvées, les personnes et le planning.",
+    aiChatSendLabel: "Envoyer",
+    aiChatBadge: "Bêta",
+    aiChatPlaceholder: "Tapez votre question...",
+    aiChatMicTitle: "Parler à l'assistant",
+    aiChatWelcome: "Je suis prêt à aider avec les corvées, les personnes et les plannings.",
+    aiChatListening: "Écoute...",
+    aiChatListenError: "Erreur de reconnaissance vocale",
+    aiChatNoSpeech: "Reconnaissance vocale non supportée dans ce navigateur.",
+    aiChatWorking: "Réfléchit...",
+    aiChatReady: "Prêt",
+    aiChatNoReply: "Pas de réponse de l'IA.",
+    
+    // Paramètres - Système de niveaux
+    levelSystemSettingsTitle: "Paramètres du système de niveaux",
+    configureLevelTitlesBtn: "Configurer les titres de niveau et récompenses",
+    
+    // Paramètres - Système de pièces
+    coinsSystemSettingsTitle: "Paramètres du système de pièces",
+    
+    // Paramètres - Fonctionnalités IA
+    aiFeaturesTitle: "Fonctionnalités IA",
+    aiAudioLabel: "Activer l'audio IA",
+    aiAudioHelp: "Activer les réponses vocales.",
+    voiceNova: "Nova - Femme amicale",
+    voiceAlloy: "Alloy - Neutre",
+    voiceEcho: "Echo - Homme",
+    voiceFable: "Fable - Expressif",
+    voiceOnyx: "Onyx - Homme profond",
+    voiceShimmer: "Shimmer - Femme chaleureuse",
+    
+    // Paramètres - Fonctionnalités avancées
+    advancedFeaturesTitle: "Fonctionnalités avancées",
+    
+    // Paramètres - Maintenance
+    maintenanceToolsTitle: "Outils de maintenance",
+    maintenanceToolsDesc: "Des corvées récurrentes bloquées dans le passé ? Exécutez ce correctif temporaire pour archiver les doublons en retard et ne conserver que les tâches à venir.",
+    runDataFixBtn: "Exécuter le correctif temporaire",
+
       // Nouveau système de récompenses
       rewardsTitle: "Gestion des récompenses",
       usePointSystemLabel: "Utiliser le système de pièces",
@@ -580,11 +797,15 @@ const LANGUAGES = {
     taskPendingLabel: "pendientes",
     taskSeriesFilterLabel: "Mostrar solo tareas recurrentes",
     taskSeriesFilterEmpty: "No hay tareas base recurrentes disponibles",
+    groupByPersonLabel: "Agrupar por persona",
+    showMyTasksLabel: "Mostrar solo mis tareas",
     taskNamePlaceholder: "Nombre de tarea…",
     taskRecurring: {
       none: "Una vez",
       daily: "Diario",
       weekly: "Semanal",
+      weekdays: "Días laborables (lun-vie)",
+      weekends: "Fines de semana (sáb-dom)",
       monthly: "Mensual",
       yearly: "Anual"
     },
@@ -633,6 +854,7 @@ const LANGUAGES = {
     viewRewardsButton: "Recompensas",
     showPastLabel: "Mostrar tareas anteriores",
     analyticsOnMirrorLabel: "Analítica en el espejo",
+    notificationsTitle: "Notificaciones",
     useAiLabel: "Usar funciones de IA",
     textSizeLabel: "Tamaño del texto en el espejo",
     textSizeOptions: {
@@ -659,6 +881,12 @@ const LANGUAGES = {
     customRewardsLabel: "Recompensas personalizadas por persona",
     levelRangeLabel: "Niveles",
     pushoverEnabledLabel: "Habilitar Pushover",
+    pushoverConfigError: "Establece pushoverApiKey y pushoverUser en config.js para usar las notificaciones de Pushover.",
+    pushoverUnfinishedTitle: "Tareas sin completar:",
+    pushoverNewTask: "Nueva tarea: {task}",
+    pushoverTaskCompleted: "Tarea completada: {task}{by}",
+    pushoverTaskBy: " por {name}",
+    pushoverRewardRedeemed: "{person} canjeó {reward} por {cost} {coins}",
     reminderTimeLabel: "Hora del recordatorio",
     logout: "Cerrar sesión",
     backgroundLabel: "Fondo",
@@ -674,6 +902,67 @@ const LANGUAGES = {
       loginPassword: "Contraseña",
       loginButton: "Entrar",
       loginError: "Error de inicio de sesión",
+    // Configuración - Sistema de recompensas
+    rewardSystemTitle: "Sistema de recompensas",
+    rewardSystemInfo: "Elige cómo se calculan las recompensas y el progreso. Puedes cambiar entre sistemas en cualquier momento.",
+    levelSystemLabel: "Sistema de niveles (Predeterminado)",
+    levelSystemDesc: "Progresión tradicional basada en niveles con títulos como 'Junior', 'Experto', 'Maestro' según las tareas completadas.",
+    defaultBadge: "Predeterminado",
+    coinSystemLabel: "Sistema de monedas (Avanzado)",
+    coinSystemDesc: "Gana monedas por tareas y gástalas en recompensas personalizadas. Más flexible y personalizable.",
+    newFeatureBadge: "Nueva función",
+    migrationWarning: "Aviso de migración: Cambiar al sistema de monedas recalculará los saldos según tus tareas completadas. Puedes volver al sistema de niveles en cualquier momento sin perder datos.",
+    
+    // Configuración - Pantalla
+    displaySettingsTitle: "Configuración de pantalla",
+    showRewardsTabLabel: "Mostrar pestaña de Recompensas",
+    showCoinsOnMirrorLabel: "Mostrar monedas en el espejo",
+    
+    // Chatbot de IA
+    chatbotToggleLabel: "Habilitar chatbot de IA en admin",
+    chatbotToggleHelp: "Mostrar un cuadro de chat con soporte de texto y micrófono en el panel.",
+    chatbotVoiceLabel: "Voz",
+    chatbotVoiceHelp: "Elige la voz de IA para las respuestas habladas.",
+    aiChatTitle: "Chatbot de IA",
+    aiChatSubtitle: "Haz preguntas sobre tus tareas, personas y horarios.",
+    aiChatSendLabel: "Enviar",
+    aiChatBadge: "Beta",
+    aiChatPlaceholder: "Escribe tu pregunta...",
+    aiChatMicTitle: "Hablar con el asistente",
+    aiChatWelcome: "Estoy listo para ayudar con tareas, personas y horarios.",
+    aiChatListening: "Escuchando...",
+    aiChatListenError: "Error de reconocimiento de voz",
+    aiChatNoSpeech: "Reconocimiento de voz no soportado en este navegador.",
+    aiChatWorking: "Pensando...",
+    aiChatReady: "Listo",
+    aiChatNoReply: "Sin respuesta de la IA.",
+    
+    // Configuración - Sistema de niveles
+    levelSystemSettingsTitle: "Configuración del sistema de niveles",
+    configureLevelTitlesBtn: "Configurar títulos de nivel y recompensas",
+    
+    // Configuración - Sistema de monedas
+    coinsSystemSettingsTitle: "Configuración del sistema de monedas",
+    
+    // Configuración - Funciones de IA
+    aiFeaturesTitle: "Funciones de IA",
+    aiAudioLabel: "Habilitar audio de IA",
+    aiAudioHelp: "Habilitar respuestas de texto a voz.",
+    voiceNova: "Nova - Mujer amigable",
+    voiceAlloy: "Alloy - Neutral",
+    voiceEcho: "Echo - Hombre",
+    voiceFable: "Fable - Expresivo",
+    voiceOnyx: "Onyx - Hombre profundo",
+    voiceShimmer: "Shimmer - Mujer cálida",
+    
+    // Configuración - Funciones avanzadas
+    advancedFeaturesTitle: "Funciones avanzadas",
+    
+    // Configuración - Mantenimiento
+    maintenanceToolsTitle: "Herramientas de mantenimiento",
+    maintenanceToolsDesc: "¿Tareas recurrentes atascadas en el pasado? Ejecuta este corrector temporal para archivar duplicados vencidos y mantener solo las tareas futuras.",
+    runDataFixBtn: "Ejecutar corrección de datos temporal",
+
       // Nuevo sistema de recompensas
       rewardsTitle: "Gestión de recompensas",
       usePointSystemLabel: "Usar sistema de monedas",
@@ -766,11 +1055,15 @@ const LANGUAGES = {
     taskPendingLabel: "offen",
     taskSeriesFilterLabel: "Nur wiederkehrende Aufgaben anzeigen",
     taskSeriesFilterEmpty: "Keine wiederkehrenden Stammaufgaben verfügbar",
+    groupByPersonLabel: "Nach Person gruppieren",
+    showMyTasksLabel: "Nur meine Aufgaben anzeigen",
     taskNamePlaceholder: "Aufgabenname…",
     taskRecurring: {
       none: "Einmalig",
       daily: "Täglich",
       weekly: "Wöchentlich",
+      weekdays: "Wochentage (Mo-Fr)",
+      weekends: "Wochenenden (Sa-So)",
       monthly: "Monatlich",
       yearly: "Jährlich"
     },
@@ -819,6 +1112,7 @@ const LANGUAGES = {
     viewRewardsButton: "Belohnungen",
     showPastLabel: "Vergangene Aufgaben anzeigen",
     analyticsOnMirrorLabel: "Analytik auf dem Spiegel",
+    notificationsTitle: "Benachrichtigungen",
     useAiLabel: "KI-Funktionen verwenden",
     textSizeLabel: "Textgröße im Spiegel",
     textSizeOptions: {
@@ -845,6 +1139,12 @@ const LANGUAGES = {
     customRewardsLabel: "Benutzerdefinierte Belohnungen pro Person",
     levelRangeLabel: "Level",
     pushoverEnabledLabel: "Pushover aktivieren",
+    pushoverConfigError: "Setze pushoverApiKey und pushoverUser in config.js, um Pushover-Benachrichtigungen zu verwenden.",
+    pushoverUnfinishedTitle: "Offene Aufgaben:",
+    pushoverNewTask: "Neue Aufgabe: {task}",
+    pushoverTaskCompleted: "Aufgabe erledigt: {task}{by}",
+    pushoverTaskBy: " von {name}",
+    pushoverRewardRedeemed: "{person} hat {reward} für {cost} {coins} eingelöst",
     reminderTimeLabel: "Erinnerungszeit",
     logout: "Abmelden",
     backgroundLabel: "Hintergrund",
@@ -860,6 +1160,67 @@ const LANGUAGES = {
       loginPassword: "Passwort",
       loginButton: "Anmelden",
       loginError: "Anmeldung fehlgeschlagen",
+    // Einstellungen - Belohnungssystem
+    rewardSystemTitle: "Belohnungssystem",
+    rewardSystemInfo: "Wähle, wie Belohnungen und Fortschritt berechnet werden. Du kannst jederzeit zwischen den Systemen wechseln.",
+    levelSystemLabel: "Levelsystem (Standard)",
+    levelSystemDesc: "Traditioneller levelbasierter Fortschritt mit Titeln wie 'Junior', 'Experte', 'Meister' basierend auf erledigten Aufgaben.",
+    defaultBadge: "Standard",
+    coinSystemLabel: "Münzsystem (Erweitert)",
+    coinSystemDesc: "Verdiene Münzen für Aufgaben und gib sie für benutzerdefinierte Belohnungen aus. Flexibler und anpassbarer.",
+    newFeatureBadge: "Neue Funktion",
+    migrationWarning: "Migrationshinweis: Der Wechsel zum Münzsystem berechnet die Salden basierend auf deinen erledigten Aufgaben neu. Du kannst jederzeit zum Levelsystem zurückkehren, ohne Daten zu verlieren.",
+    
+    // Einstellungen - Anzeige
+    displaySettingsTitle: "Anzeigeeinstellungen",
+    showRewardsTabLabel: "Belohnungs-Tab anzeigen",
+    showCoinsOnMirrorLabel: "Münzen auf dem Spiegel anzeigen",
+    
+    // KI-Chatbot
+    chatbotToggleLabel: "KI-Chatbot im Admin aktivieren",
+    chatbotToggleHelp: "Zeige eine Chatbox mit Text- und Mikrofonunterstützung auf dem Dashboard.",
+    chatbotVoiceLabel: "Stimme",
+    chatbotVoiceHelp: "Wähle die KI-Stimme für gesprochene Antworten.",
+    aiChatTitle: "KI-Chatbot",
+    aiChatSubtitle: "Stelle Fragen zu deinen Aufgaben, Personen und Zeitplänen.",
+    aiChatSendLabel: "Senden",
+    aiChatBadge: "Beta",
+    aiChatPlaceholder: "Tippe deine Frage...",
+    aiChatMicTitle: "Sprich mit dem Assistenten",
+    aiChatWelcome: "Ich bin bereit, bei Aufgaben, Personen und Zeitplänen zu helfen.",
+    aiChatListening: "Zuhören...",
+    aiChatListenError: "Spracherkennungsfehler",
+    aiChatNoSpeech: "Spracherkennung in diesem Browser nicht unterstützt.",
+    aiChatWorking: "Denken...",
+    aiChatReady: "Bereit",
+    aiChatNoReply: "Keine Antwort von der KI.",
+    
+    // Einstellungen - Levelsystem
+    levelSystemSettingsTitle: "Einstellungen für Levelsystem",
+    configureLevelTitlesBtn: "Leveltitel & Belohnungen konfigurieren",
+    
+    // Einstellungen - Münzsystem
+    coinsSystemSettingsTitle: "Einstellungen für Münzsystem",
+    
+    // Einstellungen - KI-Funktionen
+    aiFeaturesTitle: "KI-Funktionen",
+    aiAudioLabel: "KI-Audio aktivieren",
+    aiAudioHelp: "Text-zu-Sprache-Antworten aktivieren.",
+    voiceNova: "Nova - Freundliche Frau",
+    voiceAlloy: "Alloy - Neutral",
+    voiceEcho: "Echo - Mann",
+    voiceFable: "Fable - Ausdrucksstark",
+    voiceOnyx: "Onyx - Tiefer Mann",
+    voiceShimmer: "Shimmer - Warme Frau",
+    
+    // Einstellungen - Erweiterte Funktionen
+    advancedFeaturesTitle: "Erweiterte Funktionen",
+    
+    // Einstellungen - Wartung
+    maintenanceToolsTitle: "Wartungswerkzeuge",
+    maintenanceToolsDesc: "Wiederkehrende Aufgaben in der Vergangenheit stecken geblieben? Führe diesen temporären Fix aus, um überfällige Duplikate zu archivieren und nur kommende Aufgaben zu behalten.",
+    runDataFixBtn: "Temporären Datenfix ausführen",
+
       // Neues Belohnungssystem
       rewardsTitle: "Belohnungsverwaltung",
       usePointSystemLabel: "Münzsystem verwenden",
@@ -952,11 +1313,15 @@ const LANGUAGES = {
     taskPendingLabel: "in sospeso",
     taskSeriesFilterLabel: "Mostra solo le attività ricorrenti",
     taskSeriesFilterEmpty: "Nessuna attività ricorrente principale disponibile",
+    groupByPersonLabel: "Raggruppa per persona",
+    showMyTasksLabel: "Mostra solo i miei compiti",
     taskNamePlaceholder: "Nome del compito…",
     taskRecurring: {
       none: "Una tantum",
       daily: "Giornaliero",
       weekly: "Settimanale",
+      weekdays: "Giorni feriali (lun-ven)",
+      weekends: "Weekend (sab-dom)",
       monthly: "Mensile",
       yearly: "Annuale"
     },
@@ -1005,6 +1370,7 @@ const LANGUAGES = {
     viewRewardsButton: "Ricompense",
     showPastLabel: "Mostra compiti passati",
     analyticsOnMirrorLabel: "Analisi sullo specchio",
+    notificationsTitle: "Notifiche",
     useAiLabel: "Usa funzioni IA",
     textSizeLabel: "Dimensione testo nello specchio",
     textSizeOptions: {
@@ -1031,6 +1397,12 @@ const LANGUAGES = {
     customRewardsLabel: "Ricompense personalizzate per persona",
     levelRangeLabel: "Livelli",
     pushoverEnabledLabel: "Abilita Pushover",
+    pushoverConfigError: "Imposta pushoverApiKey e pushoverUser in config.js per usare le notifiche Pushover.",
+    pushoverUnfinishedTitle: "Attività non completate:",
+    pushoverNewTask: "Nuova attività: {task}",
+    pushoverTaskCompleted: "Attività completata: {task}{by}",
+    pushoverTaskBy: " da {name}",
+    pushoverRewardRedeemed: "{person} ha riscattato {reward} per {cost} {coins}",
     reminderTimeLabel: "Ora del promemoria",
     logout: "Disconnetti",
     backgroundLabel: "Sfondo",
@@ -1046,6 +1418,67 @@ const LANGUAGES = {
       loginPassword: "Password",
       loginButton: "Accedi",
       loginError: "Accesso non riuscito",
+    // Impostazioni - Sistema di ricompense
+    rewardSystemTitle: "Sistema di ricompense",
+    rewardSystemInfo: "Scegli come vengono calcolati i premi e i progressi. Puoi passare da un sistema all'altro in qualsiasi momento.",
+    levelSystemLabel: "Sistema a livelli (Predefinito)",
+    levelSystemDesc: "Progressione tradizionale basata sui livelli con titoli come 'Junior', 'Esperto', 'Maestro' basati sui compiti completati.",
+    defaultBadge: "Predefinito",
+    coinSystemLabel: "Sistema a monete (Avanzato)",
+    coinSystemDesc: "Guadagna monete per i compiti e spendile in premi personalizzati. Più flessibile e personalizzabile.",
+    newFeatureBadge: "Nuova funzionalità",
+    migrationWarning: "Avviso di migrazione: Passare al sistema a monete ricalcolerà i saldi in base ai tuoi compiti completati. Puoi tornare al sistema a livelli in qualsiasi momento senza perdere dati.",
+    
+    // Impostazioni - Visualizzazione
+    displaySettingsTitle: "Impostazioni di visualizzazione",
+    showRewardsTabLabel: "Mostra scheda Ricompense",
+    showCoinsOnMirrorLabel: "Mostra monete sullo specchio",
+    
+    // Chatbot IA
+    chatbotToggleLabel: "Abilita chatbot IA nell'admin",
+    chatbotToggleHelp: "Mostra una casella di chat con supporto testo e microfono nella dashboard.",
+    chatbotVoiceLabel: "Voce",
+    chatbotVoiceHelp: "Scegli la voce IA per le risposte vocali.",
+    aiChatTitle: "Chatbot IA",
+    aiChatSubtitle: "Fai domande sulle tue faccende, persone e programmi.",
+    aiChatSendLabel: "Invia",
+    aiChatBadge: "Beta",
+    aiChatPlaceholder: "Scrivi la tua domanda...",
+    aiChatMicTitle: "Parla con l'assistente",
+    aiChatWelcome: "Sono pronto ad aiutare con faccende, persone e programmi.",
+    aiChatListening: "Ascolto...",
+    aiChatListenError: "Errore di riconoscimento vocale",
+    aiChatNoSpeech: "Riconoscimento vocale non supportato in questo browser.",
+    aiChatWorking: "Pensando...",
+    aiChatReady: "Pronto",
+    aiChatNoReply: "Nessuna risposta dall'IA.",
+    
+    // Impostazioni - Sistema a livelli
+    levelSystemSettingsTitle: "Impostazioni sistema a livelli",
+    configureLevelTitlesBtn: "Configura titoli di livello e ricompense",
+    
+    // Impostazioni - Sistema a monete
+    coinsSystemSettingsTitle: "Impostazioni sistema a monete",
+    
+    // Impostazioni - Funzionalità IA
+    aiFeaturesTitle: "Funzionalità IA",
+    aiAudioLabel: "Abilita audio IA",
+    aiAudioHelp: "Abilita risposte text-to-speech.",
+    voiceNova: "Nova - Donna amichevole",
+    voiceAlloy: "Alloy - Neutrale",
+    voiceEcho: "Echo - Uomo",
+    voiceFable: "Fable - Espressivo",
+    voiceOnyx: "Onyx - Uomo profondo",
+    voiceShimmer: "Shimmer - Donna calorosa",
+    
+    // Impostazioni - Funzionalità avanzate
+    advancedFeaturesTitle: "Funzionalità avanzate",
+    
+    // Impostazioni - Manutenzione
+    maintenanceToolsTitle: "Strumenti di manutenzione",
+    maintenanceToolsDesc: "Faccende ricorrenti bloccate nel passato? Esegui questo correttore temporaneo per archiviare i duplicati scaduti e mantenere solo i compiti futuri.",
+    runDataFixBtn: "Esegui correzione dati temporanea",
+
       // Nuovo sistema ricompense
       rewardsTitle: "Gestione ricompense",
       usePointSystemLabel: "Usa sistema di monete",
@@ -1138,11 +1571,15 @@ const LANGUAGES = {
     taskPendingLabel: "in behandeling",
     taskSeriesFilterLabel: "Toon alleen terugkerende taken",
     taskSeriesFilterEmpty: "Geen terugkerende hoofdtaken beschikbaar",
+    groupByPersonLabel: "Groeperen op persoon",
+    showMyTasksLabel: "Toon alleen mijn taken",
     taskNamePlaceholder: "Taaknaam…",
     taskRecurring: {
       none: "Eenmalig",
       daily: "Dagelijks",
       weekly: "Wekelijks",
+      weekdays: "Doordeweeks (ma-vr)",
+      weekends: "Weekenden (za-zo)",
       monthly: "Maandelijks",
       yearly: "Jaarlijks"
     },
@@ -1191,6 +1628,7 @@ const LANGUAGES = {
     viewRewardsButton: "Beloningen",
     showPastLabel: "Toon eerdere taken",
     analyticsOnMirrorLabel: "Analyse op spiegel",
+    notificationsTitle: "Meldingen",
     useAiLabel: "Gebruik AI-functies",
     textSizeLabel: "Tekstgrootte op spiegel",
     textSizeOptions: {
@@ -1217,6 +1655,12 @@ const LANGUAGES = {
     customRewardsLabel: "Aangepaste beloningen per persoon",
     levelRangeLabel: "Niveaus",
     pushoverEnabledLabel: "Pushover inschakelen",
+    pushoverConfigError: "Stel pushoverApiKey en pushoverUser in config.js in om Pushover-meldingen te gebruiken.",
+    pushoverUnfinishedTitle: "Niet voltooide taken:",
+    pushoverNewTask: "Nieuwe taak: {task}",
+    pushoverTaskCompleted: "Taak voltooid: {task}{by}",
+    pushoverTaskBy: " door {name}",
+    pushoverRewardRedeemed: "{person} heeft {reward} ingewisseld voor {cost} {coins}",
     reminderTimeLabel: "Herinneringstijd",
       logout: "Afmelden",
       backgroundLabel: "Achtergrond",
@@ -1232,6 +1676,67 @@ const LANGUAGES = {
       loginPassword: "Wachtwoord",
       loginButton: "Inloggen",
       loginError: "Inloggen mislukt",
+    // Instellingen - Beloningssysteem
+    rewardSystemTitle: "Beloningssysteem",
+    rewardSystemInfo: "Kies hoe beloningen en voortgang worden berekend. Je kunt op elk moment wisselen tussen systemen.",
+    levelSystemLabel: "Niveausysteem (Standaard)",
+    levelSystemDesc: "Traditionele voortgang op basis van niveaus met titels als 'Junior', 'Expert', 'Meester' op basis van voltooide taken.",
+    defaultBadge: "Standaard",
+    coinSystemLabel: "Muntensysteem (Geavanceerd)",
+    coinSystemDesc: "Verdien munten voor taken en geef ze uit aan aangepaste beloningen. Flexibeler en aanpasbaar.",
+    newFeatureBadge: "Nieuwe functie",
+    migrationWarning: "Migratiemelding: Overschakelen naar het muntensysteem herberekent saldi op basis van je voltooide taken. Je kunt op elk moment terugkeren naar het niveausysteem zonder gegevens te verliezen.",
+    
+    // Instellingen - Weergave
+    displaySettingsTitle: "Weergave-instellingen",
+    showRewardsTabLabel: "Toon tabblad Beloningen",
+    showCoinsOnMirrorLabel: "Toon munten op spiegel",
+    
+    // AI-chatbot
+    chatbotToggleLabel: "Schakel AI-chatbot in admin in",
+    chatbotToggleHelp: "Toon een chatbox met tekst- en microfoonondersteuning op het dashboard.",
+    chatbotVoiceLabel: "Stem",
+    chatbotVoiceHelp: "Kies de AI-stem voor gesproken antwoorden.",
+    aiChatTitle: "AI-chatbot",
+    aiChatSubtitle: "Stel vragen over je klusjes, mensen en schema's.",
+    aiChatSendLabel: "Verzenden",
+    aiChatBadge: "Bèta",
+    aiChatPlaceholder: "Typ je vraag...",
+    aiChatMicTitle: "Spreek met de assistent",
+    aiChatWelcome: "Ik ben klaar om te helpen met klusjes, mensen en schema's.",
+    aiChatListening: "Luisteren...",
+    aiChatListenError: "Spraakherkenningsfout",
+    aiChatNoSpeech: "Spraakherkenning niet ondersteund in deze browser.",
+    aiChatWorking: "Denken...",
+    aiChatReady: "Klaar",
+    aiChatNoReply: "Geen antwoord van AI.",
+    
+    // Instellingen - Niveausysteem
+    levelSystemSettingsTitle: "Instellingen niveausysteem",
+    configureLevelTitlesBtn: "Configureer niveautitels & beloningen",
+    
+    // Instellingen - Muntensysteem
+    coinsSystemSettingsTitle: "Instellingen muntensysteem",
+    
+    // Instellingen - AI-functies
+    aiFeaturesTitle: "AI-functies",
+    aiAudioLabel: "Schakel AI-audio in",
+    aiAudioHelp: "Schakel tekst-naar-spraak antwoorden in.",
+    voiceNova: "Nova - Vriendelijke vrouw",
+    voiceAlloy: "Alloy - Neutraal",
+    voiceEcho: "Echo - Man",
+    voiceFable: "Fable - Expressief",
+    voiceOnyx: "Onyx - Diepe man",
+    voiceShimmer: "Shimmer - Warme vrouw",
+    
+    // Instellingen - Geavanceerde functies
+    advancedFeaturesTitle: "Geavanceerde functies",
+    
+    // Instellingen - Onderhoud
+    maintenanceToolsTitle: "Onderhoudstools",
+    maintenanceToolsDesc: "Terugkerende klusjes vast in het verleden? Voer deze tijdelijke oplossing uit om achterstallige duplicaten te archiveren en alleen toekomstige taken te behouden.",
+    runDataFixBtn: "Voer tijdelijke gegevenscorrectie uit",
+
       // Nieuw beloningssysteem
       rewardsTitle: "Beloningenbeheer",
       usePointSystemLabel: "Gebruik muntsysteem",
@@ -1324,11 +1829,15 @@ const LANGUAGES = {
     taskPendingLabel: "oczekujące",
     taskSeriesFilterLabel: "Pokaż tylko zadania cykliczne",
     taskSeriesFilterEmpty: "Brak bazowych zadań cyklicznych do wyświetlenia",
+    groupByPersonLabel: "Grupuj według osoby",
+    showMyTasksLabel: "Pokaż tylko moje zadania",
     taskNamePlaceholder: "Nazwa zadania…",
     taskRecurring: {
       none: "Jednorazowe",
       daily: "Codziennie",
       weekly: "Tygodniowo",
+      weekdays: "Dni robocze (pon-pt)",
+      weekends: "Weekend (sob-nd)",
       monthly: "Miesięcznie",
       yearly: "Rocznie"
     },
@@ -1377,6 +1886,7 @@ const LANGUAGES = {
     viewRewardsButton: "Nagrody",
     showPastLabel: "Pokaż wcześniejsze zadania",
     analyticsOnMirrorLabel: "Analiza na lustrze",
+    notificationsTitle: "Powiadomienia",
     useAiLabel: "Użyj funkcji AI",
     textSizeLabel: "Rozmiar tekstu na lustrze",
     textSizeOptions: {
@@ -1403,6 +1913,12 @@ const LANGUAGES = {
     customRewardsLabel: "Własne nagrody na osobę",
     levelRangeLabel: "Poziomy",
     pushoverEnabledLabel: "Włącz Pushover",
+    pushoverConfigError: "Ustaw pushoverApiKey i pushoverUser w config.js, aby korzystać z powiadomień Pushover.",
+    pushoverUnfinishedTitle: "Niewykonane zadania:",
+    pushoverNewTask: "Nowe zadanie: {task}",
+    pushoverTaskCompleted: "Zadanie ukończone: {task}{by}",
+    pushoverTaskBy: " przez {name}",
+    pushoverRewardRedeemed: "{person} wykorzystał(a) {reward} za {cost} {coins}",
     reminderTimeLabel: "Czas przypomnienia",
     logout: "Wyloguj",
     backgroundLabel: "Tło",
@@ -1418,6 +1934,67 @@ const LANGUAGES = {
       loginPassword: "Hasło",
       loginButton: "Zaloguj się",
       loginError: "Logowanie nieudane",
+    // Ustawienia - System nagród
+    rewardSystemTitle: "System nagród",
+    rewardSystemInfo: "Wybierz sposób obliczania nagród i postępów. Możesz przełączać się między systemami w dowolnym momencie.",
+    levelSystemLabel: "System poziomów (Domyślny)",
+    levelSystemDesc: "Tradycyjny postęp oparty na poziomach z tytułami takimi jak 'Junior', 'Ekspert', 'Mistrz' na podstawie ukończonych zadań.",
+    defaultBadge: "Domyślny",
+    coinSystemLabel: "System monet (Zaawansowany)",
+    coinSystemDesc: "Zarabiaj monety za zadania i wydawaj je na niestandardowe nagrody. Bardziej elastyczny i konfigurowalny.",
+    newFeatureBadge: "Nowa funkcja",
+    migrationWarning: "Uwaga dotycząca migracji: Przełączenie na system monet spowoduje przeliczenie sald na podstawie ukończonych zadań. Możesz wrócić do systemu poziomów w dowolnym momencie bez utraty danych.",
+    
+    // Ustawienia - Wyświetlanie
+    displaySettingsTitle: "Ustawienia wyświetlania",
+    showRewardsTabLabel: "Pokaż kartę Nagrody",
+    showCoinsOnMirrorLabel: "Pokaż monety na lustrze",
+    
+    // Chatbot AI
+    chatbotToggleLabel: "Włącz chatbot AI w panelu admina",
+    chatbotToggleHelp: "Pokaż okno czatu z obsługą tekstu i mikrofonu na pulpicie nawigacyjnym.",
+    chatbotVoiceLabel: "Głos",
+    chatbotVoiceHelp: "Wybierz głos AI dla odpowiedzi głosowych.",
+    aiChatTitle: "Chatbot AI",
+    aiChatSubtitle: "Zadawaj pytania dotyczące obowiązków, osób i harmonogramów.",
+    aiChatSendLabel: "Wyślij",
+    aiChatBadge: "Beta",
+    aiChatPlaceholder: "Wpisz swoje pytanie...",
+    aiChatMicTitle: "Rozmawiaj z asystentem",
+    aiChatWelcome: "Jestem gotowy do pomocy w obowiązkach, osobach i harmonogramach.",
+    aiChatListening: "Słuchanie...",
+    aiChatListenError: "Błąd rozpoznawania mowy",
+    aiChatNoSpeech: "Rozpoznawanie mowy nieobsługiwane w tej przeglądarce.",
+    aiChatWorking: "Myślenie...",
+    aiChatReady: "Gotowy",
+    aiChatNoReply: "Brak odpowiedzi od AI.",
+    
+    // Ustawienia - System poziomów
+    levelSystemSettingsTitle: "Ustawienia systemu poziomów",
+    configureLevelTitlesBtn: "Konfiguruj tytuły poziomów i nagrody",
+    
+    // Ustawienia - System monet
+    coinsSystemSettingsTitle: "Ustawienia systemu monet",
+    
+    // Ustawienia - Funkcje AI
+    aiFeaturesTitle: "Funkcje AI",
+    aiAudioLabel: "Włącz dźwięk AI",
+    aiAudioHelp: "Włącz odpowiedzi tekst na mowę.",
+    voiceNova: "Nova - Przyjazna kobieta",
+    voiceAlloy: "Alloy - Neutralny",
+    voiceEcho: "Echo - Mężczyzna",
+    voiceFable: "Fable - Wyrazisty",
+    voiceOnyx: "Onyx - Głęboki mężczyzna",
+    voiceShimmer: "Shimmer - Ciepła kobieta",
+    
+    // Ustawienia - Funkcje zaawansowane
+    advancedFeaturesTitle: "Funkcje zaawansowane",
+    
+    // Ustawienia - Konserwacja
+    maintenanceToolsTitle: "Narzędzia konserwacji",
+    maintenanceToolsDesc: "Powtarzające się obowiązki utknęły w przeszłości? Uruchom tę tymczasową poprawkę, aby zarchiwizować zaległe duplikaty i zachować tylko nadchodzące zadania.",
+    runDataFixBtn: "Uruchom tymczasową naprawę danych",
+
       // Nowy system nagród
       rewardsTitle: "Zarządzanie nagrodami",
       usePointSystemLabel: "Użyj systemu monet",
@@ -1515,6 +2092,8 @@ const LANGUAGES = {
       none: "一次性",
       daily: "每日",
       weekly: "每周",
+      weekdays: "工作日（周一-周五）",
+      weekends: "周末（周六-周日）",
       monthly: "每月",
       yearly: "每年"
     },
@@ -1564,6 +2143,7 @@ const LANGUAGES = {
     showPastLabel: "显示过去的任务",
     analyticsOnMirrorLabel: "镜面分析",
     useAiLabel: "使用 AI 功能",
+    notificationsTitle: "通知",
     textSizeLabel: "镜面文字大小",
     textSizeOptions: {
       small: "小",
@@ -1589,6 +2169,12 @@ const LANGUAGES = {
     customRewardsLabel: "每人自定义奖励",
     levelRangeLabel: "级别",
     pushoverEnabledLabel: "启用 Pushover",
+    pushoverConfigError: "请在 config.js 中设置 pushoverApiKey 和 pushoverUser 以使用 Pushover 通知。",
+    pushoverUnfinishedTitle: "未完成的任务：",
+    pushoverNewTask: "新任务：{task}",
+    pushoverTaskCompleted: "任务已完成：{task}{by}",
+    pushoverTaskBy: " 由 {name}",
+    pushoverRewardRedeemed: "{person} 兑换了 {reward}，花费 {cost} {coins}",
     reminderTimeLabel: "提醒时间",
     logout: "退出登录",
     backgroundLabel: "背景",
@@ -1604,6 +2190,67 @@ const LANGUAGES = {
       loginPassword: "密码",
       loginButton: "登录",
       loginError: "登录失败",
+    // 设置 - 奖励系统
+    rewardSystemTitle: "奖励系统",
+    rewardSystemInfo: "选择如何计算奖励和进度。您可以随时在系统之间切换。",
+    levelSystemLabel: "等级系统（默认）",
+    levelSystemDesc: "传统的基于等级的进度，根据完成的任务获得“初级”、“专家”、“大师”等头衔。",
+    defaultBadge: "默认",
+    coinSystemLabel: "金币系统（高级）",
+    coinSystemDesc: "通过任务赚取金币并将其用于自定义奖励。更加灵活和可定制。",
+    newFeatureBadge: "新功能",
+    migrationWarning: "迁移通知：切换到金币系统将根据您完成的任务重新计算余额。您可以随时切换回等级系统而不会丢失数据。",
+    
+    // 设置 - 显示
+    displaySettingsTitle: "显示设置",
+    showRewardsTabLabel: "显示奖励标签",
+    showCoinsOnMirrorLabel: "在镜子上显示金币",
+    
+    // AI 聊天机器人
+    chatbotToggleLabel: "在管理后台启用 AI 聊天机器人",
+    chatbotToggleHelp: "在仪表板上显示支持文本和麦克风的聊天框。",
+    chatbotVoiceLabel: "语音",
+    chatbotVoiceHelp: "选择用于语音回复的 AI 语音。",
+    aiChatTitle: "AI 聊天机器人",
+    aiChatSubtitle: "询问有关您的家务、人员和日程安排的问题。",
+    aiChatSendLabel: "发送",
+    aiChatBadge: "测试版",
+    aiChatPlaceholder: "输入您的问题...",
+    aiChatMicTitle: "与助手交谈",
+    aiChatWelcome: "我已准备好协助处理家务、人员和日程安排。",
+    aiChatListening: "正在聆听...",
+    aiChatListenError: "语音识别错误",
+    aiChatNoSpeech: "此浏览器不支持语音识别。",
+    aiChatWorking: "正在思考...",
+    aiChatReady: "就绪",
+    aiChatNoReply: "AI 没有回应。",
+    
+    // 设置 - 等级系统
+    levelSystemSettingsTitle: "等级系统设置",
+    configureLevelTitlesBtn: "配置等级头衔和奖励",
+    
+    // 设置 - 金币系统
+    coinsSystemSettingsTitle: "金币系统设置",
+    
+    // 设置 - AI 功能
+    aiFeaturesTitle: "AI 功能",
+    aiAudioLabel: "启用 AI 音频",
+    aiAudioHelp: "启用文本转语音响应。",
+    voiceNova: "Nova - 友好的女性",
+    voiceAlloy: "Alloy - 中性",
+    voiceEcho: "Echo - 男性",
+    voiceFable: "Fable - 富有表现力",
+    voiceOnyx: "Onyx - 深沉的男性",
+    voiceShimmer: "Shimmer - 温暖的女性",
+    
+    // 设置 - 高级功能
+    advancedFeaturesTitle: "高级功能",
+    
+    // 设置 - 维护
+    maintenanceToolsTitle: "维护工具",
+    maintenanceToolsDesc: "重复的家务卡在过去？运行此临时修复程序以归档过期的重复项并仅保留即将到来的任务。",
+    runDataFixBtn: "运行临时数据修复",
+
       // 新奖励系统
       rewardsTitle: "奖励管理",
       usePointSystemLabel: "使用金币系统",
@@ -1701,6 +2348,8 @@ const LANGUAGES = {
       none: "مرة واحدة",
       daily: "يومي",
       weekly: "أسبوعي",
+      weekdays: "أيام الأسبوع (الإثنين-الجمعة)",
+      weekends: "عطلة نهاية الأسبوع (السبت-الأحد)",
       monthly: "شهري",
       yearly: "سنوي"
     },
@@ -1749,6 +2398,7 @@ const LANGUAGES = {
     viewRewardsButton: "المكافآت",
     showPastLabel: "عرض المهام السابقة",
     analyticsOnMirrorLabel: "التحليلات على المرآة",
+    notificationsTitle: "الإشعارات",
     useAiLabel: "استخدام ميزات الذكاء الاصطناعي",
     textSizeLabel: "حجم النص على المرآة",
     textSizeOptions: {
@@ -1775,6 +2425,12 @@ const LANGUAGES = {
     customRewardsLabel: "مكافآت مخصصة لكل شخص",
     levelRangeLabel: "المستويات",
     pushoverEnabledLabel: "تفعيل Pushover",
+    pushoverConfigError: "يرجى ضبط pushoverApiKey و pushoverUser في config.js لاستخدام إشعارات Pushover.",
+    pushoverUnfinishedTitle: "المهام غير المكتملة:",
+    pushoverNewTask: "مهمة جديدة: {task}",
+    pushoverTaskCompleted: "تم إكمال المهمة: {task}{by}",
+    pushoverTaskBy: " بواسطة {name}",
+    pushoverRewardRedeemed: "{person} استبدل {reward} مقابل {cost} {coins}",
     reminderTimeLabel: "وقت التذكير",
     logout: "تسجيل الخروج",
     backgroundLabel: "الخلفية",
@@ -1790,6 +2446,67 @@ const LANGUAGES = {
       loginPassword: "كلمة المرور",
       loginButton: "تسجيل الدخول",
       loginError: "فشل تسجيل الدخول",
+    // الإعدادات - نظام المكافآت
+    rewardSystemTitle: "نظام المكافآت",
+    rewardSystemInfo: "اختر كيفية حساب المكافآت والتقدم. يمكنك التبديل بين الأنظمة في أي وقت.",
+    levelSystemLabel: "نظام المستويات (افتراضي)",
+    levelSystemDesc: "تقدم تقليدي قائم على المستويات مع ألقاب مثل 'مبتدئ'، 'خبير'، 'سيد' بناءً على المهام المكتملة.",
+    defaultBadge: "افتراضي",
+    coinSystemLabel: "نظام العملات (متقدم)",
+    coinSystemDesc: "اربح عملات للمهام وأنفقها على مكافآت مخصصة. أكثر مرونة وقابلية للتخصيص.",
+    newFeatureBadge: "ميزة جديدة",
+    migrationWarning: "إشعار الترحيل: سيؤدي التبديل إلى نظام العملات إلى إعادة حساب الأرصدة بناءً على مهامك المكتملة. يمكنك العودة إلى نظام المستويات في أي وقت دون فقدان البيانات.",
+    
+    // الإعدادات - العرض
+    displaySettingsTitle: "إعدادات العرض",
+    showRewardsTabLabel: "إظهار علامة تبويب المكافآت",
+    showCoinsOnMirrorLabel: "إظهار العملات على المرآة",
+    
+    // روبوت الدردشة بالذكاء الاصطناعي
+    chatbotToggleLabel: "تمكين روبوت الدردشة بالذكاء الاصطناعي في المسؤول",
+    chatbotToggleHelp: "إظهار مربع دردشة مع دعم النص والميكروفون على لوحة القيادة.",
+    chatbotVoiceLabel: "الصوت",
+    chatbotVoiceHelp: "اختر صوت الذكاء الاصطناعي للردود المنطوقة.",
+    aiChatTitle: "روبوت الدردشة بالذكاء الاصطناعي",
+    aiChatSubtitle: "اطرح أسئلة حول أعمالك الروتينية والأشخاص والجداول الزمنية.",
+    aiChatSendLabel: "إرسال",
+    aiChatBadge: "تجريبي",
+    aiChatPlaceholder: "اكتب سؤالك...",
+    aiChatMicTitle: "تحدث إلى المساعد",
+    aiChatWelcome: "أنا مستعد للمساعدة في الأعمال الروتينية والأشخاص والجداول الزمنية.",
+    aiChatListening: "جاري الاستماع...",
+    aiChatListenError: "خطأ في التعرف على الكلام",
+    aiChatNoSpeech: "التعرف على الكلام غير مدعوم في هذا المتصفح.",
+    aiChatWorking: "جاري التفكير...",
+    aiChatReady: "جاهز",
+    aiChatNoReply: "لا يوجد رد من الذكاء الاصطناعي.",
+    
+    // الإعدادات - نظام المستويات
+    levelSystemSettingsTitle: "إعدادات نظام المستويات",
+    configureLevelTitlesBtn: "تكوين ألقاب المستويات والمكافآت",
+    
+    // الإعدادات - نظام العملات
+    coinsSystemSettingsTitle: "إعدادات نظام العملات",
+    
+    // الإعدادات - ميزات الذكاء الاصطناعي
+    aiFeaturesTitle: "ميزات الذكاء الاصطناعي",
+    aiAudioLabel: "تمكين صوت الذكاء الاصطناعي",
+    aiAudioHelp: "تمكين استجابات تحويل النص إلى كلام.",
+    voiceNova: "Nova - أنثى ودودة",
+    voiceAlloy: "Alloy - محايد",
+    voiceEcho: "Echo - ذكر",
+    voiceFable: "Fable - معبر",
+    voiceOnyx: "Onyx - ذكر عميق",
+    voiceShimmer: "Shimmer - أنثى دافئة",
+    
+    // الإعدادات - ميزات متقدمة
+    advancedFeaturesTitle: "ميزات متقدمة",
+    
+    // الإعدادات - الصيانة
+    maintenanceToolsTitle: "أدوات الصيانة",
+    maintenanceToolsDesc: "الأعمال الروتينية المتكررة عالقة في الماضي؟ قم بتشغيل هذا الإصلاح المؤقت لأرشفة التكرارات المتأخرة والاحتفاظ بالمهام القادمة فقط.",
+    runDataFixBtn: "تشغيل إصلاح البيانات المؤقت",
+
       // نظام المكافآت الجديد
       rewardsTitle: "إدارة المكافآت",
       usePointSystemLabel: "استخدام نظام العملات",
@@ -1871,3 +2588,8 @@ const LANGUAGES = {
       coinTotalsLoading: "جارٍ تحميل أرصدة العملات..."
     }
   };
+
+// Export for Node usage while remaining browser-friendly
+if (typeof module !== "undefined") {
+  module.exports = LANGUAGES;
+}

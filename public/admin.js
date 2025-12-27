@@ -18,6 +18,8 @@ let settingsSaved = false;
 let dateFormatting = '';
 let authToken = localStorage.getItem('choresToken') || null;
 let userPermission = 'write';
+let currentUserName = null;
+let currentPersonId = null;
 let loginEnabled = true;
 let editTaskId = null;
 let editTaskModal = null;
@@ -26,8 +28,26 @@ let personRewardsTarget = null;
 let editCoinsPersonId = null;
 let levelTitles = [];
 let taskPointsRules = [];
+let aiChatHistory = [];
+let aiChatRecognizer = null;
+let aiChatListening = false;
+let aiChatInitialized = false;
+let aiChatEnabled = false;
+let aiChatTtsEnabled = false;
+let aiResponseAudio = new Audio(); // Global audio object for AI responses
+let aiAutoStopTimer = null;
+window.isAiSpeaking = false;
+const DEFAULT_TTS_AUDIO = { volume: 0.7, pauseMs: 600, fadeMs: 120 };
+let ttsAudio = { ...DEFAULT_TTS_AUDIO };
+let userSettings = {};
+const MY_TASKS_FILTER_KEY = 'mmm-chores-my-tasks';
+let showMyTasksOnly = localStorage.getItem(MY_TASKS_FILTER_KEY) === '1';
+let audioContext = null;
+let silenceAudioBuffer = null;
 const TASK_SERIES_FILTER_KEY = 'mmm-chores-series-filter';
 let showTaskSeriesRootsOnly = localStorage.getItem(TASK_SERIES_FILTER_KEY) === '1';
+const TASK_GROUP_FILTER_KEY = 'mmm-chores-group-filter';
+let showTaskGroupByPerson = localStorage.getItem(TASK_GROUP_FILTER_KEY) === '1';
 const personRewardsModalEl = document.getElementById('personRewardsModal');
 const personRewardTitlesContainer = document.getElementById('personRewardTitlesContainer');
 const personRewardTitleInputs = [];
@@ -94,6 +114,35 @@ async function checkLogin() {
   const res = await fetch('/api/login', { headers: authHeaders() });
   const data = await res.json();
   loginEnabled = data.loginRequired;
+
+  const screenBtn = document.getElementById('screenLoginBtn');
+  if (screenBtn) {
+    screenBtn.style.display = data.screenEnabled ? '' : 'none';
+    screenBtn.onclick = async () => {
+      try {
+        const resp = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: 'screen', password: '' })
+        });
+        const out = await resp.json();
+        if (resp.ok && out.token) {
+          authToken = out.token;
+          localStorage.setItem('choresToken', authToken);
+          userPermission = out.permission || 'screen';
+          if (loginDiv) loginDiv.style.display = 'none';
+          if (app) app.style.display = '';
+          initApp();
+        } else {
+          const err = document.getElementById('loginError');
+          if (err) err.textContent = out.error || 'Screen login failed';
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+  }
+
   if (!loginEnabled) {
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) logoutBtn.style.display = 'none';
@@ -104,6 +153,7 @@ async function checkLogin() {
   }
   if (data.loggedIn) {
     userPermission = data.permission || 'write';
+    currentUserName = data.username || null;
     if (loginDiv) loginDiv.style.display = 'none';
     if (app) app.style.display = '';
     initApp();
@@ -145,6 +195,12 @@ async function fetchUserSettings() {
     const res = await authFetch('/api/settings');
     if (!res.ok) throw new Error('Failed fetching user settings');
     const data = await res.json();
+    userSettings = data.userSettings || {};
+    currentUserName = currentUserName || data.currentUser || null;
+    currentPersonId = data.currentPersonId || null;
+    if (data.permission) userPermission = data.permission;
+    const effective = data.effectiveSettings || data;
+    settings = effective; // sync global settings reference with merged view
     return data;
   } catch (e) {
     console.warn('Could not fetch user settings:', e);
@@ -175,6 +231,32 @@ function initSettingsForm(settings) {
   if (!settingsContainer) return;
   const settingsSaveBtn = settingsContainer.querySelector('#settingsSaveBtn');
   if (!settingsSaveBtn) return;
+
+  if (userPermission === 'regular') {
+    // Hide unrelated sections for regular users
+    [
+      'levelSystemCard', 'coinSystemCard', 'levelSettings', 'coinSettings', 'settingsShowPast',
+      'settingsShowAnalytics', 'settingsShowRedeemedRewards', 'settingsPushoverEnable',
+      'settingsReminderTime', 'settingsAutoUpdate', 'settingsTextSize', 'settingsDateFmt',
+      'settingsShowCoinsOnMirror', 'maintenanceToolsCard', 'advancedFeaturesCard', 'notificationsCard'
+    ].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        // If the element itself is a card (like advancedFeaturesCard), hide it directly.
+        // Otherwise look for a wrapper.
+        if (el.classList.contains('card')) {
+          el.style.display = 'none';
+        } else {
+          const wrap = el.closest('.form-check') || el.closest('.mb-3') || el.closest('[class*="col-"]') || el.closest('.card');
+          if (wrap) wrap.style.display = 'none';
+        }
+      }
+    });
+  }
+
+  // Normalize shared TTS audio settings
+  ttsAudio = parseTtsAudio(settings);
+  aiResponseAudio.volume = ttsAudio.volume;
 
   // Load task coin rules
   if (settings.taskPointsRules && Array.isArray(settings.taskPointsRules)) {
@@ -299,8 +381,56 @@ function initSettingsForm(settings) {
   const showRewardsTabContainer = document.getElementById('settingsShowRewardsTabContainer');
   const showCoinsOnMirror = document.getElementById('settingsShowCoinsOnMirror');
   const showCoinsOnMirrorContainer = document.getElementById('settingsShowCoinsOnMirrorContainer');
+  const showRedeemedRewards = document.getElementById('settingsShowRedeemedRewards');
+  const showRedeemedRewardsContainer = document.getElementById('settingsShowRedeemedRewardsContainer');
   const levelEnable = document.getElementById('settingsLevelEnable');
   const autoUpdate = document.getElementById('settingsAutoUpdate');
+  const aiSettingsContainer = document.getElementById('aiSettingsContainer');
+  const chatbotEnabledToggle = document.getElementById('settingsChatbotEnabled');
+  const aiAudioEnabledToggle = document.getElementById('settingsAiAudioEnabled');
+  const chatbotVoiceSelect = document.getElementById('settingsChatbotVoice');
+  const chatbotVoiceContainer = document.getElementById('chatbotVoiceContainer');
+
+  const updateVoiceVisibility = () => {
+    if (!chatbotVoiceContainer) return;
+    const aiOn = useAI ? useAI.checked : true;
+    const chatOn = chatbotEnabledToggle ? chatbotEnabledToggle.checked : false;
+    const audioOn = aiAudioEnabledToggle ? aiAudioEnabledToggle.checked : false;
+    const show = aiOn && chatOn && audioOn;
+    chatbotVoiceContainer.style.display = show ? '' : 'none';
+    chatbotVoiceContainer.classList.toggle('d-none', !show);
+    chatbotVoiceContainer.hidden = !show;
+    chatbotVoiceContainer.setAttribute('aria-hidden', show ? 'false' : 'true');
+  };
+
+  const updateAiSettingsVisibility = () => {
+    const aiOn = useAI ? useAI.checked : true;
+    if (aiSettingsContainer) {
+      aiSettingsContainer.style.display = aiOn ? '' : 'none';
+      aiSettingsContainer.classList.toggle('d-none', !aiOn);
+      aiSettingsContainer.hidden = !aiOn;
+      aiSettingsContainer.setAttribute('aria-hidden', aiOn ? 'false' : 'true');
+    }
+    if (!aiOn) {
+      if (chatbotEnabledToggle) chatbotEnabledToggle.checked = false;
+      if (aiAudioEnabledToggle) aiAudioEnabledToggle.checked = false;
+    }
+    updateVoiceVisibility();
+  };
+
+  if (useAI) {
+    useAI.addEventListener('change', updateAiSettingsVisibility);
+  }
+
+  if (chatbotEnabledToggle) {
+    chatbotEnabledToggle.addEventListener('change', updateVoiceVisibility);
+  }
+
+  if (aiAudioEnabledToggle) {
+    aiAudioEnabledToggle.addEventListener('change', updateVoiceVisibility);
+  }
+  
+  updateAiSettingsVisibility();
   const pushoverEnable = document.getElementById('settingsPushoverEnable');
   const reminderTime = document.getElementById('settingsReminderTime');
   const backgroundSelect = document.getElementById('settingsBackground');
@@ -309,6 +439,7 @@ function initSettingsForm(settings) {
   const dataFixStatus = document.getElementById('dataFixStatus');
 
   if (showPast) showPast.checked = !!settings.showPast;
+  if (showRedeemedRewards) showRedeemedRewards.checked = settings.showRedeemedRewards !== false;
   if (textSize) textSize.value = settings.textMirrorSize || 'small';
   if (dateFmt) dateFmt.value = settings.dateFormatting || '';
   if (useAI) useAI.checked = settings.useAI !== false;
@@ -317,6 +448,15 @@ function initSettingsForm(settings) {
   if (showCoinsOnMirror) showCoinsOnMirror.checked = settings.showCoinsOnMirror !== false;
   if (levelEnable) levelEnable.checked = settings.levelingEnabled !== false;
   if (autoUpdate) autoUpdate.checked = !!settings.autoUpdate;
+  if (chatbotEnabledToggle) {
+    chatbotEnabledToggle.checked = !!settings.chatbotEnabled;
+  }
+  if (aiAudioEnabledToggle) {
+    aiAudioEnabledToggle.checked = !!settings.chatbotTtsEnabled;
+  }
+  if (chatbotVoiceSelect) chatbotVoiceSelect.value = settings.chatbotVoice || 'nova';
+  updateAiSettingsVisibility();
+  aiChatTtsEnabled = !!settings.chatbotEnabled && !!settings.chatbotTtsEnabled && settings.useAI !== false;
   if (pushoverEnable) pushoverEnable.checked = !!settings.pushoverEnabled;
   if (reminderTime) reminderTime.value = settings.reminderTime || '';
   if (backgroundSelect) backgroundSelect.value = settings.background || '';
@@ -335,6 +475,14 @@ function initSettingsForm(settings) {
       showCoinsOnMirrorContainer.style.display = '';
     } else {
       showCoinsOnMirrorContainer.style.display = 'none';
+    }
+  }
+
+  if (showRedeemedRewardsContainer) {
+    if (currentSystem === 'coins') {
+      showRedeemedRewardsContainer.style.display = '';
+    } else {
+      showRedeemedRewardsContainer.style.display = 'none';
     }
   }
 
@@ -406,12 +554,59 @@ function initSettingsForm(settings) {
       showAnalyticsOnMirror: showAnalytics ? showAnalytics.checked : false,
       showRewardsTab: showRewardsTab ? showRewardsTab.checked : true,
       showCoinsOnMirror: showCoinsOnMirror ? showCoinsOnMirror.checked : true,
+      showRedeemedRewards: showRedeemedRewards ? showRedeemedRewards.checked : true,
       levelingEnabled: levelEnable ? levelEnable.checked : false,
       autoUpdate: autoUpdate ? autoUpdate.checked : false,
+      chatbotEnabled: (useAI ? useAI.checked : false) && (chatbotEnabledToggle ? chatbotEnabledToggle.checked : false),
+      chatbotTtsEnabled: (useAI ? useAI.checked : false) && (aiAudioEnabledToggle ? aiAudioEnabledToggle.checked : false),
+      chatbotVoice: chatbotVoiceSelect ? chatbotVoiceSelect.value : 'nova',
       pushoverEnabled: pushoverEnable ? pushoverEnable.checked : false,
       reminderTime: reminderTime ? reminderTime.value : '',
-      background: backgroundSelect ? backgroundSelect.value : ''
+      background: backgroundSelect ? backgroundSelect.value : '',
+      ttsAudio
     };
+
+    // Regular users only save their own overrides
+    if (userPermission === 'regular') {
+      const userOnly = {
+        useCoinSystem: coinSystemSelected,
+        usePointSystem: coinSystemSelected,
+        useAI: useAI ? useAI.checked : false,
+        chatbotEnabled: (useAI ? useAI.checked : false) && (chatbotEnabledToggle ? chatbotEnabledToggle.checked : false),
+        chatbotTtsEnabled: (useAI ? useAI.checked : false) && (aiAudioEnabledToggle ? aiAudioEnabledToggle.checked : false),
+        chatbotVoice: chatbotVoiceSelect ? chatbotVoiceSelect.value : 'nova',
+        background: backgroundSelect ? backgroundSelect.value : '',
+        showRewardsTab: showRewardsTab ? showRewardsTab.checked : true
+      };
+
+      try {
+        const res = await authFetch('/api/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userSettings: userOnly })
+        });
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.error || 'Failed to save settings');
+        }
+        userSettings = userOnly;
+        settings = { ...settings, ...userOnly };
+        setBackground(userOnly.background);
+        localStorage.setItem('choresBackground', userOnly.background || '');
+        updateRewardsTabVisibility(userOnly.useCoinSystem, userOnly.showRewardsTab);
+        toggleAiChat(userOnly.chatbotEnabled && userOnly.useAI !== false);
+        aiChatTtsEnabled = !!userOnly.chatbotEnabled && !!userOnly.chatbotTtsEnabled && userOnly.useAI !== false;
+        showToast('Settings saved successfully', 'success');
+        const settingsModal = document.getElementById('settingsModal');
+        const modalInstance = settingsModal ? bootstrap.Modal.getInstance(settingsModal) : null;
+        if (modalInstance) modalInstance.hide();
+        return;
+      } catch (e) {
+        console.error('Failed to save settings:', e);
+        showToast(e.message || 'Failed to save settings', 'danger');
+        return;
+      }
+    }
 
     try {
       const res = await authFetch('/api/settings', {
@@ -445,6 +640,14 @@ function initSettingsForm(settings) {
       settings.useCoinSystem = newSettings.useCoinSystem;
       settings.usePointSystem = newSettings.useCoinSystem;
       settings.showCoinsOnMirror = newSettings.showCoinsOnMirror;
+      settings.useAI = newSettings.useAI;
+      settings.chatbotEnabled = newSettings.chatbotEnabled;
+      settings.chatbotTtsEnabled = newSettings.chatbotTtsEnabled;
+      settings.chatbotVoice = newSettings.chatbotVoice;
+      settings.ttsAudio = newSettings.ttsAudio;
+
+      toggleAiChat(newSettings.chatbotEnabled && newSettings.useAI !== false);
+      aiChatTtsEnabled = !!newSettings.chatbotEnabled && !!newSettings.chatbotTtsEnabled && newSettings.useAI !== false;
 
       showToast('Settings saved successfully', 'success');
       const settingsModal = document.getElementById('settingsModal');
@@ -506,6 +709,524 @@ function updateCoinTotalsPreview() {
   preview.textContent = pointsText || t.coinTotalsLoading || t.loadingLabel || 'Loading...';
 }
 
+// ==========================
+// AI Chatbot (admin dashboard)
+// ==========================
+
+function getAiChatNodes() {
+  return {
+    container: document.getElementById('aiChatContainer'),
+    log: document.getElementById('aiChatLog'),
+    input: document.getElementById('aiChatInput'),
+    send: document.getElementById('aiChatSend'),
+    mic: document.getElementById('aiChatMic'),
+    micIcon: document.getElementById('aiChatMicIcon'),
+    status: document.getElementById('aiChatStatus')
+  };
+}
+
+function toggleAiChat(enabled) {
+  const { container } = getAiChatNodes();
+  aiChatEnabled = !!enabled;
+  if (container) {
+    container.style.display = aiChatEnabled ? '' : 'none';
+  }
+  if (aiChatEnabled) {
+    setupAiChat();
+    renderAiChatWelcome(true);
+  }
+}
+
+function renderAiChatWelcome(force = false) {
+  const { log } = getAiChatNodes();
+  if (!log) return;
+  if (aiChatHistory.length) return;
+  if (!force && log.childElementCount) return;
+  const t = LANGUAGES[currentLang] || {};
+  log.innerHTML = '';
+  appendAiChatBubble('system', t.aiChatWelcome || 'I am ready to help with chores, people, and schedules.');
+}
+
+function appendAiChatBubble(role, text) {
+  const { log } = getAiChatNodes();
+  if (!log || !text) return;
+  const bubble = document.createElement('div');
+  bubble.className = `ai-chat-bubble ${role}`;
+  bubble.textContent = text;
+  log.appendChild(bubble);
+  log.scrollTop = log.scrollHeight;
+}
+
+function setAiChatStatus(message, variant = 'muted') {
+  const { status } = getAiChatNodes();
+  if (!status) return;
+  status.classList.remove('text-danger', 'text-success');
+  if (variant === 'error') {
+    status.classList.add('text-danger');
+  } else if (variant === 'success') {
+    status.classList.add('text-success');
+  }
+  status.textContent = message || '';
+}
+
+function clamp(val, min, max) {
+  return Math.min(Math.max(val, min), max);
+}
+
+function parseTtsAudio(settings) {
+  const cfg = (settings && settings.ttsAudio) || {};
+  return {
+    volume: Number.isFinite(cfg.volume) ? clamp(cfg.volume, 0, 1) : DEFAULT_TTS_AUDIO.volume,
+    pauseMs: Number.isFinite(cfg.pauseMs) ? Math.max(0, cfg.pauseMs) : DEFAULT_TTS_AUDIO.pauseMs,
+    fadeMs: Number.isFinite(cfg.fadeMs) ? Math.max(0, cfg.fadeMs) : DEFAULT_TTS_AUDIO.fadeMs
+  };
+}
+
+function waitMs(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function fadeInAudioElement(el, targetVolume, durationMs) {
+  const target = clamp(targetVolume, 0, 1);
+  const steps = Math.max(4, Math.ceil(durationMs / 25));
+  const stepDur = durationMs / steps;
+  let current = 0;
+  el.volume = 0;
+  const id = setInterval(() => {
+    current += target / steps;
+    el.volume = Math.min(current, target);
+    if (current >= target) {
+      clearInterval(id);
+    }
+  }, stepDur);
+}
+
+function initAudioContext() {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  // Ensure context is running
+  if (audioContext.state === 'suspended') {
+    audioContext.resume();
+  }
+  return audioContext;
+}
+
+function createSilentBuffer(durationMs) {
+  const ctx = initAudioContext();
+  const sampleRate = ctx.sampleRate;
+  const numSamples = Math.ceil((durationMs / 1000) * sampleRate);
+  const buffer = ctx.createBuffer(2, numSamples, sampleRate);
+  return buffer;
+}
+
+async function prependSilenceToAudio(audioBlob, silenceDurationMs) {
+  const ctx = initAudioContext();
+  const arrayBuffer = await audioBlob.arrayBuffer();
+  const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+  
+  const silentBuffer = createSilentBuffer(silenceDurationMs);
+  const totalLength = silentBuffer.length + audioBuffer.length;
+  const combined = ctx.createBuffer(
+    audioBuffer.numberOfChannels,
+    totalLength,
+    audioBuffer.sampleRate
+  );
+  
+  for (let channel = 0; channel < audioBuffer.numberOfChannels; channel++) {
+    const outputData = combined.getChannelData(channel);
+    const audioData = audioBuffer.getChannelData(channel);
+    outputData.set(audioData, silentBuffer.length);
+  }
+  
+  return combined;
+}
+
+function resolveAiChatLocale() {
+  const map = {
+    sv: 'sv-SE',
+    nb: 'nb-NO',
+    nn: 'nb-NO',
+    no: 'nb-NO',
+    da: 'da-DK',
+    de: 'de-DE',
+    es: 'es-ES',
+    fr: 'fr-FR',
+    it: 'it-IT',
+    nl: 'nl-NL',
+    pt: 'pt-PT'
+  };
+  return map[currentLang] || navigator.language || 'en-US';
+}
+
+function updateAiMicState(listening) {
+  const { mic, micIcon } = getAiChatNodes();
+  if (mic) {
+    mic.classList.toggle('btn-danger', listening);
+    mic.setAttribute('aria-pressed', listening ? 'true' : 'false');
+  }
+  if (micIcon) {
+    micIcon.className = listening ? 'bi bi-stop-fill' : 'bi bi-soundwave';
+  }
+}
+
+function stopAiChatListeningSession() {
+  if (aiAutoStopTimer) {
+    clearTimeout(aiAutoStopTimer);
+    aiAutoStopTimer = null;
+  }
+  if (aiChatRecognizer) {
+    try {
+      aiChatRecognizer.onend = null;
+      aiChatRecognizer.onresult = null;
+      aiChatRecognizer.onerror = null;
+      aiChatRecognizer.stop();
+    } catch (e) {}
+    aiChatRecognizer = null;
+  }
+  aiChatListening = false;
+  updateAiMicState(false);
+}
+
+async function ensureMicStoppedPause() {
+  stopAiChatListeningSession();
+  await waitMs(ttsAudio.pauseMs || DEFAULT_TTS_AUDIO.pauseMs);
+}
+
+function isIosDevice() {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent || '';
+  const isiOS = /iPad|iPhone|iPod/.test(ua);
+  const iPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+  return isiOS || iPadOS;
+}
+
+function initAiChatSpeechRecognition() {
+  if (typeof window === 'undefined') return;
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Recognition) return;
+
+  // Always clean up old instance if it exists
+  if (aiChatRecognizer) {
+    try {
+      aiChatRecognizer.abort();
+    } catch (e) {}
+    aiChatRecognizer = null;
+  }
+
+  aiChatRecognizer = new Recognition();
+  aiChatRecognizer.continuous = true; // Keep listening like a Teams call
+  aiChatRecognizer.interimResults = true;
+
+  aiChatRecognizer.onstart = () => {
+    aiChatListening = true;
+    updateAiMicState(true);
+    const t = LANGUAGES[currentLang] || {};
+    setAiChatStatus(t.aiChatListening || 'Listening...', 'success');
+  };
+
+  aiChatRecognizer.onerror = (event) => {
+    // If it's a "no-speech" error and we are in continuous mode, we might want to ignore it or restart?
+    // But usually on error we stop.
+    aiChatListening = false;
+    updateAiMicState(false);
+    const t = LANGUAGES[currentLang] || {};
+    setAiChatStatus(event.error || t.aiChatListenError || 'Speech recognition error', 'error');
+    aiChatRecognizer = null;
+  };
+
+  aiChatRecognizer.onend = () => {
+    aiChatListening = false;
+    updateAiMicState(false);
+    // In continuous mode, onend means the session really ended (error or manual stop).
+    // We don't automatically send here because we send on 'isFinal' in onresult.
+    const t = LANGUAGES[currentLang] || {};
+    setAiChatStatus(t.aiChatReady || 'Ready');
+    aiChatRecognizer = null;
+  };
+
+  aiChatRecognizer.onresult = (event) => {
+    if (aiAutoStopTimer) {
+      clearTimeout(aiAutoStopTimer);
+      aiAutoStopTimer = null;
+    }
+    
+    // If AI is speaking, ignore input to prevent echo loop
+    if (window.isAiSpeaking) return;
+
+    const { input, send } = getAiChatNodes();
+    // If we are already processing a request (Thinking...), ignore new input
+    if (send && send.disabled) return;
+
+    let finalTranscript = '';
+    let interimTranscript = '';
+
+    for (let i = event.resultIndex; i < event.results.length; ++i) {
+      if (event.results[i].isFinal) {
+        finalTranscript += event.results[i][0].transcript;
+      } else {
+        interimTranscript += event.results[i][0].transcript;
+      }
+    }
+
+    if (input) {
+      if (finalTranscript) {
+        input.value = finalTranscript.trim();
+        sendAiChatMessage(true);
+      } else if (interimTranscript) {
+        input.value = interimTranscript;
+      }
+    }
+  };
+}
+
+async function speakAiResponse(text, audioBase64, onComplete) {
+  // Do NOT stop the mic. Just flag that AI is speaking so we ignore input.
+  window.isAiSpeaking = true;
+
+  const finishSpeaking = () => {
+    window.isAiSpeaking = false;
+    if (onComplete) onComplete();
+  };
+
+  if (!aiChatTtsEnabled) {
+    finishSpeaking();
+    return;
+  }
+  
+  // If we have OpenAI TTS audio, play it
+  if (audioBase64) {
+    try {
+      const audioBlob = new Blob(
+        [Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0))],
+        { type: 'audio/mpeg' }
+      );
+      
+      // Prepend 500ms of silence to prevent clipping
+      const audioBufferWithSilence = await prependSilenceToAudio(audioBlob, 500);
+      const ctx = initAudioContext();
+      const source = ctx.createBufferSource();
+      source.buffer = audioBufferWithSilence;
+      
+      const gainNode = ctx.createGain();
+      source.connect(gainNode);
+      gainNode.connect(ctx.destination);
+      
+      // Ensure context is resumed
+      if (ctx.state === 'suspended') {
+        await ctx.resume();
+      }
+      
+      // Start at zero volume and fade in
+      const targetVol = clamp(ttsAudio.volume, 0, 1);
+      const fadeMs = ttsAudio.fadeMs || DEFAULT_TTS_AUDIO.fadeMs;
+      const now = ctx.currentTime;
+      gainNode.gain.setValueAtTime(0, now);
+      gainNode.gain.linearRampToValueAtTime(targetVol, now + (fadeMs / 1000));
+      
+      source.onended = () => {
+        finishSpeaking();
+      };
+      
+      // Start playback - silence will play first
+      source.start(0);
+      return;
+    } catch (err) {
+      console.error('Failed to process audio:', err);
+      // Fallback if audio processing fails
+      window.isAiSpeaking = false; // Reset flag before fallback
+    }
+  }
+  
+  // Fallback to browser TTS if no audio provided
+  fallbackToWebSpeech(text, finishSpeaking);
+}
+
+async function fallbackToWebSpeech(text, onComplete) {
+  if (!text || !aiChatTtsEnabled) {
+    if (onComplete) onComplete();
+    return;
+  }
+  if ('speechSynthesis' in window) {
+    // Ensure any ongoing speech is cancelled
+    window.speechSynthesis.cancel();
+    // Do NOT stop mic here either.
+
+    const pauseMs = ttsAudio.pauseMs || DEFAULT_TTS_AUDIO.pauseMs;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = resolveAiChatLocale();
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    utterance.volume = clamp(ttsAudio.volume, 0, 1);
+    utterance.onend = () => {
+      if (onComplete) onComplete();
+    };
+
+    await waitMs(pauseMs);
+    speechSynthesis.speak(utterance);
+  } else {
+    if (onComplete) onComplete();
+  }
+}
+
+function startListeningWithTimeout() {
+  if (!aiChatEnabled) return;
+  
+  // Start listening if not already
+  if (!aiChatListening) {
+    toggleAiChatListening();
+  }
+  
+  // Set timeout to stop listening if no speech detected
+  if (aiAutoStopTimer) clearTimeout(aiAutoStopTimer);
+  aiAutoStopTimer = setTimeout(() => {
+    if (aiChatListening && aiChatRecognizer) {
+      console.log("Auto-stop listening due to inactivity");
+      aiChatRecognizer.stop();
+    }
+  }, 7000);
+}
+
+function toggleAiChatListening() {
+  if (!aiChatEnabled) return;
+  
+  // Warm up audio context on user interaction
+  if (audioContext && audioContext.state === 'suspended') {
+    audioContext.resume().catch(e => console.log('Audio context resume failed', e));
+  }
+  
+  // Unlock/warm up the global audio object with silence
+  aiResponseAudio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==";
+  aiResponseAudio.play().catch(e => console.log("Audio unlock failed", e));
+
+  if (aiChatListening) {
+    if (aiChatRecognizer) aiChatRecognizer.stop();
+    return;
+  }
+
+  // Always re-init for a fresh session to avoid stale state
+  initAiChatSpeechRecognition();
+
+  const t = LANGUAGES[currentLang] || {};
+  const { mic } = getAiChatNodes();
+  if (!aiChatRecognizer) {
+    if (mic) mic.disabled = true;
+    setAiChatStatus(t.aiChatNoSpeech || 'Speech recognition not supported on browser without SSL, see repository readme.', 'error');
+    return;
+  }
+
+  try {
+    aiChatRecognizer.lang = resolveAiChatLocale();
+    aiChatRecognizer.start();
+  } catch (err) {
+    aiChatListening = false;
+    updateAiMicState(false);
+    aiChatRecognizer = null;
+    setAiChatStatus(err.message || t.aiChatListenError || 'Could not start microphone.', 'error');
+  }
+}
+
+async function sendAiChatMessage(isVoice = false) {
+  if (!aiChatEnabled) return;
+  
+  // Try to warm up audio if this was a click interaction
+  if (audioContext && audioContext.state === 'suspended') {
+    audioContext.resume().catch(e => {});
+  }
+  aiResponseAudio.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==";
+  aiResponseAudio.play().catch(e => {}); // Ignore errors if not a user interaction
+
+  const { input, send, mic } = getAiChatNodes();
+  const prompt = (input && input.value ? input.value.trim() : '');
+  if (!prompt) return;
+
+  // Do NOT stop listening session. We want continuous listening.
+  // stopAiChatListeningSession();
+
+  const t = LANGUAGES[currentLang] || {};
+  appendAiChatBubble('user', prompt);
+  aiChatHistory.push({ role: 'user', content: prompt });
+  if (input) input.value = '';
+  if (send) send.disabled = true;
+  // Do not disable mic button, so user can stop if they want?
+  // But we might want to prevent toggling while sending?
+  // Let's keep mic enabled but maybe ignore input in onresult if send is disabled.
+  // if (mic) mic.disabled = true; 
+  
+  setAiChatStatus(t.aiChatWorking || 'Thinking...');
+  let micReleased = false;
+  let playbackCompleted = false;
+  const releaseMic = () => {
+    if (mic && !micReleased) {
+      mic.disabled = false;
+      micReleased = true;
+    }
+  };
+
+  try {
+    const res = await authFetch('/api/ai-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: prompt, history: aiChatHistory.slice(-6) })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || 'AI chat failed');
+    }
+    const reply = data.reply || data.response || t.aiChatNoReply || 'No response from AI.';
+    aiChatHistory.push({ role: 'assistant', content: reply });
+    appendAiChatBubble('assistant', reply);
+    
+    speakAiResponse(reply, data.audio, () => {
+      playbackCompleted = true;
+      releaseMic();
+    });
+    
+    setAiChatStatus(t.aiChatReady || 'Ready', 'success');
+
+    if (data.dataChanged) {
+      await fetchTasks();
+      await fetchPeople();
+    }
+  } catch (err) {
+    playbackCompleted = true;
+    releaseMic();
+    setAiChatStatus(err.message || 'AI chat failed', 'error');
+    showToast(err.message || 'AI chat failed', 'danger', 6000);
+  } finally {
+    if (send) send.disabled = false;
+    if (playbackCompleted) {
+      releaseMic();
+    }
+  }
+}
+
+function setupAiChat() {
+  if (aiChatInitialized) return;
+  const { container, send, input, mic } = getAiChatNodes();
+  if (!container) return;
+  aiChatInitialized = true;
+
+  if (send) {
+    send.addEventListener('click', sendAiChatMessage);
+  }
+  if (input) {
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendAiChatMessage();
+      }
+    });
+  }
+  if (mic) {
+    mic.addEventListener('click', toggleAiChatListening);
+  }
+
+  initAiChatSpeechRecognition();
+  renderAiChatWelcome();
+  setAiChatStatus((LANGUAGES[currentLang] && LANGUAGES[currentLang].aiChatReady) || 'Ready');
+}
+
 function openSettingsToRewardSystem() {
   const settingsModal = document.getElementById('settingsModal');
   const useCoinSystem = document.getElementById('useCoinSystem');
@@ -539,6 +1260,58 @@ function setLanguage(lang) {
   document.documentElement.setAttribute('lang', lang);
 
   const t = LANGUAGES[lang];
+
+  // Generic data-i18n handler
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    const keys = key.split('.');
+    let value = t;
+    for (const k of keys) {
+      value = value ? value[k] : null;
+    }
+    if (value) {
+      el.textContent = value;
+    }
+  });
+
+  // Generic data-i18n-placeholder handler
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    const keys = key.split('.');
+    let value = t;
+    for (const k of keys) {
+      value = value ? value[k] : null;
+    }
+    if (value) {
+      el.placeholder = value;
+    }
+  });
+
+  // Generic data-i18n-title handler
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    const keys = key.split('.');
+    let value = t;
+    for (const k of keys) {
+      value = value ? value[k] : null;
+    }
+    if (value) {
+      el.title = value;
+    }
+  });
+
+  // Generic data-i18n-aria-label handler
+  document.querySelectorAll('[data-i18n-aria-label]').forEach(el => {
+    const key = el.getAttribute('data-i18n-aria-label');
+    const keys = key.split('.');
+    let value = t;
+    for (const k of keys) {
+      value = value ? value[k] : null;
+    }
+    if (value) {
+      el.setAttribute('aria-label', value);
+    }
+  });
 
   localizedMonths = Array.from({ length: 12 }, (_, i) =>
     new Date(2000, i).toLocaleDateString(lang, { month: "short" })
@@ -600,8 +1373,30 @@ function setLanguage(lang) {
   if (showPastLbl) showPastLbl.textContent = t.showPastLabel || 'Show past tasks';
   const showAnalyticsLbl = document.querySelector("label[for='settingsShowAnalytics']");
   if (showAnalyticsLbl) showAnalyticsLbl.textContent = t.analyticsOnMirrorLabel || 'Analytics on mirror';
+  const showRedeemedRewardsLbl = document.querySelector("label[for='settingsShowRedeemedRewards']");
+  if (showRedeemedRewardsLbl) showRedeemedRewardsLbl.textContent = t.showRedeemedRewardsLabel || 'Show redeemed rewards on mirror';
   const useAiLbl = document.querySelector("label[for='settingsUseAI']");
   if (useAiLbl) useAiLbl.textContent = t.useAiLabel || 'Use AI features';
+  const chatbotLbl = document.getElementById('settingsChatbotLabel');
+  if (chatbotLbl) chatbotLbl.textContent = t.chatbotToggleLabel || 'Enable AI chatbot in admin';
+  const chatbotHelp = document.getElementById('settingsChatbotHelp');
+  if (chatbotHelp) chatbotHelp.textContent = t.chatbotToggleHelp || 'Show a chat box with text and microphone support on the dashboard.';
+  const chatbotVoiceLbl = document.getElementById('settingsChatbotVoiceLabel');
+  if (chatbotVoiceLbl) chatbotVoiceLbl.textContent = t.chatbotVoiceLabel || 'Voice';
+  const chatbotVoiceHelp = document.getElementById('settingsChatbotVoiceHelp');
+  if (chatbotVoiceHelp) chatbotVoiceHelp.textContent = t.chatbotVoiceHelp || 'Choose the AI voice for spoken responses.';
+  const aiChatTitle = document.getElementById('aiChatTitle');
+  if (aiChatTitle) aiChatTitle.textContent = t.aiChatTitle || 'AI Chatbot';
+  const aiChatSubtitle = document.getElementById('aiChatSubtitle');
+  if (aiChatSubtitle) aiChatSubtitle.textContent = t.aiChatSubtitle || 'Ask questions about your chores, people, and schedule.';
+  const aiChatSendLabel = document.getElementById('aiChatSendLabel');
+  if (aiChatSendLabel) aiChatSendLabel.textContent = t.aiChatSendLabel || 'Send';
+  const aiChatBadge = document.getElementById('aiChatBadge');
+  if (aiChatBadge) aiChatBadge.textContent = t.aiChatBadge || 'Beta';
+  const aiChatInput = document.getElementById('aiChatInput');
+  if (aiChatInput) aiChatInput.placeholder = t.aiChatPlaceholder || 'Type your question...';
+  const aiChatMic = document.getElementById('aiChatMic');
+  if (aiChatMic) aiChatMic.title = t.aiChatMicTitle || 'Speak to the assistant';
   const userRewardsHeader = document.getElementById('userRewardsHeader');
   if (userRewardsHeader) userRewardsHeader.textContent = t.userRewardsTitle || 'User Reward Config';
   const userRewardsDescription = document.getElementById('userRewardsDescription');
@@ -709,6 +1504,8 @@ function setLanguage(lang) {
   if (levelEnableLbl) levelEnableLbl.textContent = t.levelingEnabledLabel;
   const autoUpdateLbl = document.querySelector("label[for='settingsAutoUpdate']");
   if (autoUpdateLbl) autoUpdateLbl.textContent = t.autoUpdateLabel || 'Enable autoupdate';
+  const notificationsTitle = document.getElementById('notificationsTitle');
+  if (notificationsTitle) notificationsTitle.textContent = t.notificationsTitle || 'Notifications';
   const pushoverEnableLbl = document.querySelector("label[for='settingsPushoverEnable']");
   if (pushoverEnableLbl) pushoverEnableLbl.textContent = t.pushoverEnabledLabel || 'Enable Pushover';
   const reminderTimeLbl = document.querySelector("label[for='settingsReminderTime']");
@@ -836,12 +1633,18 @@ function setLanguage(lang) {
   if (pendingLabel) pendingLabel.textContent = ` ${t.taskPendingLabel}`;
   const taskInput = document.getElementById("taskName");
   if (taskInput) taskInput.placeholder = t.taskNamePlaceholder;
-  const recurringSelect = document.getElementById("taskRecurring");
-  if (recurringSelect && t.taskRecurring) {
-    Array.from(recurringSelect.options).forEach(opt => {
+  const updateRecurringSelectText = (selectEl) => {
+    if (!selectEl || !t.taskRecurring) return;
+    Array.from(selectEl.options).forEach(opt => {
       const key = opt.value || "none";
       if (t.taskRecurring[key]) opt.textContent = t.taskRecurring[key];
     });
+  };
+  updateRecurringSelectText(document.getElementById("taskRecurring"));
+  updateRecurringSelectText(document.getElementById("editTaskRecurring"));
+  const editTaskRecurringLabel = document.getElementById("editTaskRecurringLabel");
+  if (editTaskRecurringLabel && t.taskRecurringLabel) {
+    editTaskRecurringLabel.textContent = t.taskRecurringLabel;
   }
   const taskAddBtn = document.getElementById("btnAddTask");
   if (taskAddBtn) taskAddBtn.innerHTML = `<i class='bi bi-plus-lg me-1'></i>${t.taskAddButton}`;
@@ -853,6 +1656,16 @@ function setLanguage(lang) {
   if (taskSeriesFilterLabel) {
     taskSeriesFilterLabel.textContent = t.taskSeriesFilterLabel || 'Show recurring tasks only';
   }
+  
+  const groupByPersonLabel = document.querySelector('label[for="tasksGroupByPerson"]');
+  if (groupByPersonLabel) {
+    groupByPersonLabel.textContent = t.groupByPersonLabel || 'Group by person';
+  }
+
+  const taskMyFilterLabel = document.getElementById('taskMyFilterLabel');
+  if (taskMyFilterLabel) {
+    taskMyFilterLabel.textContent = t.showMyTasksLabel || 'Show only my tasks';
+  }
   const taskSeriesFilterToggle = document.getElementById('tasksSeriesFilter');
   if (taskSeriesFilterToggle) {
     taskSeriesFilterToggle.checked = showTaskSeriesRootsOnly;
@@ -863,6 +1676,40 @@ function setLanguage(lang) {
         renderTasks();
       });
       taskSeriesFilterToggle.dataset.bound = 'true';
+    }
+  }
+
+  const taskGroupByPersonToggle = document.getElementById('tasksGroupByPerson');
+  const taskGroupByPersonWrapper = document.getElementById('taskGroupByPersonWrapper');
+  if (taskGroupByPersonToggle && taskGroupByPersonWrapper) {
+    taskGroupByPersonToggle.checked = showTaskGroupByPerson;
+    // Show for write and screen users
+    taskGroupByPersonWrapper.style.display = (userPermission === 'write' || userPermission === 'screen') ? '' : 'none';
+    
+    if (!taskGroupByPersonToggle.dataset.bound) {
+      taskGroupByPersonToggle.addEventListener('change', (event) => {
+        showTaskGroupByPerson = event.target.checked;
+        localStorage.setItem(TASK_GROUP_FILTER_KEY, showTaskGroupByPerson ? '1' : '0');
+        renderTasks();
+      });
+      taskGroupByPersonToggle.dataset.bound = 'true';
+    }
+  }
+
+  const taskMyFilterToggle = document.getElementById('tasksMyFilter');
+  const taskMyFilterWrapper = document.getElementById('taskMyFilterWrapper');
+  if (taskMyFilterToggle && taskMyFilterWrapper) {
+    taskMyFilterToggle.checked = showMyTasksOnly;
+    const hasPerson = Boolean(currentPersonId);
+    // Hide if no person selected OR if user is regular (since it's enforced)
+    taskMyFilterWrapper.style.display = (hasPerson && userPermission !== 'regular') ? '' : 'none';
+    if (!taskMyFilterToggle.dataset.bound) {
+      taskMyFilterToggle.addEventListener('change', (event) => {
+        showMyTasksOnly = event.target.checked;
+        localStorage.setItem(MY_TASKS_FILTER_KEY, showMyTasksOnly ? '1' : '0');
+        renderTasks();
+      });
+      taskMyFilterToggle.dataset.bound = 'true';
     }
   }
 
@@ -895,6 +1742,58 @@ function setLanguage(lang) {
     const emptyOption = select.querySelector('option[value=""]');
     if (emptyOption) emptyOption.textContent = text;
   });
+
+  // Manual updates for Reward System Settings (to ensure translation)
+  const rewardSystemTitle = document.querySelector('[data-i18n="rewardSystemTitle"]');
+  if (rewardSystemTitle) rewardSystemTitle.textContent = t.rewardSystemTitle;
+  const rewardSystemInfo = document.querySelector('[data-i18n="rewardSystemInfo"]');
+  if (rewardSystemInfo) rewardSystemInfo.textContent = t.rewardSystemInfo;
+  const levelSystemLabel = document.querySelector('[data-i18n="levelSystemLabel"]');
+  if (levelSystemLabel) levelSystemLabel.textContent = t.levelSystemLabel;
+  const levelSystemDesc = document.querySelector('[data-i18n="levelSystemDesc"]');
+  if (levelSystemDesc) levelSystemDesc.textContent = t.levelSystemDesc;
+  const defaultBadge = document.querySelector('[data-i18n="defaultBadge"]');
+  if (defaultBadge) defaultBadge.textContent = t.defaultBadge;
+  const coinSystemLabel = document.querySelector('[data-i18n="coinSystemLabel"]');
+  if (coinSystemLabel) coinSystemLabel.textContent = t.coinSystemLabel;
+  const coinSystemDesc = document.querySelector('[data-i18n="coinSystemDesc"]');
+  if (coinSystemDesc) coinSystemDesc.textContent = t.coinSystemDesc;
+  const newFeatureBadge = document.querySelector('[data-i18n="newFeatureBadge"]');
+  if (newFeatureBadge) newFeatureBadge.textContent = t.newFeatureBadge;
+  const migrationWarning = document.querySelector('[data-i18n="migrationWarning"]');
+  if (migrationWarning) migrationWarning.textContent = t.migrationWarning;
+  
+  const displaySettingsTitle = document.querySelector('[data-i18n="displaySettingsTitle"]');
+  if (displaySettingsTitle) displaySettingsTitle.textContent = t.displaySettingsTitle;
+  const showRewardsTabLabel = document.querySelector('[data-i18n="showRewardsTabLabel"]');
+  if (showRewardsTabLabel) showRewardsTabLabel.textContent = t.showRewardsTabLabel;
+  const showCoinsOnMirrorLabel = document.querySelector('[data-i18n="showCoinsOnMirrorLabel"]');
+  if (showCoinsOnMirrorLabel) showCoinsOnMirrorLabel.textContent = t.showCoinsOnMirrorLabel;
+  
+  const levelSystemSettingsTitle = document.querySelector('[data-i18n="levelSystemSettingsTitle"]');
+  if (levelSystemSettingsTitle) levelSystemSettingsTitle.textContent = t.levelSystemSettingsTitle;
+  const configureLevelTitlesBtn = document.querySelector('[data-i18n="configureLevelTitlesBtn"]');
+  if (configureLevelTitlesBtn) configureLevelTitlesBtn.textContent = t.configureLevelTitlesBtn;
+  
+  const coinsSystemSettingsTitle = document.querySelector('[data-i18n="coinsSystemSettingsTitle"]');
+  if (coinsSystemSettingsTitle) coinsSystemSettingsTitle.textContent = t.coinsSystemSettingsTitle;
+  
+  const aiFeaturesTitle = document.querySelector('[data-i18n="aiFeaturesTitle"]');
+  if (aiFeaturesTitle) aiFeaturesTitle.textContent = t.aiFeaturesTitle;
+  const aiAudioLabel = document.querySelector('[data-i18n="aiAudioLabel"]');
+  if (aiAudioLabel) aiAudioLabel.textContent = t.aiAudioLabel;
+  const aiAudioHelp = document.querySelector('[data-i18n="aiAudioHelp"]');
+  if (aiAudioHelp) aiAudioHelp.textContent = t.aiAudioHelp;
+  
+  const advancedFeaturesTitle = document.querySelector('[data-i18n="advancedFeaturesTitle"]');
+  if (advancedFeaturesTitle) advancedFeaturesTitle.textContent = t.advancedFeaturesTitle;
+  
+  const maintenanceToolsTitle = document.querySelector('[data-i18n="maintenanceToolsTitle"]');
+  if (maintenanceToolsTitle) maintenanceToolsTitle.textContent = t.maintenanceToolsTitle;
+  const maintenanceToolsDesc = document.querySelector('[data-i18n="maintenanceToolsDesc"]');
+  if (maintenanceToolsDesc) maintenanceToolsDesc.textContent = t.maintenanceToolsDesc;
+  const runDataFixBtn = document.querySelector('[data-i18n="runDataFixBtn"]');
+  if (runDataFixBtn) runDataFixBtn.textContent = t.runDataFixBtn;
 
   updateBoardTitleMap();
   renderPeople();
@@ -946,6 +1845,14 @@ async function applySettings(newSettings) {
   if (newSettings.useAI !== undefined) {
     const aiButton = document.getElementById('btnAiGenerate');
     if (aiButton) aiButton.style.display = newSettings.useAI === false ? 'none' : '';
+  }
+  if (newSettings.chatbotEnabled !== undefined || newSettings.useAI !== undefined) {
+    const allowChat = (newSettings.chatbotEnabled ?? aiChatEnabled) && (newSettings.useAI ?? true) && userPermission !== 'screen';
+    toggleAiChat(allowChat);
+  }
+  if (newSettings.ttsAudio !== undefined) {
+    ttsAudio = parseTtsAudio({ ttsAudio: newSettings.ttsAudio });
+    aiResponseAudio.volume = ttsAudio.volume;
   }
   if (newSettings.dateFormatting !== undefined) {
     dateFormatting = newSettings.dateFormatting;
@@ -1194,12 +2101,16 @@ function renderPersonRewardsList() {
 function renderPeople() {
   const list = document.getElementById("peopleList");
   list.innerHTML = "";
+  const isRegular = userPermission === 'regular';
+  const visiblePeople = isRegular && currentPersonId
+    ? peopleCache.filter(p => p.id === currentPersonId)
+    : peopleCache.slice();
   
   // Check if coin system is active
   const useCoinSystem = document.getElementById('useCoinSystem');
   const isCoinSystemActive = useCoinSystem && useCoinSystem.checked;
 
-  if (peopleCache.length === 0) {
+  if (visiblePeople.length === 0) {
     const li = document.createElement("li");
     li.className = "list-group-item text-center text-muted";
     li.textContent = LANGUAGES[currentLang].noPeople;
@@ -1207,7 +2118,7 @@ function renderPeople() {
     return;
   }
 
-  for (const person of peopleCache) {
+  for (const person of visiblePeople) {
     const li = document.createElement("li");
     li.className = "list-group-item d-flex justify-content-between align-items-center";
     const info = document.createElement("span");
@@ -1259,6 +2170,19 @@ function renderPeople() {
       actions.appendChild(delBtn);
       li.appendChild(actions);
     }
+    if (userPermission === 'regular') {
+      const actions = document.createElement('div');
+      actions.className = 'btn-group btn-group-sm';
+      if (isCoinSystemActive) {
+        const redeemBtn = document.createElement('button');
+        redeemBtn.className = 'btn btn-outline-success';
+        redeemBtn.title = LANGUAGES[currentLang].redeemReward || 'Redeem Reward';
+        redeemBtn.innerHTML = '<i class="bi bi-gift"></i>';
+        redeemBtn.onclick = () => openRedeemModalForPerson(person.id);
+        actions.appendChild(redeemBtn);
+      }
+      if (actions.childElementCount > 0) li.appendChild(actions);
+    }
     list.appendChild(li);
   }
   const taskPerson = document.getElementById('taskPerson');
@@ -1276,6 +2200,11 @@ function renderPeople() {
     peopleCache.forEach(p => {
       editPerson.add(new Option(p.name, p.id));
     });
+  }
+
+  if (isRegular) {
+    const personForm = document.getElementById('personForm');
+    if (personForm) personForm.style.display = 'none';
   }
 }
 
@@ -1305,7 +2234,8 @@ function formatDate(dateStr) {
 
 function renderTasks() {
   const t = LANGUAGES[currentLang];
-  const canWrite = userPermission === 'write';
+  const canWrite = userPermission === 'write' || userPermission === 'regular';
+  const canDelete = userPermission === 'write';
   const list = document.getElementById("taskList");
   list.innerHTML = "";
   const useCoinSystem = document.getElementById('useCoinSystem');
@@ -1321,7 +2251,11 @@ function renderTasks() {
   }
 
   const recurringTasks = activeTasks.filter(task => task.recurring && task.recurring !== 'none'); // only keep recurring entries
-  const visibleTasks = showTaskSeriesRootsOnly ? recurringTasks : activeTasks;
+  let visibleTasks = showTaskSeriesRootsOnly ? recurringTasks : activeTasks;
+
+  if ((showMyTasksOnly || userPermission === 'regular') && currentPersonId) {
+    visibleTasks = visibleTasks.filter(task => task.assignedTo === currentPersonId);
+  }
 
   if (visibleTasks.length === 0) {
     const li = document.createElement("li");
@@ -1331,7 +2265,126 @@ function renderTasks() {
     return;
   }
 
+  if (showTaskGroupByPerson && !showMyTasksOnly) {
+    // Group tasks by person
+    const grouped = {};
+    const unassigned = [];
+    
+    visibleTasks.forEach(task => {
+      if (task.assignedTo) {
+        if (!grouped[task.assignedTo]) grouped[task.assignedTo] = [];
+        grouped[task.assignedTo].push(task);
+      } else {
+        unassigned.push(task);
+      }
+    });
+
+    // Render groups
+    Object.keys(grouped).forEach(personId => {
+      const pid = parseInt(personId, 10);
+      const person = peopleCache.find(p => p.id === pid);
+      const name = person ? person.name : (t.unknownPerson || 'Unknown');
+      
+      renderTaskGroup(list, name, grouped[personId], t, canWrite, canDelete, isCoinSystemActive);
+    });
+
+    if (unassigned.length > 0) {
+      renderTaskGroup(list, t.unassigned || 'Unassigned', unassigned, t, canWrite, canDelete, isCoinSystemActive);
+    }
+
+    // Disable sortable when grouped
+    if (taskSortable) {
+      taskSortable.destroy();
+      taskSortable = null;
+    }
+    return;
+  }
+
   for (const task of visibleTasks) {
+    const li = createTaskElement(task, t, canWrite, canDelete, isCoinSystemActive);
+    list.appendChild(li);
+  }
+
+  if (taskSortable) {
+    taskSortable.destroy();
+    taskSortable = null;
+  }
+  if (canWrite && !showTaskGroupByPerson) {
+    taskSortable = new Sortable(list, {
+      handle: '.drag-handle',
+      animation: 150,
+      onEnd: async (evt) => {
+        const activeSnapshot = tasksCache.filter(task => !task.deleted);
+        let reordered;
+        if (showTaskSeriesRootsOnly) {
+          const displayed = visibleTasks.slice();
+          const movedRoot = displayed.splice(evt.oldIndex, 1)[0];
+          displayed.splice(evt.newIndex, 0, movedRoot);
+          const grouped = activeSnapshot.reduce((map, task) => {
+            const seriesId = task.seriesId || task.id;
+            if (!map.has(seriesId)) map.set(seriesId, []);
+            map.get(seriesId).push(task);
+            return map;
+          }, new Map());
+          const seriesOrder = displayed.map(task => task.seriesId || task.id);
+          const usedSeries = new Set();
+          reordered = [];
+          seriesOrder.forEach(seriesId => {
+            const group = grouped.get(seriesId) || [];
+            group.forEach(item => reordered.push(item));
+            usedSeries.add(seriesId);
+          });
+          activeSnapshot.forEach(task => {
+            const seriesId = task.seriesId || task.id;
+            if (!usedSeries.has(seriesId)) {
+              reordered.push(task);
+              usedSeries.add(seriesId);
+            }
+          });
+        } else {
+          reordered = activeSnapshot.slice();
+          const moved = reordered.splice(evt.oldIndex, 1)[0];
+          reordered.splice(evt.newIndex, 0, moved);
+        }
+
+        let i = 0;
+        tasksCache = tasksCache.map(task => task.deleted ? task : reordered[i++]);
+        const ids = reordered.map(task => task.id);
+        await authFetch('/api/tasks/reorder', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(ids)
+        });
+      }
+    });
+  }
+}
+
+function renderTaskGroup(container, title, tasks, t, canWrite, canDelete, isCoinSystemActive) {
+  const card = document.createElement('div');
+  card.className = 'card mb-3 task-group-card';
+  
+  const header = document.createElement('div');
+  header.className = 'card-header task-group-header fw-bold';
+  header.textContent = title;
+  
+  const body = document.createElement('div');
+  body.className = 'card-body p-0';
+  
+  const ul = document.createElement('ul');
+  ul.className = 'list-group list-group-flush';
+  
+  tasks.forEach(task => {
+    ul.appendChild(createTaskElement(task, t, canWrite, canDelete, isCoinSystemActive));
+  });
+  
+  body.appendChild(ul);
+  card.appendChild(header);
+  card.appendChild(body);
+  container.appendChild(card);
+}
+
+function createTaskElement(task, t, canWrite, canDelete, isCoinSystemActive) {
     const li = document.createElement("li");
     li.className = "list-group-item d-flex align-items-center";
     li.dataset.id = task.id;
@@ -1389,19 +2442,26 @@ function renderTasks() {
       span.innerHTML += ` <span class="badge bg-warning text-dark">${task.points} ${t.pointsLabel || 'coins'}</span>`;
     }
     if (task.done) span.classList.add("task-done");
-    const person = peopleCache.find(p => p.id === task.assignedTo);
-    const personName = person ? person.name : t.unassigned;
-    span.innerHTML += ` - ${personName}`;
+    
+    // Only show assigned person if NOT grouping by person
+    if (!showTaskGroupByPerson) {
+      const person = peopleCache.find(p => p.id === task.assignedTo);
+      const personName = person ? person.name : t.unassigned;
+      span.innerHTML += ` - ${personName}`;
+    }
 
     left.appendChild(chk);
     left.appendChild(span);
 
     if (canWrite) {
-      const del = document.createElement("button");
-      del.className = "btn btn-sm btn-outline-danger";
-      del.title = t.remove;
-      del.innerHTML = '<i class="bi bi-trash"></i>';
-      del.addEventListener("click", () => deleteTask(task.id));
+      if (canDelete) {
+        const del = document.createElement("button");
+        del.className = "btn btn-sm btn-outline-danger";
+        del.title = t.remove;
+        del.innerHTML = '<i class="bi bi-trash"></i>';
+        del.addEventListener("click", () => deleteTask(task.id));
+        actions.appendChild(del);
+      }
 
       const dragBtn = document.createElement("button");
       dragBtn.className = "btn btn-sm btn-outline-secondary drag-handle";
@@ -1415,7 +2475,6 @@ function renderTasks() {
         edit.addEventListener("click", () => openEditModal(task));
         actions.appendChild(edit);
       }
-      actions.appendChild(del);
       actions.appendChild(dragBtn);
     }
 
@@ -1424,63 +2483,8 @@ function renderTasks() {
     } else {
       li.append(left);
     }
-
-    list.appendChild(li);
-  }
-
-  if (taskSortable) {
-    taskSortable.destroy();
-    taskSortable = null;
-  }
-  if (canWrite) {
-    taskSortable = new Sortable(list, {
-      handle: '.drag-handle',
-      animation: 150,
-      onEnd: async (evt) => {
-        const activeSnapshot = tasksCache.filter(task => !task.deleted);
-        let reordered;
-        if (showTaskSeriesRootsOnly) {
-          const displayed = visibleTasks.slice();
-          const movedRoot = displayed.splice(evt.oldIndex, 1)[0];
-          displayed.splice(evt.newIndex, 0, movedRoot);
-          const grouped = activeSnapshot.reduce((map, task) => {
-            const seriesId = task.seriesId || task.id;
-            if (!map.has(seriesId)) map.set(seriesId, []);
-            map.get(seriesId).push(task);
-            return map;
-          }, new Map());
-          const seriesOrder = displayed.map(task => task.seriesId || task.id);
-          const usedSeries = new Set();
-          reordered = [];
-          seriesOrder.forEach(seriesId => {
-            const group = grouped.get(seriesId) || [];
-            group.forEach(item => reordered.push(item));
-            usedSeries.add(seriesId);
-          });
-          activeSnapshot.forEach(task => {
-            const seriesId = task.seriesId || task.id;
-            if (!usedSeries.has(seriesId)) {
-              reordered.push(task);
-              usedSeries.add(seriesId);
-            }
-          });
-        } else {
-          reordered = activeSnapshot.slice();
-          const moved = reordered.splice(evt.oldIndex, 1)[0];
-          reordered.splice(evt.newIndex, 0, moved);
-        }
-
-        let i = 0;
-        tasksCache = tasksCache.map(task => task.deleted ? task : reordered[i++]);
-        const ids = reordered.map(task => task.id);
-        await authFetch('/api/tasks/reorder', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(ids)
-        });
-      }
-    });
-  }
+    
+    return li;
 }
 
 function openEditModal(task) {
@@ -1488,9 +2492,11 @@ function openEditModal(task) {
   const nameInput = document.getElementById('editTaskName');
   const dateInput = document.getElementById('editTaskDate');
   const personSelect = document.getElementById('editTaskPerson');
+  const recurringSelect = document.getElementById('editTaskRecurring');
   if (nameInput) nameInput.value = task.name;
   if (dateInput) dateInput.value = task.date || '';
   if (personSelect) personSelect.value = task.assignedTo || '';
+  if (recurringSelect) recurringSelect.value = task.recurring || 'none';
   if (!editTaskModal) {
     const modalEl = document.getElementById('editTaskModal');
     if (modalEl) editTaskModal = new bootstrap.Modal(modalEl);
@@ -1720,10 +2726,12 @@ document.getElementById('editTaskForm').addEventListener('submit', async e => {
   const name = document.getElementById('editTaskName').value.trim();
   const date = document.getElementById('editTaskDate').value;
   const assigned = document.getElementById('editTaskPerson').value;
+  const recurring = document.getElementById('editTaskRecurring').value || 'none';
   await updateTask(editTaskId, {
     name,
     date,
-    assignedTo: assigned ? parseInt(assigned) : null
+    assignedTo: assigned ? parseInt(assigned) : null,
+    recurring
   });
   if (editTaskModal) editTaskModal.hide();
   editTaskId = null;
@@ -2143,26 +3151,48 @@ function setIcon(theme) {
 }
 
 async function initApp() {
-  const userSettings = await fetchUserSettings();
-  customLevelTitles = userSettings.customLevelTitles || {};
-  if (userPermission !== 'write') {
+  const settingsResponse = await fetchUserSettings();
+  const effectiveSettings = settingsResponse.effectiveSettings || settingsResponse;
+  customLevelTitles = effectiveSettings.customLevelTitles || {};
+  
+  if (userPermission !== 'write' && userPermission !== 'regular') {
     const personForm = document.getElementById('personForm');
     if (personForm) personForm.style.display = 'none';
     const taskForm = document.getElementById('taskForm');
     if (taskForm) taskForm.style.display = 'none';
   }
-  if (typeof userSettings.levelingEnabled === "boolean") {
-    levelingEnabled = userSettings.levelingEnabled;
+
+  if (userPermission === 'screen') {
+    const peopleCol = document.getElementById('peopleCardCol');
+    if (peopleCol) peopleCol.style.display = 'none';
+    const settingsBtn = document.getElementById('settingsBtn');
+    if (settingsBtn) settingsBtn.style.display = 'none';
+    const mainTabs = document.getElementById('mainTabs');
+    if (mainTabs) mainTabs.style.display = 'none';
+    const tasksCol = document.getElementById('tasksCardCol');
+    if (tasksCol) {
+      tasksCol.classList.remove('col-lg-8');
+      tasksCol.classList.add('col-12');
+    }
   }
-  if (userSettings.settings) {
-    settingsMode = userSettings.settings;
+
+  if (typeof effectiveSettings.levelingEnabled === "boolean") {
+    levelingEnabled = effectiveSettings.levelingEnabled;
   }
-  if (userSettings.language && LANGUAGES[userSettings.language]) {
-    currentLang = userSettings.language;
+  
+  // Fix PIN logic: prioritize settings from config (settingsResponse.settings)
+  if (settingsResponse.settings) {
+    settingsMode = settingsResponse.settings;
+  } else if (effectiveSettings.settings) {
+    settingsMode = effectiveSettings.settings;
+  }
+
+  if (effectiveSettings.language && LANGUAGES[effectiveSettings.language]) {
+    currentLang = effectiveSettings.language;
   } else {
     currentLang = localStorage.getItem("mmm-chores-lang") || 'en';
   }
-  dateFormatting = userSettings.dateFormatting || '';
+  dateFormatting = effectiveSettings.dateFormatting || '';
 
   const selector = document.createElement("select");
   selector.className = "language-select";
@@ -2187,7 +3217,7 @@ async function initApp() {
   }
 
   const aiButton = document.getElementById("btnAiGenerate");
-  if (aiButton && userSettings.useAI === false) {
+  if (aiButton && effectiveSettings.useAI === false) {
     aiButton.style.display = "none";
   }
 
@@ -2202,16 +3232,22 @@ async function initApp() {
     });
   }
 
-  initSettingsForm(userSettings);
+  setBackground(effectiveSettings.background || '');
+
+  initSettingsForm(effectiveSettings);
 
   setLanguage(currentLang);
-  await applySettings(userSettings);
+  setupAiChat();
+  const allowChat = effectiveSettings.chatbotEnabled && effectiveSettings.useAI !== false && userPermission !== 'screen';
+  toggleAiChat(allowChat);
+  await applySettings(effectiveSettings);
 
   // Initialize rewards system visibility
-  const userCoinSystemEnabled = userSettings.useCoinSystem ?? userSettings.usePointSystem ?? false;
-  updateRewardsTabVisibility(userCoinSystemEnabled, userSettings.showRewardsTab !== false);
+  const coinSystemEnabled = effectiveSettings.useCoinSystem ?? effectiveSettings.usePointSystem ?? false;
+  const rewardsTabVisible = effectiveSettings.showRewardsTab !== false;
+  updateRewardsTabVisibility(coinSystemEnabled, rewardsTabVisible);
   
-  if (userCoinSystemEnabled) {
+  if (coinSystemEnabled) {
     await fetchRewards();
     await fetchRedemptions();
   }

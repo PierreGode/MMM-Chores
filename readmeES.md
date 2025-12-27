@@ -2,6 +2,53 @@
 
 **MMM-Chores** es un módulo para [MagicMirror²](https://github.com/MagicMirrorOrg/MagicMirror) que te permite gestionar las tareas del hogar.
 
+## ✨ Nuevas funciones (diciembre 2025)
+### 🔄 Opciones recurrentes mejoradas
+- **Días laborables**: de lunes a viernes.
+- **Fines de semana**: de sábado a domingo.
+
+### Opciones en el espejo
+- **Recompensas**: muestra en el espejo qué recompensas fueron canjeadas y por quién.
+
+### Modo pantalla
+- **Panel a pantalla completa**: activa un modo de visualización continua pensado para tabletas o pantallas murales, manteniendo las tareas visibles sin la interfaz de administración.
+
+### Filtros
+- **Agrupar por persona**: filtra y organiza la lista según el responsable para ver rápidamente qué debe hacer cada uno.
+
+### 🎯 Recompensas basadas en puntos
+- **Recompensas en Pushover**: mejoras en las notificaciones de recompensas enviadas a Pushover, ahora con soporte multiidioma.
+
+### 🤖 Chatbot con IA
+- **Asistente inteligente**: chatbot con tecnología de OpenAI integrado en el panel de administración.
+- **Interacción por voz**: habla con tu lista de tareas (requiere SSL/HTTPS).
+- **Texto a voz**: escucha respuestas con seis voces IA naturales (se necesita certificado SSL "https" para que funcione el micrófono).
+- **Contexto consciente**: pregunta por tareas próximas, puntos de cada persona o recompensas disponibles.
+
+### Usuarios
+- **Nuevo rol: regular**
+- **Acceso regular**: las cuentas con rol regular solo ven sus tareas asignadas y pueden definir ajustes propios, como su fondo personal.
+
+## ✨ Nuevas funciones (octubre 2025)
+
+**Actualización importante**: se añadió un sistema completo de recompensas basado en puntos y opciones recurrentes mejoradas. Consulta NEW_FEATURES.md para ver todos los detalles.
+
+### 🎯 Recompensas basadas en puntos
+- **Puntos personalizados**: asigna valores de puntos a cada tarea.
+- **Recompensas flexibles**: crea recompensas con costes específicos en puntos.
+- **Seguimiento automático**: los puntos se asignan automáticamente al completar tareas.
+- **Notificaciones por correo**: opción de enviar un correo al canjear una recompensa.
+
+### 🔄 Opciones recurrentes mejoradas
+- **Cada X días**: tareas que se repiten cada 2, 3 o más días.
+- **Cada X semanas**: tareas que se repiten cada 2, 3 o más semanas.
+- **Primer lunes del mes**: tareas que ocurren el primer lunes de cada mes.
+
+### 🔧 Migración de sistema
+- **Compatibilidad hacia atrás**: el sistema de niveles sigue siendo el predeterminado.
+- **Cambio sin fricciones**: alterna entre niveles y puntos en cualquier momento.
+- **Conservación de datos**: toda la información existente se mantiene durante la migración.
+
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/J3J2EARPK)
 
 Proporciona una interfaz de administración donde puedes añadir, editar y eliminar tareas. También puedes establecer fechas límite y asignar tareas a diferentes personas. Las tareas pueden ser únicas o repetirse diariamente, semanalmente, mensualmente o anualmente. El módulo muestra las tareas en tu MagicMirror, permitiéndote llevar un seguimiento de las tareas domésticas de un vistazo.
@@ -14,6 +61,7 @@ sobrevive a refrescos de página y reinicios.
 La configuración **Mostrar tareas pasadas** te permite alternar si las tareas vencidas que aún no se han completado deben seguir siendo visibles en el espejo. Las tareas pasadas completadas siempre están ocultas.
 
 *Actualización 2025-08-04: la mayoría de las configuraciones se trasladaron a la página de administración*
+*Actualización 2025-08-20: se añadió el login opcional con usuarios de sólo lectura o escritura, recordatorios Pushover y fondos de 4 estaciones*
 
 ## Capturas de pantalla
 
@@ -163,7 +211,7 @@ insignia `lvlX`.
 
 Ve a http://yourmirrorIP:5003/ #la página será accesible dentro de la misma red.
 > [!CAUTION]
-> NO expongas la aplicación mediante reenvío de puertos
+> NO expongas la aplicación mediante reenvío de puertos. El login opcional no te protege de Internet; un pez dorado entrenado podría romperlo.
 
 ## Notificaciones Push
 
@@ -171,6 +219,10 @@ Si deseas usar notificaciones push sigue la guía a continuación.
 Alternativamente, puedes usar [Pushover](https://pushover.net/) proporcionando `pushoverApiKey` y `pushoverUser` en la configuración del módulo y habilitando Pushover en la configuración del administrador.
 
 ![cert](img/screenshot3_cert.png)
+
+### Script rápido para instalar SSL
+
+Si ejecutas el espejo en Linux, puedes generar automáticamente los certificados necesarios ejecutando `./generate_certs.sh` desde la raíz del módulo. El script detecta tu IP principal, crea la carpeta `certs` dentro de `~/MagicMirror/modules/MMM-Chores/` y deja listos los archivos `server.key`, `server.csr` y `server.crt`.
 
 ### 1. En MagicMirror/modules/MMM-Chores crea una carpeta certs
 
