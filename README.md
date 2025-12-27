@@ -236,6 +236,10 @@ Alternatively, you can use [Pushover](https://pushover.net/) by providing both a
 
 ![cert](img/screenshot3_cert.png)
 
+### Quick SSL setup script
+
+If you're running the mirror on Linux, you can auto-generate the required certificates by executing `./generate_certs.sh` from the module root. The script detects your primary IP, creates the `certs` folder inside `~/MagicMirror/modules/MMM-Chores/`, and outputs ready-to-use `server.key`, `server.csr`, and `server.crt` files.
+
 ### 1. in MagicMirror/modules/MMM-Chores create a folder certs
 
 ```bash

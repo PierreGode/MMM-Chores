@@ -220,6 +220,10 @@ Alternativamente, puedes usar [Pushover](https://pushover.net/) proporcionando `
 
 ![cert](img/screenshot3_cert.png)
 
+### Script rápido para instalar SSL
+
+Si ejecutas el espejo en Linux, puedes generar automáticamente los certificados necesarios ejecutando `./generate_certs.sh` desde la raíz del módulo. El script detecta tu IP principal, crea la carpeta `certs` dentro de `~/MagicMirror/modules/MMM-Chores/` y deja listos los archivos `server.key`, `server.csr` y `server.crt`.
+
 ### 1. En MagicMirror/modules/MMM-Chores crea una carpeta certs
 
 ```bash
