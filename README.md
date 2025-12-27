@@ -6,13 +6,18 @@
 
 
 ## ✨ New Features (dec 2025)
-### 🔄 Enhanced Recurring Options 
+### 🔄 Enhanced Recurring Options
 - **Weekdays**: Monday to Friday
 - **Weekends**: Saturday to Sunday
 
 ### Mirror options
 - **Rewards**: show claimed rewards by whom on the mirror
 
+### Screen Mode
+- **Fullscreen dashboard**: Launch an always-on display mode tailored for tablets and wall screens, keeping chores visible without the admin chrome.
+
+### Filters
+- **Group by person**: Quickly filter and group the task list by assignee to focus on what each person needs to do next.
 
 ### 🎯 Point-Based Rewards
 - **Rewards in Pushover**: get better notifikations to pushover about rewards, and now with language support.
@@ -20,8 +25,12 @@
 ### 🤖 AI Chatbot
 - **Smart Assistant**: Integrated OpenAI-powered chatbot in the admin dashboard.
 - **Voice Interaction**: Speak to your chores list! (Requires SSL/HTTPS).
-- **Text-to-Speech**: Hear responses with natural-sounding AI voices.  ( ssl cert is needed "https" for microphone to work)
+- **Text-to-Speech**: Hear responses with six natural-sounding AI voices.  ( ssl cert is needed "https" for microphone to work)
 - **Context Aware**: Ask about upcoming tasks, people's points, or available rewards.
+
+### Users
+- **New role: regular**
+- **Regular access**: Regular users only see their assigned tasks and can personalize user-specific settings such as their own background.
 
 ## ✨ New Features (October 2025)
 

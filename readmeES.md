@@ -2,6 +2,33 @@
 
 **MMM-Chores** es un módulo para [MagicMirror²](https://github.com/MagicMirrorOrg/MagicMirror) que te permite gestionar las tareas del hogar.
 
+## ✨ Nuevas funciones (diciembre 2025)
+### 🔄 Opciones recurrentes mejoradas
+- **Días laborables**: de lunes a viernes.
+- **Fines de semana**: de sábado a domingo.
+
+### Opciones en el espejo
+- **Recompensas**: muestra en el espejo qué recompensas fueron canjeadas y por quién.
+
+### Modo pantalla
+- **Panel a pantalla completa**: activa un modo de visualización continua pensado para tabletas o pantallas murales, manteniendo las tareas visibles sin la interfaz de administración.
+
+### Filtros
+- **Agrupar por persona**: filtra y organiza la lista según el responsable para ver rápidamente qué debe hacer cada uno.
+
+### 🎯 Recompensas basadas en puntos
+- **Recompensas en Pushover**: mejoras en las notificaciones de recompensas enviadas a Pushover, ahora con soporte multiidioma.
+
+### 🤖 Chatbot con IA
+- **Asistente inteligente**: chatbot con tecnología de OpenAI integrado en el panel de administración.
+- **Interacción por voz**: habla con tu lista de tareas (requiere SSL/HTTPS).
+- **Texto a voz**: escucha respuestas con seis voces IA naturales (se necesita certificado SSL "https" para que funcione el micrófono).
+- **Contexto consciente**: pregunta por tareas próximas, puntos de cada persona o recompensas disponibles.
+
+### Usuarios
+- **Nuevo rol: regular**
+- **Acceso regular**: las cuentas con rol regular solo ven sus tareas asignadas y pueden definir ajustes propios, como su fondo personal.
+
 ## ✨ Nuevas funciones (octubre 2025)
 
 **Actualización importante**: se añadió un sistema completo de recompensas basado en puntos y opciones recurrentes mejoradas. Consulta NEW_FEATURES.md para ver todos los detalles.
