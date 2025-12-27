@@ -1111,7 +1111,7 @@ function toggleAiChatListening() {
   const { mic } = getAiChatNodes();
   if (!aiChatRecognizer) {
     if (mic) mic.disabled = true;
-    setAiChatStatus(t.aiChatNoSpeech || 'Speech recognition not supported in this browser.', 'error');
+    setAiChatStatus(t.aiChatNoSpeech || 'Speech recognition not supported on browser without SSL, see repository readme.', 'error');
     return;
   }
 
