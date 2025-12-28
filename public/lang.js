@@ -155,6 +155,7 @@ const LANGUAGES = {
     displaySettingsTitle: "Display Settings",
     showRewardsTabLabel: "Show Rewards tab",
     showCoinsOnMirrorLabel: "Show coins on mirror",
+    showLevelOnMirrorLabel: "Show level on mirror",
     
     // Settings Modal - Level System
     levelSystemSettingsTitle: "Level System Settings",
@@ -401,6 +402,7 @@ const LANGUAGES = {
     displaySettingsTitle: "Visningsinställningar",
     showRewardsTabLabel: "Visa fliken Belöningar",
     showCoinsOnMirrorLabel: "Visa mynt på spegeln",
+    showLevelOnMirrorLabel: "Visa nivå på spegeln",
     
     // AI Chatbot
     chatbotToggleLabel: "Aktivera AI-chatbot i admin",
@@ -659,6 +661,7 @@ const LANGUAGES = {
     displaySettingsTitle: "Paramètres d'affichage",
     showRewardsTabLabel: "Afficher l'onglet Récompenses",
     showCoinsOnMirrorLabel: "Afficher les pièces sur le miroir",
+    showLevelOnMirrorLabel: "Afficher le niveau sur le miroir",
     
     // Chatbot IA
     chatbotToggleLabel: "Activer le chatbot IA dans l'admin",
@@ -916,6 +919,7 @@ const LANGUAGES = {
     // Configuración - Pantalla
     displaySettingsTitle: "Configuración de pantalla",
     showRewardsTabLabel: "Mostrar pestaña de Recompensas",
+    showLevelOnMirrorLabel: "Mostrar nivel en el espejo",
     showCoinsOnMirrorLabel: "Mostrar monedas en el espejo",
     
     // Chatbot de IA
@@ -1175,6 +1179,7 @@ const LANGUAGES = {
     displaySettingsTitle: "Anzeigeeinstellungen",
     showRewardsTabLabel: "Belohnungs-Tab anzeigen",
     showCoinsOnMirrorLabel: "Münzen auf dem Spiegel anzeigen",
+    showLevelOnMirrorLabel: "Level auf dem Spiegel anzeigen",
     
     // KI-Chatbot
     chatbotToggleLabel: "KI-Chatbot im Admin aktivieren",
@@ -1433,6 +1438,7 @@ const LANGUAGES = {
     displaySettingsTitle: "Impostazioni di visualizzazione",
     showRewardsTabLabel: "Mostra scheda Ricompense",
     showCoinsOnMirrorLabel: "Mostra monete sullo specchio",
+    showLevelOnMirrorLabel: "Mostra livello sullo specchio",
     
     // Chatbot IA
     chatbotToggleLabel: "Abilita chatbot IA nell'admin",
@@ -1690,6 +1696,7 @@ const LANGUAGES = {
     // Instellingen - Weergave
     displaySettingsTitle: "Weergave-instellingen",
     showRewardsTabLabel: "Toon tabblad Beloningen",
+    showLevelOnMirrorLabel: "Toon niveau op spiegel",
     showCoinsOnMirrorLabel: "Toon munten op spiegel",
     
     // AI-chatbot
@@ -1948,6 +1955,7 @@ const LANGUAGES = {
     // Ustawienia - Wyświetlanie
     displaySettingsTitle: "Ustawienia wyświetlania",
     showRewardsTabLabel: "Pokaż kartę Nagrody",
+    showLevelOnMirrorLabel: "Pokaż poziom na lustrze",
     showCoinsOnMirrorLabel: "Pokaż monety na lustrze",
     
     // Chatbot AI
@@ -2205,6 +2213,7 @@ const LANGUAGES = {
     displaySettingsTitle: "显示设置",
     showRewardsTabLabel: "显示奖励标签",
     showCoinsOnMirrorLabel: "在镜子上显示金币",
+    showLevelOnMirrorLabel: "在镜子上显示等级",
     
     // AI 聊天机器人
     chatbotToggleLabel: "在管理后台启用 AI 聊天机器人",
@@ -2461,6 +2470,7 @@ const LANGUAGES = {
     displaySettingsTitle: "إعدادات العرض",
     showRewardsTabLabel: "إظهار علامة تبويب المكافآت",
     showCoinsOnMirrorLabel: "إظهار العملات على المرآة",
+    showLevelOnMirrorLabel: "إظهار المستوى على المرآة",
     
     // روبوت الدردشة بالذكاء الاصطناعي
     chatbotToggleLabel: "تمكين روبوت الدردشة بالذكاء الاصطناعي في المسؤول",
