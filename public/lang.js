@@ -150,11 +150,13 @@ const LANGUAGES = {
     coinSystemDesc: "Earn coins for tasks and spend them on custom rewards. More flexible and customizable.",
     newFeatureBadge: "New Feature",
     migrationWarning: "Migration Notice: Switching to the coins system will recalculate balances based on your completed tasks. You can switch back to the level system anytime without losing data.",
+    disableRewardSystemLabel: "Disable Reward System",
     
     // Settings Modal - Display
     displaySettingsTitle: "Display Settings",
     showRewardsTabLabel: "Show Rewards tab",
     showCoinsOnMirrorLabel: "Show coins on mirror",
+    showLevelOnMirrorLabel: "Show level on mirror",
     
     // Settings Modal - Level System
     levelSystemSettingsTitle: "Level System Settings",
@@ -396,11 +398,13 @@ const LANGUAGES = {
     coinSystemDesc: "Tjäna mynt för uppgifter och spendera dem på anpassade belöningar. Mer flexibelt och anpassningsbart.",
     newFeatureBadge: "Ny funktion",
     migrationWarning: "Migreringsnotis: Att byta till myntsystemet kommer att räkna om saldon baserat på dina slutförda uppgifter. Du kan byta tillbaka till nivåsystemet när som helst utan att förlora data.",
+    disableRewardSystemLabel: "Inaktivera belöningssystem",
     
     // Inställningar - Visning
     displaySettingsTitle: "Visningsinställningar",
     showRewardsTabLabel: "Visa fliken Belöningar",
     showCoinsOnMirrorLabel: "Visa mynt på spegeln",
+    showLevelOnMirrorLabel: "Visa nivå på spegeln",
     
     // AI Chatbot
     chatbotToggleLabel: "Aktivera AI-chatbot i admin",
@@ -653,12 +657,14 @@ const LANGUAGES = {
     coinSystemLabel: "Système de pièces (Avancé)",
     coinSystemDesc: "Gagnez des pièces pour les tâches et dépensez-les pour des récompenses personnalisées. Plus flexible et personnalisable.",
     newFeatureBadge: "Nouvelle fonctionnalité",
+    disableRewardSystemLabel: "Désactiver le système de récompenses",
     migrationWarning: "Avis de migration : Passer au système de pièces recalculera les soldes en fonction de vos tâches terminées. Vous pouvez revenir au système de niveaux à tout moment sans perdre de données.",
     
     // Paramètres - Affichage
     displaySettingsTitle: "Paramètres d'affichage",
     showRewardsTabLabel: "Afficher l'onglet Récompenses",
     showCoinsOnMirrorLabel: "Afficher les pièces sur le miroir",
+    showLevelOnMirrorLabel: "Afficher le niveau sur le miroir",
     
     // Chatbot IA
     chatbotToggleLabel: "Activer le chatbot IA dans l'admin",
@@ -911,11 +917,13 @@ const LANGUAGES = {
     coinSystemLabel: "Sistema de monedas (Avanzado)",
     coinSystemDesc: "Gana monedas por tareas y gástalas en recompensas personalizadas. Más flexible y personalizable.",
     newFeatureBadge: "Nueva función",
+    disableRewardSystemLabel: "Desactivar sistema de recompensas",
     migrationWarning: "Aviso de migración: Cambiar al sistema de monedas recalculará los saldos según tus tareas completadas. Puedes volver al sistema de niveles en cualquier momento sin perder datos.",
     
     // Configuración - Pantalla
     displaySettingsTitle: "Configuración de pantalla",
     showRewardsTabLabel: "Mostrar pestaña de Recompensas",
+    showLevelOnMirrorLabel: "Mostrar nivel en el espejo",
     showCoinsOnMirrorLabel: "Mostrar monedas en el espejo",
     
     // Chatbot de IA
@@ -1168,6 +1176,7 @@ const LANGUAGES = {
     defaultBadge: "Standard",
     coinSystemLabel: "Münzsystem (Erweitert)",
     coinSystemDesc: "Verdiene Münzen für Aufgaben und gib sie für benutzerdefinierte Belohnungen aus. Flexibler und anpassbarer.",
+    disableRewardSystemLabel: "Belohnungssystem deaktivieren",
     newFeatureBadge: "Neue Funktion",
     migrationWarning: "Migrationshinweis: Der Wechsel zum Münzsystem berechnet die Salden basierend auf deinen erledigten Aufgaben neu. Du kannst jederzeit zum Levelsystem zurückkehren, ohne Daten zu verlieren.",
     
@@ -1175,6 +1184,7 @@ const LANGUAGES = {
     displaySettingsTitle: "Anzeigeeinstellungen",
     showRewardsTabLabel: "Belohnungs-Tab anzeigen",
     showCoinsOnMirrorLabel: "Münzen auf dem Spiegel anzeigen",
+    showLevelOnMirrorLabel: "Level auf dem Spiegel anzeigen",
     
     // KI-Chatbot
     chatbotToggleLabel: "KI-Chatbot im Admin aktivieren",
@@ -1433,6 +1443,7 @@ const LANGUAGES = {
     displaySettingsTitle: "Impostazioni di visualizzazione",
     showRewardsTabLabel: "Mostra scheda Ricompense",
     showCoinsOnMirrorLabel: "Mostra monete sullo specchio",
+    showLevelOnMirrorLabel: "Mostra livello sullo specchio",
     
     // Chatbot IA
     chatbotToggleLabel: "Abilita chatbot IA nell'admin",
@@ -1690,6 +1701,7 @@ const LANGUAGES = {
     // Instellingen - Weergave
     displaySettingsTitle: "Weergave-instellingen",
     showRewardsTabLabel: "Toon tabblad Beloningen",
+    showLevelOnMirrorLabel: "Toon niveau op spiegel",
     showCoinsOnMirrorLabel: "Toon munten op spiegel",
     
     // AI-chatbot
@@ -1948,6 +1960,7 @@ const LANGUAGES = {
     // Ustawienia - Wyświetlanie
     displaySettingsTitle: "Ustawienia wyświetlania",
     showRewardsTabLabel: "Pokaż kartę Nagrody",
+    showLevelOnMirrorLabel: "Pokaż poziom na lustrze",
     showCoinsOnMirrorLabel: "Pokaż monety na lustrze",
     
     // Chatbot AI
@@ -2205,6 +2218,7 @@ const LANGUAGES = {
     displaySettingsTitle: "显示设置",
     showRewardsTabLabel: "显示奖励标签",
     showCoinsOnMirrorLabel: "在镜子上显示金币",
+    showLevelOnMirrorLabel: "在镜子上显示等级",
     
     // AI 聊天机器人
     chatbotToggleLabel: "在管理后台启用 AI 聊天机器人",
@@ -2461,6 +2475,7 @@ const LANGUAGES = {
     displaySettingsTitle: "إعدادات العرض",
     showRewardsTabLabel: "إظهار علامة تبويب المكافآت",
     showCoinsOnMirrorLabel: "إظهار العملات على المرآة",
+    showLevelOnMirrorLabel: "إظهار المستوى على المرآة",
     
     // روبوت الدردشة بالذكاء الاصطناعي
     chatbotToggleLabel: "تمكين روبوت الدردشة بالذكاء الاصطناعي في المسؤول",

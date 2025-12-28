@@ -33,6 +33,7 @@ Module.register("MMM-Chores", {
     showAnalyticsOnMirror: false, // display analytics cards on the mirror
     analyticsCards: [],           // board types selected in the admin UI
     showCoinsOnMirror: true,      // display coin balances next to assignees when coin system is active
+    showLevelOnMirror: true,      // display level badge next to assignees when level system is active
     showRedeemedRewards: true,    // display redeemed rewards on mirror above chores when coin system is active
     usePointSystem: false,        // use point system instead of level system
     leveling: {
@@ -750,15 +751,17 @@ Module.register("MMM-Chores", {
         let html = ` — ${p ? p.name : ""}`;
         
         // Show coins if the coin system is active and the mirror toggle allows it; otherwise show level info
-        const showCoins = this.config.usePointSystem && this.config.showCoinsOnMirror !== false;
-        if (showCoins && p) {
-          const coins = p.points || 0;
-          html += ` <span class="coin-badge">🪙${coins}</span>`;
+        if (this.config.usePointSystem) {
+          if (this.config.showCoinsOnMirror !== false && p) {
+            const coins = p.points || 0;
+            html += ` <span class="coin-badge">🪙${coins}</span>`;
+          }
         } else {
           const lvlEnabled = !(
             this.config.leveling && this.config.leveling.enabled === false
           );
-          if (lvlEnabled && p && p.level) {
+          const showLevel = this.config.showLevelOnMirror !== false;
+          if (lvlEnabled && showLevel && p && p.level) {
             html += ` <span class="lvl-badge">lvl${p.level}</span>`;
           }
         }
