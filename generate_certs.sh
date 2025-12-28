@@ -4,7 +4,7 @@ set -e
 
 # ===== CONFIG =====
 CERT_DIR="$HOME/MagicMirror/modules/MMM-Chores/certs"
-DAYS_VALID=365
+
 # ==================
 
 echo "Detecting primary IPv4 address..."
@@ -27,17 +27,8 @@ echo "Generating private key (server.key)..."
 openssl genrsa -out server.key 2048
 
 echo "Generating certificate signing request (server.csr)..."
-openssl req -new \
-  -key server.key \
-  -out server.csr \
-  -subj "/C=SE/ST=Stockholm/L=Stockholm/O=Home/CN=${IP_ADDRESS}"
-
-echo "Generating self-signed certificate (server.crt)..."
-openssl x509 -req \
-  -in server.csr \
-  -signkey server.key \
-  -out server.crt \
-  -days "$DAYS_VALID"
+openssl req -new -key server.key -out server.csr -subj "/C=SE/ST=Stockholm/L=Stockholm/O=Home/CN=${IP_ADDRESS}"
+openssl x509 -req -in server.csr -signkey server.key -out server.crt -days 365
 
 echo ""
 echo "✔ Certificate generation complete"
