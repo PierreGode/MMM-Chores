@@ -150,6 +150,7 @@ const LANGUAGES = {
     coinSystemDesc: "Earn coins for tasks and spend them on custom rewards. More flexible and customizable.",
     newFeatureBadge: "New Feature",
     migrationWarning: "Migration Notice: Switching to the coins system will recalculate balances based on your completed tasks. You can switch back to the level system anytime without losing data.",
+    disableRewardSystemLabel: "Disable Reward System",
     
     // Settings Modal - Display
     displaySettingsTitle: "Display Settings",
@@ -397,6 +398,7 @@ const LANGUAGES = {
     coinSystemDesc: "Tjäna mynt för uppgifter och spendera dem på anpassade belöningar. Mer flexibelt och anpassningsbart.",
     newFeatureBadge: "Ny funktion",
     migrationWarning: "Migreringsnotis: Att byta till myntsystemet kommer att räkna om saldon baserat på dina slutförda uppgifter. Du kan byta tillbaka till nivåsystemet när som helst utan att förlora data.",
+    disableRewardSystemLabel: "Inaktivera belöningssystem",
     
     // Inställningar - Visning
     displaySettingsTitle: "Visningsinställningar",
@@ -655,6 +657,7 @@ const LANGUAGES = {
     coinSystemLabel: "Système de pièces (Avancé)",
     coinSystemDesc: "Gagnez des pièces pour les tâches et dépensez-les pour des récompenses personnalisées. Plus flexible et personnalisable.",
     newFeatureBadge: "Nouvelle fonctionnalité",
+    disableRewardSystemLabel: "Désactiver le système de récompenses",
     migrationWarning: "Avis de migration : Passer au système de pièces recalculera les soldes en fonction de vos tâches terminées. Vous pouvez revenir au système de niveaux à tout moment sans perdre de données.",
     
     // Paramètres - Affichage
@@ -914,6 +917,7 @@ const LANGUAGES = {
     coinSystemLabel: "Sistema de monedas (Avanzado)",
     coinSystemDesc: "Gana monedas por tareas y gástalas en recompensas personalizadas. Más flexible y personalizable.",
     newFeatureBadge: "Nueva función",
+    disableRewardSystemLabel: "Desactivar sistema de recompensas",
     migrationWarning: "Aviso de migración: Cambiar al sistema de monedas recalculará los saldos según tus tareas completadas. Puedes volver al sistema de niveles en cualquier momento sin perder datos.",
     
     // Configuración - Pantalla
@@ -1172,6 +1176,7 @@ const LANGUAGES = {
     defaultBadge: "Standard",
     coinSystemLabel: "Münzsystem (Erweitert)",
     coinSystemDesc: "Verdiene Münzen für Aufgaben und gib sie für benutzerdefinierte Belohnungen aus. Flexibler und anpassbarer.",
+    disableRewardSystemLabel: "Belohnungssystem deaktivieren",
     newFeatureBadge: "Neue Funktion",
     migrationWarning: "Migrationshinweis: Der Wechsel zum Münzsystem berechnet die Salden basierend auf deinen erledigten Aufgaben neu. Du kannst jederzeit zum Levelsystem zurückkehren, ohne Daten zu verlieren.",
     

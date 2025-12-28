@@ -270,6 +270,7 @@ function initSettingsForm(settings) {
   // Reward system selection
   const useLevelSystem = document.getElementById('useLevelSystem');
   const useCoinSystem = document.getElementById('useCoinSystem');
+  const disableRewardSystem = document.getElementById('disableRewardSystem');
   const levelSystemCard = document.getElementById('levelSystemCard');
   const coinSystemCard = document.getElementById('coinSystemCard');
   const migrationWarning = document.getElementById('migrationWarning');
@@ -278,7 +279,30 @@ function initSettingsForm(settings) {
 
   // Initialize reward system selection
   const coinSystemEnabled = settings.useCoinSystem ?? settings.usePointSystem ?? false;
-  const currentSystem = coinSystemEnabled ? 'coins' : 'level';
+  const levelingEnabled = settings.levelingEnabled !== false;
+  
+  let currentSystem = 'level';
+  if (coinSystemEnabled) {
+    currentSystem = 'coins';
+  } else if (!levelingEnabled) {
+    currentSystem = 'none';
+  }
+
+  if (disableRewardSystem) {
+    disableRewardSystem.checked = currentSystem === 'none';
+    disableRewardSystem.addEventListener('change', () => {
+      if (disableRewardSystem.checked) {
+        updateRewardSystemUI('none');
+        if (useLevelSystem) useLevelSystem.checked = false;
+        if (useCoinSystem) useCoinSystem.checked = false;
+      } else {
+        // Revert to level system by default
+        updateRewardSystemUI('level');
+        if (useLevelSystem) useLevelSystem.checked = true;
+      }
+    });
+  }
+
   if (useLevelSystem && useCoinSystem) {
     useLevelSystem.checked = currentSystem === 'level';
     useCoinSystem.checked = currentSystem === 'coins';
@@ -289,6 +313,7 @@ function initSettingsForm(settings) {
   if (useLevelSystem) {
     useLevelSystem.addEventListener('change', () => {
       if (useLevelSystem.checked) {
+        if (disableRewardSystem) disableRewardSystem.checked = false;
         updateRewardSystemUI('level');
       }
     });
@@ -297,6 +322,7 @@ function initSettingsForm(settings) {
   if (useCoinSystem) {
     useCoinSystem.addEventListener('change', () => {
       if (useCoinSystem.checked) {
+        if (disableRewardSystem) disableRewardSystem.checked = false;
         updateRewardSystemUI('coins');
         if (migrationWarning) {
           migrationWarning.classList.remove('d-none');
@@ -310,6 +336,7 @@ function initSettingsForm(settings) {
     levelSystemCard.addEventListener('click', () => {
       if (useLevelSystem) {
         useLevelSystem.checked = true;
+        if (disableRewardSystem) disableRewardSystem.checked = false;
         updateRewardSystemUI('level');
       }
     });
@@ -319,6 +346,7 @@ function initSettingsForm(settings) {
     coinSystemCard.addEventListener('click', () => {
       if (useCoinSystem) {
         useCoinSystem.checked = true;
+        if (disableRewardSystem) disableRewardSystem.checked = false;
         updateRewardSystemUI('coins');
         if (migrationWarning) {
           migrationWarning.classList.remove('d-none');
@@ -332,6 +360,14 @@ function initSettingsForm(settings) {
     if (levelSystemCard && coinSystemCard) {
       levelSystemCard.classList.toggle('selected', system === 'level');
       coinSystemCard.classList.toggle('selected', system === 'coins');
+      
+      if (system === 'none') {
+        levelSystemCard.style.opacity = '0.5';
+        coinSystemCard.style.opacity = '0.5';
+      } else {
+        levelSystemCard.style.opacity = '1';
+        coinSystemCard.style.opacity = '1';
+      }
     }
 
     // Show/hide settings sections
@@ -564,7 +600,16 @@ function initSettingsForm(settings) {
   }
 
   async function handleSettingsSave() {
-    const coinSystemSelected = useCoinSystem ? useCoinSystem.checked : false;
+    const rewardSystemDisabled = disableRewardSystem ? disableRewardSystem.checked : false;
+    const coinSystemSelected = !rewardSystemDisabled && (useCoinSystem ? useCoinSystem.checked : false);
+    
+    // Determine leveling enabled state
+    let levelingEnabledValue = false;
+    if (!rewardSystemDisabled && !coinSystemSelected) {
+      // Level system is active. Respect the inner checkbox if available, otherwise default to true.
+      levelingEnabledValue = levelEnable ? levelEnable.checked : true;
+    }
+
     const newSettings = {
       useCoinSystem: coinSystemSelected,
       usePointSystem: coinSystemSelected,
@@ -577,7 +622,7 @@ function initSettingsForm(settings) {
       showCoinsOnMirror: showCoinsOnMirror ? showCoinsOnMirror.checked : true,
       showLevelOnMirror: showLevelOnMirror ? showLevelOnMirror.checked : true,
       showRedeemedRewards: showRedeemedRewards ? showRedeemedRewards.checked : true,
-      levelingEnabled: levelEnable ? levelEnable.checked : false,
+      levelingEnabled: levelingEnabledValue,
       autoUpdate: autoUpdate ? autoUpdate.checked : false,
       chatbotEnabled: (useAI ? useAI.checked : false) && (chatbotEnabledToggle ? chatbotEnabledToggle.checked : false),
       chatbotTtsEnabled: (useAI ? useAI.checked : false) && (aiAudioEnabledToggle ? aiAudioEnabledToggle.checked : false),
