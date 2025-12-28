@@ -276,6 +276,7 @@ function initSettingsForm(settings) {
   const migrationWarning = document.getElementById('migrationWarning');
   const levelSettings = document.getElementById('levelSettings');
   const coinSettings = document.getElementById('coinSettings');
+  const levelEnable = document.getElementById('settingsLevelEnable');
 
   // Initialize reward system selection
   const coinSystemEnabled = settings.useCoinSystem ?? settings.usePointSystem ?? false;
@@ -299,6 +300,7 @@ function initSettingsForm(settings) {
         // Revert to level system by default
         updateRewardSystemUI('level');
         if (useLevelSystem) useLevelSystem.checked = true;
+        if (levelEnable) levelEnable.checked = true;
       }
     });
   }
@@ -315,6 +317,7 @@ function initSettingsForm(settings) {
       if (useLevelSystem.checked) {
         if (disableRewardSystem) disableRewardSystem.checked = false;
         updateRewardSystemUI('level');
+        if (levelEnable) levelEnable.checked = true;
       }
     });
   }
@@ -338,6 +341,7 @@ function initSettingsForm(settings) {
         useLevelSystem.checked = true;
         if (disableRewardSystem) disableRewardSystem.checked = false;
         updateRewardSystemUI('level');
+        if (levelEnable) levelEnable.checked = true;
       }
     });
   }
@@ -431,7 +435,7 @@ function initSettingsForm(settings) {
   const showLevelOnMirrorContainer = document.getElementById('settingsShowLevelOnMirrorContainer');
   const showRedeemedRewards = document.getElementById('settingsShowRedeemedRewards');
   const showRedeemedRewardsContainer = document.getElementById('settingsShowRedeemedRewardsContainer');
-  const levelEnable = document.getElementById('settingsLevelEnable');
+  // levelEnable moved to top
   const autoUpdate = document.getElementById('settingsAutoUpdate');
   const aiSettingsContainer = document.getElementById('aiSettingsContainer');
   const chatbotEnabledToggle = document.getElementById('settingsChatbotEnabled');
