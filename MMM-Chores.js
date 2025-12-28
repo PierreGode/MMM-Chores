@@ -750,10 +750,11 @@ Module.register("MMM-Chores", {
         let html = ` — ${p ? p.name : ""}`;
         
         // Show coins if the coin system is active and the mirror toggle allows it; otherwise show level info
-        const showCoins = this.config.usePointSystem && this.config.showCoinsOnMirror !== false;
-        if (showCoins && p) {
-          const coins = p.points || 0;
-          html += ` <span class="coin-badge">🪙${coins}</span>`;
+        if (this.config.usePointSystem) {
+          if (this.config.showCoinsOnMirror !== false && p) {
+            const coins = p.points || 0;
+            html += ` <span class="coin-badge">🪙${coins}</span>`;
+          }
         } else {
           const lvlEnabled = !(
             this.config.leveling && this.config.leveling.enabled === false
