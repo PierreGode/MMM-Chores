@@ -362,6 +362,16 @@ function initSettingsForm(settings) {
       }
     }
 
+    // Show/hide level badge toggle based on system
+    const showLevelContainer = document.getElementById('settingsShowLevelOnMirrorContainer');
+    if (showLevelContainer) {
+      if (system === 'level') {
+        showLevelContainer.style.display = '';
+      } else {
+        showLevelContainer.style.display = 'none';
+      }
+    }
+
     // Update rewards tab visibility
     updateRewardsTabVisibility(system === 'coins');
 
@@ -381,6 +391,8 @@ function initSettingsForm(settings) {
   const showRewardsTabContainer = document.getElementById('settingsShowRewardsTabContainer');
   const showCoinsOnMirror = document.getElementById('settingsShowCoinsOnMirror');
   const showCoinsOnMirrorContainer = document.getElementById('settingsShowCoinsOnMirrorContainer');
+  const showLevelOnMirror = document.getElementById('settingsShowLevelOnMirror');
+  const showLevelOnMirrorContainer = document.getElementById('settingsShowLevelOnMirrorContainer');
   const showRedeemedRewards = document.getElementById('settingsShowRedeemedRewards');
   const showRedeemedRewardsContainer = document.getElementById('settingsShowRedeemedRewardsContainer');
   const levelEnable = document.getElementById('settingsLevelEnable');
@@ -446,6 +458,7 @@ function initSettingsForm(settings) {
   if (showAnalytics) showAnalytics.checked = !!settings.showAnalyticsOnMirror;
   if (showRewardsTab) showRewardsTab.checked = settings.showRewardsTab !== false;
   if (showCoinsOnMirror) showCoinsOnMirror.checked = settings.showCoinsOnMirror !== false;
+  if (showLevelOnMirror) showLevelOnMirror.checked = settings.showLevelOnMirror !== false;
   if (levelEnable) levelEnable.checked = settings.levelingEnabled !== false;
   if (autoUpdate) autoUpdate.checked = !!settings.autoUpdate;
   if (chatbotEnabledToggle) {
@@ -475,6 +488,14 @@ function initSettingsForm(settings) {
       showCoinsOnMirrorContainer.style.display = '';
     } else {
       showCoinsOnMirrorContainer.style.display = 'none';
+    }
+  }
+
+  if (showLevelOnMirrorContainer) {
+    if (currentSystem === 'level') {
+      showLevelOnMirrorContainer.style.display = '';
+    } else {
+      showLevelOnMirrorContainer.style.display = 'none';
     }
   }
 
@@ -554,6 +575,7 @@ function initSettingsForm(settings) {
       showAnalyticsOnMirror: showAnalytics ? showAnalytics.checked : false,
       showRewardsTab: showRewardsTab ? showRewardsTab.checked : true,
       showCoinsOnMirror: showCoinsOnMirror ? showCoinsOnMirror.checked : true,
+      showLevelOnMirror: showLevelOnMirror ? showLevelOnMirror.checked : true,
       showRedeemedRewards: showRedeemedRewards ? showRedeemedRewards.checked : true,
       levelingEnabled: levelEnable ? levelEnable.checked : false,
       autoUpdate: autoUpdate ? autoUpdate.checked : false,
@@ -640,6 +662,7 @@ function initSettingsForm(settings) {
       settings.useCoinSystem = newSettings.useCoinSystem;
       settings.usePointSystem = newSettings.useCoinSystem;
       settings.showCoinsOnMirror = newSettings.showCoinsOnMirror;
+      settings.showLevelOnMirror = newSettings.showLevelOnMirror;
       settings.useAI = newSettings.useAI;
       settings.chatbotEnabled = newSettings.chatbotEnabled;
       settings.chatbotTtsEnabled = newSettings.chatbotTtsEnabled;
