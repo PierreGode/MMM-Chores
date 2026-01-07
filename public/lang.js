@@ -72,6 +72,7 @@ const LANGUAGES = {
     editRewardsButton: "Edit Rewards",
     viewRewardsButton: "Rewards",
     showPastLabel: "Show past tasks",
+    hideCompletedNextDayLabel: "Hide completed tasks the day after",
     analyticsOnMirrorLabel: "Analytics on mirror",
     showRedeemedRewardsLabel: "Show redeemed rewards on mirror",
     notificationsTitle: "Notifications",

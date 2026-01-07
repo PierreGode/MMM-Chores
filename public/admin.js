@@ -11,6 +11,7 @@ let calendarDate = new Date();
 let localizedMonths = [];
 let localizedWeekdays = [];
 let levelingEnabled = true;
+let hideCompletedNextDay = false;
 let taskSortable = null;
 let settingsMode = 'unlocked';
 let settingsChanged = false;
@@ -423,6 +424,7 @@ function initSettingsForm(settings) {
 
   // Other settings
   const showPast = document.getElementById('settingsShowPast');
+  const hideCompletedNextDayChk = document.getElementById('settingsHideCompletedNextDay');
   const textSize = document.getElementById('settingsTextSize');
   const dateFmt = document.getElementById('settingsDateFmt');
   const useAI = document.getElementById('settingsUseAI');
@@ -490,6 +492,7 @@ function initSettingsForm(settings) {
   const runDataFixBtn = document.getElementById('runDataFixBtn');
   const dataFixStatus = document.getElementById('dataFixStatus');
 
+  if (hideCompletedNextDayChk) hideCompletedNextDayChk.checked = !!settings.hideCompletedNextDay;
   if (showPast) showPast.checked = !!settings.showPast;
   if (showRedeemedRewards) showRedeemedRewards.checked = settings.showRedeemedRewards !== false;
   if (textSize) textSize.value = settings.textMirrorSize || 'small';
@@ -616,6 +619,7 @@ function initSettingsForm(settings) {
 
     const newSettings = {
       useCoinSystem: coinSystemSelected,
+      hideCompletedNextDay: hideCompletedNextDayChk ? hideCompletedNextDayChk.checked : false,
       usePointSystem: coinSystemSelected,
       showPast: showPast ? showPast.checked : false,
       textMirrorSize: textSize ? textSize.value : 'small',
@@ -1911,8 +1915,13 @@ async function fetchTasks() {
 }
 
 async function applySettings(newSettings) {
-  if (typeof newSettings.levelingEnabled === 'boolean') {
-    levelingEnabled = newSettings.levelingEnabled;
+  if (newSettings.levelingEnabled !== undefined) {
+    if (typeof newSettings.levelingEnabled === 'boolean') {
+      levelingEnabled = newSettings.levelingEnabled;
+    }
+  }
+  if (newSettings.hideCompletedNextDay !== undefined) {
+    hideCompletedNextDay = !!newSettings.hideCompletedNextDay;
   }
   if (newSettings.useAI !== undefined) {
     const aiButton = document.getElementById('btnAiGenerate');
@@ -2312,7 +2321,22 @@ function renderTasks() {
   list.innerHTML = "";
   const useCoinSystem = document.getElementById('useCoinSystem');
   const isCoinSystemActive = useCoinSystem && useCoinSystem.checked;
-  const activeTasks = tasksCache.filter(task => !task.deleted);
+  conshideCompletedNextDay) {
+    const now = new Date();
+    const todayLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    for (let i = activeTasks.length - 1; i >= 0; i--) {
+      const t = activeTasks[i];
+      if (t.done && t.finished) {
+        const finishedTime = new Date(t.finished);
+        const finishedDateLocal = new Date(finishedTime.getFullYear(), finishedTime.getMonth(), finishedTime.getDate());
+        if (finishedDateLocal < todayLocal) {
+          activeTasks.splice(i, 1);
+        }
+      }
+    }
+  }
+
+  if (t activeTasks = tasksCache.filter(task => !task.deleted);
 
   if (activeTasks.length === 0) {
     const li = document.createElement("li");
