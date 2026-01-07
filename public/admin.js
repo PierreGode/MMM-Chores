@@ -2321,13 +2321,15 @@ function renderTasks() {
   list.innerHTML = "";
   const useCoinSystem = document.getElementById('useCoinSystem');
   const isCoinSystemActive = useCoinSystem && useCoinSystem.checked;
-  conshideCompletedNextDay) {
+  const activeTasks = tasksCache.filter(task => !task.deleted);
+
+  if (hideCompletedNextDay) {
     const now = new Date();
     const todayLocal = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     for (let i = activeTasks.length - 1; i >= 0; i--) {
-      const t = activeTasks[i];
-      if (t.done && t.finished) {
-        const finishedTime = new Date(t.finished);
+      const taskItem = activeTasks[i];
+      if (taskItem.done && taskItem.finished) {
+        const finishedTime = new Date(taskItem.finished);
         const finishedDateLocal = new Date(finishedTime.getFullYear(), finishedTime.getMonth(), finishedTime.getDate());
         if (finishedDateLocal < todayLocal) {
           activeTasks.splice(i, 1);
@@ -2335,8 +2337,6 @@ function renderTasks() {
       }
     }
   }
-
-  if (t activeTasks = tasksCache.filter(task => !task.deleted);
 
   if (activeTasks.length === 0) {
     const li = document.createElement("li");
