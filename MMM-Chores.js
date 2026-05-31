@@ -635,9 +635,15 @@ Module.register("MMM-Chores", {
       
       // Show coins if the coin system is active and the mirror toggle allows it; otherwise show level info
       if (this.config.usePointSystem) {
-        if (this.config.showCoinsOnMirror !== false && p) {
-          const coins = p.points || 0;
-          html += ` <span class="coin-badge">🪙${coins}</span>`;
+        if (this.config.showCoinsOnMirror !== false){
+          if (this.config.groupPerUserOnMirror == false && p) {
+            const coins = p.points || 0;
+            html += ` <span class="coin-badge">🪙${coins}</span>`;
+          } 
+          if (this.config.groupPerUserOnMirror == true && task.points) {
+            const yield_coins = task.points || 0;
+            html += ` <span class="coin-badge">🪙${yield_coins}</span>`;
+          }
         }
       } else {
         const lvlEnabled = !(
@@ -690,11 +696,18 @@ Module.register("MMM-Chores", {
     Array.from(grouped.values())
       .sort((a, b) => a.person.name.localeCompare(b.person.name))
       .forEach(group => {
-        // User header
+        // User header with current coin balance if coin system is active
         const header = document.createElement("div");
         header.className = "small bright";
         header.style.marginTop = "8px";
-        header.textContent = group.person.name;
+        let headerText = group.person.name;
+        
+        if (this.config.usePointSystem && this.config.showCoinsOnMirror !== false) {
+          const currentCoins = group.person.points || 0;
+          headerText += ` 🪙${currentCoins}`;
+        }
+        
+        header.textContent = headerText;
         container.appendChild(header);
 
         // User's task list
