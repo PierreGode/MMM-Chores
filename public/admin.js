@@ -433,6 +433,8 @@ function initSettingsForm(settings) {
   const showCoinsOnMirrorContainer = document.getElementById('settingsShowCoinsOnMirrorContainer');
   const showLevelOnMirror = document.getElementById('settingsShowLevelOnMirror');
   const showLevelOnMirrorContainer = document.getElementById('settingsShowLevelOnMirrorContainer');
+  const groupPerUserOnMirror = document.getElementById('settingsGroupPerUserOnMirror');
+  const groupPerUserOnMirrorContainer = document.getElementById('settingsGroupPerUserOnMirrorContainer');
   const showRedeemedRewards = document.getElementById('settingsShowRedeemedRewards');
   const showRedeemedRewardsContainer = document.getElementById('settingsShowRedeemedRewardsContainer');
   // levelEnable moved to top
@@ -499,6 +501,7 @@ function initSettingsForm(settings) {
   if (showRewardsTab) showRewardsTab.checked = settings.showRewardsTab !== false;
   if (showCoinsOnMirror) showCoinsOnMirror.checked = settings.showCoinsOnMirror !== false;
   if (showLevelOnMirror) showLevelOnMirror.checked = settings.showLevelOnMirror !== false;
+  if (groupPerUserOnMirror) groupPerUserOnMirror.checked = !!settings.groupPerUserOnMirror;
   if (levelEnable) levelEnable.checked = settings.levelingEnabled !== false;
   if (autoUpdate) autoUpdate.checked = !!settings.autoUpdate;
   if (chatbotEnabledToggle) {
@@ -626,6 +629,7 @@ function initSettingsForm(settings) {
       showCoinsOnMirror: showCoinsOnMirror ? showCoinsOnMirror.checked : true,
       showLevelOnMirror: showLevelOnMirror ? showLevelOnMirror.checked : true,
       showRedeemedRewards: showRedeemedRewards ? showRedeemedRewards.checked : true,
+      groupPerUserOnMirror: groupPerUserOnMirror ? groupPerUserOnMirror.checked : false,
       levelingEnabled: levelingEnabledValue,
       autoUpdate: autoUpdate ? autoUpdate.checked : false,
       chatbotEnabled: (useAI ? useAI.checked : false) && (chatbotEnabledToggle ? chatbotEnabledToggle.checked : false),
