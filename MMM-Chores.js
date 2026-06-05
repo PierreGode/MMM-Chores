@@ -36,6 +36,7 @@ Module.register("MMM-Chores", {
     showLevelOnMirror: true,      // display level badge next to assignees when level system is active
     showRedeemedRewards: true,    // display redeemed rewards on mirror above chores when coin system is active
     usePointSystem: false,        // use point system instead of level system
+    groupPerUserOnMirror: false,  // group tasks by user on mirror instead of showing a single list (only applies when showLevelOnMirror is false)
     leveling: {
       enabled: true,
       mode: "years",
@@ -607,6 +608,143 @@ Module.register("MMM-Chores", {
     }
   },
 
+  renderTaskItem(task) {
+    const li = document.createElement("li");
+    li.className = `${this.config.textMirrorSize}${task.done ? " task-done" : ""}`;
+
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = task.done;
+    cb.style.marginRight = "8px";
+    cb.addEventListener("change", () => {
+      li.classList.add("moving");
+      setTimeout(() => this.toggleDone(task, cb.checked), 200);
+    });
+    li.appendChild(cb);
+
+    const dateText = this.formatDate(task.date);
+    const text = document.createTextNode(`${task.name} ${dateText}`);
+    li.appendChild(text);
+
+    if (task.assignedTo) {
+      const p = this.getPerson(task.assignedTo);
+      const assignedEl = document.createElement("span");
+      assignedEl.className = "xsmall dimmed";
+      assignedEl.style.marginLeft = "6px";
+      let html = ` — ${p ? p.name : ""}`;
+      
+      // Show coins if the coin system is active and the mirror toggle allows it; otherwise show level info
+      if (this.config.usePointSystem) {
+        if (this.config.showCoinsOnMirror !== false){
+          if (this.config.groupPerUserOnMirror == false && p) {
+            const coins = p.points || 0;
+            html += ` <span class="coin-badge">🪙${coins}</span>`;
+          } 
+          if (this.config.groupPerUserOnMirror == true && task.points) {
+            const yield_coins = task.points || 0;
+            html += ` <span class="coin-badge">🪙${yield_coins}</span>`;
+          }
+        }
+      } else {
+        const lvlEnabled = !(
+          this.config.leveling && this.config.leveling.enabled === false
+        );
+        const showLevel = this.config.showLevelOnMirror !== false;
+        if (lvlEnabled && showLevel && p && p.level) {
+          html += ` <span class="lvl-badge">lvl${p.level}</span>`;
+        }
+      }
+      
+      assignedEl.innerHTML = html;
+      li.appendChild(assignedEl);
+    }
+
+    return li;
+  },
+
+  renderGrouped(visible) {
+    const container = document.createElement("div");
+    
+    // Group tasks by assignedTo
+    const grouped = new Map();
+    
+    // Initialize all people first (so even those with no tasks appear)
+    this.people.forEach(person => {
+      grouped.set(person.id, {
+        person,
+        tasks: []
+      });
+    });
+
+    // Add tasks to their assigned person
+    visible.forEach(task => {
+      if (task.assignedTo) {
+        if (!grouped.has(task.assignedTo)) {
+          const p = this.getPerson(task.assignedTo);
+          if (p) {
+            grouped.set(task.assignedTo, { person: p, tasks: [] });
+          }
+        }
+        const entry = grouped.get(task.assignedTo);
+        if (entry) {
+          entry.tasks.push(task);
+        }
+      }
+    });
+
+    // Sort by person name (alphabetically) and render
+    Array.from(grouped.values())
+      .sort((a, b) => a.person.name.localeCompare(b.person.name))
+      .forEach(group => {
+        // User header with current coin balance if coin system is active
+        const header = document.createElement("div");
+        header.className = "small bright";
+        header.style.marginTop = "8px";
+        let headerText = group.person.name;
+        
+        if (this.config.usePointSystem && this.config.showCoinsOnMirror !== false) {
+          const currentCoins = group.person.points || 0;
+          headerText += ` 🪙${currentCoins}`;
+        }
+        
+        header.textContent = headerText;
+        container.appendChild(header);
+
+        // User's task list
+        const ul = document.createElement("ul");
+        ul.className = "normal";
+
+        if (group.tasks.length === 0) {
+          const emptyLi = document.createElement("li");
+          emptyLi.className = `${this.config.textMirrorSize} dimmed`;
+          emptyLi.textContent = "No tasks";
+          ul.appendChild(emptyLi);
+        } else {
+          group.tasks.forEach(task => {
+            ul.appendChild(this.renderTaskItem(task));
+          });
+        }
+
+        container.appendChild(ul);
+      });
+
+    return container;
+  },
+
+  renderFlat(visible) {
+    const container = document.createElement("div");
+    
+    const ul = document.createElement("ul");
+    ul.className = "normal";
+
+    visible.forEach(task => {
+      ul.appendChild(this.renderTaskItem(task));
+    });
+
+    container.appendChild(ul);
+    return container;
+  },
+
   getDom() {
     const wrapper = document.createElement("div");
 
@@ -722,58 +860,12 @@ Module.register("MMM-Chores", {
       return wrapper;
     }
 
-    const ul = document.createElement("ul");
-    ul.className = "normal";
-
-    visible.forEach(task => {
-      const li = document.createElement("li");
-      li.className = `${this.config.textMirrorSize}${task.done ? " task-done" : ""}`;
-
-      const cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.checked = task.done;
-      cb.style.marginRight = "8px";
-      cb.addEventListener("change", () => {
-        li.classList.add("moving");
-        setTimeout(() => this.toggleDone(task, cb.checked), 200);
-      });
-      li.appendChild(cb);
-
-      const dateText = this.formatDate(task.date);
-      const text = document.createTextNode(`${task.name} ${dateText}`);
-      li.appendChild(text);
-
-      if (task.assignedTo) {
-        const p = this.getPerson(task.assignedTo);
-        const assignedEl = document.createElement("span");
-        assignedEl.className = "xsmall dimmed";
-        assignedEl.style.marginLeft = "6px";
-        let html = ` — ${p ? p.name : ""}`;
-        
-        // Show coins if the coin system is active and the mirror toggle allows it; otherwise show level info
-        if (this.config.usePointSystem) {
-          if (this.config.showCoinsOnMirror !== false && p) {
-            const coins = p.points || 0;
-            html += ` <span class="coin-badge">🪙${coins}</span>`;
-          }
-        } else {
-          const lvlEnabled = !(
-            this.config.leveling && this.config.leveling.enabled === false
-          );
-          const showLevel = this.config.showLevelOnMirror !== false;
-          if (lvlEnabled && showLevel && p && p.level) {
-            html += ` <span class="lvl-badge">lvl${p.level}</span>`;
-          }
-        }
-        
-        assignedEl.innerHTML = html;
-        li.appendChild(assignedEl);
-      }
-
-      ul.appendChild(li);
-    });
-
-    wrapper.appendChild(ul);
+    // Render tasks either grouped by user or as a flat list
+    if (this.config.groupPerUserOnMirror) {
+      wrapper.appendChild(this.renderGrouped(visible));
+    } else {
+      wrapper.appendChild(this.renderFlat(visible));
+    }
 
     if (this.config.showAnalyticsOnMirror && this.config.analyticsCards.length) {
       const charts = document.createElement("div");
