@@ -1287,6 +1287,7 @@ module.exports = NodeHelper.create({
         textMirrorSize: previousSettings.textMirrorSize ?? payload.textMirrorSize,
         showPast: previousSettings.showPast ?? payload.showPast,
         showAnalyticsOnMirror: previousSettings.showAnalyticsOnMirror ?? payload.showAnalyticsOnMirror,
+        groupPerUserOnMirror: previousSettings.groupPerUserOnMirror ?? payload.groupPerUserOnMirror ?? false,
         useAI: previousSettings.useAI ?? payload.useAI,
         chatbotEnabled: previousSettings.chatbotEnabled ?? payload.chatbotEnabled ?? false,
         chatbotVoice: previousSettings.chatbotVoice ?? payload.chatbotVoice ?? "nova",
