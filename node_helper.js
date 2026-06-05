@@ -831,6 +831,20 @@ function normalizeRecurringStartDate(dateStr, recurring) {
   return d.toISOString().slice(0, 10);
 }
 
+/**
+ * getNextDate(dateStr, recurring)
+ * 
+ * Calculates the next occurrence date for a recurring task based on the recurrence pattern.
+ * This is a pure calculation function with no side effects.
+ * 
+ * @param {String} dateStr - Current task date (format: YYYY-MM-DD or parseable by Date constructor)
+ * @param {String} recurring - Recurrence pattern: "daily", "weekly", "weekdays", "weekends", 
+ *                             "monthly", "yearly", "every_X_days_Y", "every_X_weeks_Y", 
+ *                             "first_monday_month", or "none"
+ * 
+ * @returns {String|null} - Next occurrence date in YYYY-MM-DD format, or null if pattern
+ *                          is invalid or unrecognized
+ */
 function getNextDate(dateStr, recurring) {
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return null;
@@ -1625,6 +1639,28 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
       });
   },
 
+  /**
+   * handleUserToggle({ id, done })
+   * 
+   * Socket notification handler that processes when a user toggles a task's completion
+   * status on the mirror display (e.g., checking/unchecking a task checkbox).
+   * 
+   * Flow:
+   *   1. Frontend (MMM-Chores.js toggleDone) sends USER_TOGGLE_CHORE notification
+   *   2. This handler receives it and makes a PUT /api/tasks/:id request to mark done/undone
+   *   3. That PUT handler triggers recurring instance creation for FUTURE dates only
+   *      (line ~2010: if nextDate && nextDate > today)
+   *   4. Then broadcastTasks() runs with lock, ensuring today's instances via ensureRecurringInstancesUpToToday()
+   *   5. Finally, this handler fetches updated tasks and broadcasts to mirror
+   * 
+   * Key behaviors:
+   *   - When marking done: sets finished timestamp
+   *   - When marking undone: clears finished timestamp
+   *   - Returns all tasks (deleted and undeleted) except deleted+unfinished
+   *   - Broadcasts updated task list to all mirror clients
+   * 
+   * @param {Object} payload - { id: taskId, done: boolean }
+   */
   async handleUserToggle({ id, done }) {
     try {
       const now = new Date();
@@ -1981,9 +2017,16 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
         revokePointsForTask(task);
       }
 
+      // When a recurring task is marked complete, create the next instance.
+      // IMPORTANT: Only create instances for FUTURE dates (after today).
+      // Today's instance should already exist from ensureRecurringInstancesUpToToday()
+      // which runs with the lock during broadcastTasks(). If we create for today here,
+      // we'd create a duplicate because broadcastTasks() calls ensureRecurringInstancesUpToToday()
+      // immediately after, and both would try to create the same instance.
       if (!prevDone && task.done && task.recurring && task.recurring !== "none") {
         const nextDate = getNextDate(task.date, task.recurring);
-        if (nextDate) {
+        const today = getLocalISO(new Date()).slice(0, 10);
+        if (nextDate && nextDate > today) {
           createRecurringInstanceFromTask(task, nextDate);
         }
       }
