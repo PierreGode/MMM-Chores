@@ -900,26 +900,54 @@ function getNextDate(dateStr, recurring) {
  * createRecurringInstanceFromTask(templateTask, date)
  * 
  * Factory function that creates a new recurring task instance from a template task.
- * This function has a critical side effect: it mutates the global `tasks` array by pushing
- * the new task. Therefore, it MUST ONLY be called from within withRecurringTaskLock().
+ * This function is CRITICAL to recurring task integrity and has guards against duplication:
+ *   1. Checks if instance already exists (same name, assignedTo, date)
+ *   2. Mutates the global `tasks` array by pushing the new task
+ * 
+ * MUST ONLY be called from within withRecurringTaskLock() to prevent race conditions.
+ * Callers:
+ *   - ensureRecurringInstancesUpToToday() - called within lock ✓
+ *   - PUT /api/tasks/:id handler - MUST wrap call in withRecurringTaskLock() ✓ (line ~2089)
+ * 
+ * Duplicate Prevention:
+ *   - Checks if (name, assignedTo, date) tuple already exists before creating
+ *   - This prevents duplicates from both concurrent calls and multiple code paths
+ *   - Example: User marks yesterday's daily task done → PUT tries to create today's instance
+ *     But ensureRecurringInstancesUpToToday also calculates today → duplicate prevented here
  * 
  * @param {Object} templateTask - The recurring task template to use as a blueprint
  *                               Must have: name, assignedTo, recurring, points, autoPointsRule
  * @param {String} date - The target date for this instance (format: YYYY-MM-DD)
  * 
- * @returns {Object|null} - The newly created task object, or null if inputs are invalid
+ * @returns {Object|null} - The newly created task object, or null if:
+ *                          - Inputs are invalid
+ *                          - Instance already exists for this date
  * 
  * Side Effects (GUARDED BY LOCK):
  *   - Calls ensureTaskSeriesMetadata(templateTask) - may add metadata to template
- *   - Calls tasks.push(newTask) - mutates global tasks array
+ *   - Calls tasks.push(newTask) - mutates global tasks array ONLY if no duplicate
  *   - Calls autoAssignTaskPoints(newTask) - may modify newTask.points
  * 
  * Example:
  *   const instance = createRecurringInstanceFromTask(weeklyCleanTask, '2026-06-12');
- *   // instance is now also in the global tasks array
+ *   // instance is now also in the global tasks array (or null if duplicate)
  */
 function createRecurringInstanceFromTask(templateTask, date) {
   if (!templateTask || !date) return null;
+  
+  // Duplicate prevention: check if a task with same name, assignedTo, and date already exists
+  const duplicateExists = tasks.some(t => 
+    t.name === templateTask.name &&
+    t.assignedTo === (templateTask.assignedTo || null) &&
+    t.date === date &&
+    !t.deleted
+  );
+  
+  if (duplicateExists) {
+    Log.log(`createRecurringInstanceFromTask: Skipping duplicate - "${templateTask.name}" for ${templateTask.assignedTo || 'unassigned'} on ${date}`);
+    return null;
+  }
+  
   ensureTaskSeriesMetadata(templateTask);
 
   const newTask = {
@@ -2018,16 +2046,22 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
       }
 
       // When a recurring task is marked complete, create the next instance.
+      // CRITICAL: Wrap in lock to protect createRecurringInstanceFromTask call.
+      // This ensures:
+      //   1. Duplicate check in createRecurringInstanceFromTask runs atomically
+      //   2. No race between PUT handler and ensureRecurringInstancesUpToToday
+      //   3. Tasks array mutations are serialized
+      // 
       // IMPORTANT: Only create instances for FUTURE dates (after today).
-      // Today's instance should already exist from ensureRecurringInstancesUpToToday()
-      // which runs with the lock during broadcastTasks(). If we create for today here,
-      // we'd create a duplicate because broadcastTasks() calls ensureRecurringInstancesUpToToday()
-      // immediately after, and both would try to create the same instance.
+      // Today's instance should be created by ensureRecurringInstancesUpToToday() which
+      // runs with the lock during broadcastTasks() immediately after this block.
       if (!prevDone && task.done && task.recurring && task.recurring !== "none") {
         const nextDate = getNextDate(task.date, task.recurring);
         const today = getLocalISO(new Date()).slice(0, 10);
         if (nextDate && nextDate > today) {
-          createRecurringInstanceFromTask(task, nextDate);
+          await withRecurringTaskLock(() => {
+            createRecurringInstanceFromTask(task, nextDate);
+          });
         }
       }
 
