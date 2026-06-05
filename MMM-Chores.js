@@ -676,6 +676,8 @@ Module.register("MMM-Chores", {
       });
     });
 
+    grouped.set(null, { person: { name: "Unassigned" }, tasks: [] });
+
     // Add tasks to their assigned person
     visible.forEach(task => {
       if (task.assignedTo) {
@@ -689,6 +691,9 @@ Module.register("MMM-Chores", {
         if (entry) {
           entry.tasks.push(task);
         }
+      }
+      else{
+        grouped.get(null).tasks.push(task);
       }
     });
 
