@@ -701,6 +701,11 @@ Module.register("MMM-Chores", {
     Array.from(grouped.values())
       .sort((a, b) => a.person.name.localeCompare(b.person.name))
       .forEach(group => {
+
+        if (group.person.name === "Unassigned" && group.tasks.length === 0) {
+          return; // Skip unassigned group if there are no unassigned tasks
+        }
+
         // User header with current coin balance if coin system is active
         const header = document.createElement("div");
         header.className = "small bright";
@@ -708,8 +713,10 @@ Module.register("MMM-Chores", {
         let headerText = group.person.name;
         
         if (this.config.usePointSystem && this.config.showCoinsOnMirror !== false) {
-          const currentCoins = group.person.points || 0;
-          headerText += ` 🪙${currentCoins}`;
+          if (group.person.name !== "Unassigned") {
+            const currentCoins = group.person.points || 0;
+            headerText += ` 🪙${currentCoins}`;
+          }
         }
         
         header.textContent = headerText;
