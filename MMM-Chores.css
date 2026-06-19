@@ -6,6 +6,10 @@
 }
 
 /* Header styling */
+.MMM-Chores .medium {
+  font-size: 1.25em;
+}
+
 .MMM-Chores .large {
   font-size: 1.5em;
   margin-bottom: 10px;
@@ -22,7 +26,6 @@
 .MMM-Chores li {
   display: flex;
   margin-bottom: 8px;
-  font-size: 0.9em;
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
