@@ -759,18 +759,17 @@ Module.register("MMM-Chores", {
 
         // User header with current coin balance if coin system is active
         const header = document.createElement("div");
-        header.className = "small bright";
+        header.className = `${this.config.textMirrorSize} bright`;
         header.style.marginTop = "8px";
-        let headerText = group.person.name;
-        
-        if (this.config.usePointSystem && this.config.showCoinsOnMirror !== false) {
-          if (group.person.name !== "Unassigned") {
-            const currentCoins = group.person.points || 0;
-            headerText += ` 🪙${currentCoins}`;
-          }
+        header.textContent = group.person.name;
+
+        if (this.config.usePointSystem && this.config.showCoinsOnMirror !== false && group.person.name !== "Unassigned") {
+          const currentCoins = group.person.points || 0;
+          const coinSpan = document.createElement("span");
+          coinSpan.className = "coin-badge";
+          coinSpan.textContent = ` 🪙${currentCoins}`;
+          header.appendChild(coinSpan);
         }
-        
-        header.textContent = headerText;
         container.appendChild(header);
 
         // User's task list
