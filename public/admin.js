@@ -2818,7 +2818,7 @@ document.getElementById('editTaskForm').addEventListener('submit', async e => {
 
 async function updateTask(id, changes) {
   Object.keys(changes).forEach(key => {
-    if (changes[key] === null) changes[key] = undefined;
+    if (changes[key] === null && key !== "assignedTo") changes[key] = undefined;
   });
   await authFetch(`/api/tasks/${id}`, {
     method: "PUT",
