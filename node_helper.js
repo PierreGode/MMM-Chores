@@ -960,18 +960,29 @@ function createRecurringInstanceFromTask(templateTask, date) {
  * Algorithm:
  *   1. Build a map of recurring series, grouping all tasks by seriesId
  *   2. For each series, find the most recent task
- *   3. If that task's date is before today, calculate the next date(s) that should exist
+ *   3. If that task's date is before today, calculate the next date beyond today
  *   4. Check if those dates already exist (prevent duplicates)
  *   5. Create missing instances
  * 
- * THE DUPLICATE PREVENTION LOGIC:
- *   The dateSet check at line 994 is what prevents duplicates:
- *     const dateSet = new Set(seriesTasks.map(t => t.date));
- *     if (dateSet.has(candidateDate)) return;  // Skip if date already exists
- *   
- *   This check relies on the tasks array being in a consistent state during execution.
- *   WITHOUT the lock, multiple concurrent callers can build stale dateSet values, both
- *   calculating the same candidateDate and both creating instances.
+ * THE DUPLICATE / RECREATION PREVENTION LOGIC:
+ *   seriesTasks includes both deleted and non-deleted tasks. This means dateSet covers
+ *   all dates that have ever existed in the series. Two guards rely on this:
+ *
+ *   1. if (lastTask.date >= today) return;
+ *      If the series has any task on or after today — deleted or not — it is already
+ *      "ensured": either today's instance exists, or the user explicitly deleted it.
+ *      Either way, we must not create a new one.
+ *
+ *   2. if (dateSet.has(candidateDate)) return;
+ *      Theoretically unreachable after guard 1, but kept as a safety net given the
+ *      history of bugs in this area. Prevents recreation if the early-exit is ever
+ *      bypassed.
+ *
+ *   Without both of these checks covering deleted tasks, deleting a recurring instance
+ *   would cause it to be immediately recreated on the next broadcastTasks() call.
+ *
+ *   The lock prevents a separate class of duplicate: concurrent callers building stale
+ *   dateSet values and both creating the same instance.
  * 
  * @returns {Number} - Count of new recurring task instances created
  * 
@@ -997,11 +1008,22 @@ function ensureRecurringInstancesUpToToday() {
     seriesMap.get(seriesId).tasks.push(task);
   });
 
+  // Also push deleted tasks into the series so their dates appear in dateSet.
+  tasks.forEach(task => {
+    if (!task || !task.deleted) return;
+    if (!task.recurring || task.recurring === "none") return;
+    if (!task.date) return;
+    const seriesId = getSeriesId(task);
+    if (seriesMap.has(seriesId)) {
+      seriesMap.get(seriesId).tasks.push(task);
+    }
+  });
+
   let createdCount = 0;
 
   seriesMap.forEach(entry => {
     const seriesTasks = entry.tasks
-      .filter(task => task && !task.deleted && task.date)
+      .filter(task => task && task.date)
       .sort((a, b) => getSortableDateKey(a.date).localeCompare(getSortableDateKey(b.date)));
     if (!seriesTasks.length) return;
 
