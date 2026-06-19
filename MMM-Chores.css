@@ -132,6 +132,34 @@
   }
 }
 
+/* Assign dropdown on unassigned tasks */
+.MMM-Chores .assign-select {
+  flex-shrink: 0;
+  margin-left: 10px;
+  padding: 6px 10px;
+  min-width: 100px;
+  font-size: 0.85em;
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  cursor: pointer;
+  /* Larger tap target for touchscreens */
+  min-height: 36px;
+  appearance: auto;
+}
+
+.MMM-Chores .assign-select:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.MMM-Chores .assign-select:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 .MMM-Chores .voice-transcript {
   margin-top: 8px;
   padding: 5px 10px;

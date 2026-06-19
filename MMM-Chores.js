@@ -37,6 +37,7 @@ Module.register("MMM-Chores", {
     showRedeemedRewards: true,    // display redeemed rewards on mirror above chores when coin system is active
     usePointSystem: false,        // use point system instead of level system
     groupPerUserOnMirror: false,  // group tasks by user on mirror instead of showing a single list (only applies when showLevelOnMirror is false)
+    showUnassignedOnMirror: false, // show tasks without an assigned person on the mirror
     leveling: {
       enabled: true,
       mode: "years",
@@ -611,6 +612,12 @@ Module.register("MMM-Chores", {
   renderTaskItem(task) {
     const li = document.createElement("li");
     li.className = `${this.config.textMirrorSize}${task.done ? " task-done" : ""}`;
+    li.style.display = "flex";
+    li.style.alignItems = "center";
+    li.style.justifyContent = "space-between";
+
+    const leftPart = document.createElement("span");
+    leftPart.style.flex = "1";
 
     const cb = document.createElement("input");
     cb.type = "checkbox";
@@ -620,11 +627,10 @@ Module.register("MMM-Chores", {
       li.classList.add("moving");
       setTimeout(() => this.toggleDone(task, cb.checked), 200);
     });
-    li.appendChild(cb);
+    leftPart.appendChild(cb);
 
     const dateText = this.formatDate(task.date);
-    const text = document.createTextNode(`${task.name} ${dateText}`);
-    li.appendChild(text);
+    leftPart.appendChild(document.createTextNode(`${task.name} ${dateText}`));
 
     if (task.assignedTo) {
       const p = this.getPerson(task.assignedTo);
@@ -632,14 +638,13 @@ Module.register("MMM-Chores", {
       assignedEl.className = "xsmall dimmed";
       assignedEl.style.marginLeft = "6px";
       let html = ` — ${p ? p.name : ""}`;
-      
-      // Show coins if the coin system is active and the mirror toggle allows it; otherwise show level info
+
       if (this.config.usePointSystem) {
         if (this.config.showCoinsOnMirror !== false){
           if (this.config.groupPerUserOnMirror == false && p) {
             const coins = p.points || 0;
             html += ` <span class="coin-badge">🪙${coins}</span>`;
-          } 
+          }
           if (this.config.groupPerUserOnMirror == true && task.points) {
             const yield_coins = task.points || 0;
             html += ` <span class="coin-badge">🪙${yield_coins}</span>`;
@@ -654,12 +659,61 @@ Module.register("MMM-Chores", {
           html += ` <span class="lvl-badge">lvl${p.level}</span>`;
         }
       }
-      
+
       assignedEl.innerHTML = html;
-      li.appendChild(assignedEl);
+      leftPart.appendChild(assignedEl);
+    }
+
+    li.appendChild(leftPart);
+
+    // Assign dropdown for unassigned tasks (shown when showUnassignedOnMirror is active)
+    if (!task.assignedTo && this.config.showUnassignedOnMirror && this.people && this.people.length) {
+      const select = document.createElement("select");
+      select.className = "assign-select";
+      select.title = "Assign to…";
+
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "Assign…";
+      placeholder.disabled = true;
+      placeholder.selected = true;
+      select.appendChild(placeholder);
+
+      this.people.forEach(person => {
+        const opt = document.createElement("option");
+        opt.value = person.id;
+        opt.textContent = person.name;
+        select.appendChild(opt);
+      });
+
+      select.addEventListener("change", (e) => {
+        const personId = parseInt(e.target.value, 10);
+        if (!personId) return;
+        this.assignTask(task, personId);
+        // Disable immediately to prevent double-tap
+        select.disabled = true;
+      });
+
+      li.appendChild(select);
     }
 
     return li;
+  },
+
+  assignTask(task, personId) {
+    const port = this.config.adminPort || 5003;
+    const body = { assignedTo: personId };
+    // For recurring tasks: detach this instance from the series so only
+    // this occurrence gets assigned (clear recurring on this instance only)
+    if (task.recurring && task.recurring !== "none") {
+      body.recurring = "none";
+      body.seriesId = null;
+    }
+    fetch(`http://localhost:${port}/api/tasks/${task.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    }).catch(err => console.error("MMM-Chores: assignTask failed", err));
   },
 
   renderGrouped(visible) {
@@ -701,6 +755,11 @@ Module.register("MMM-Chores", {
     Array.from(grouped.values())
       .sort((a, b) => a.person.name.localeCompare(b.person.name))
       .forEach(group => {
+
+        if (group.person.name === "Unassigned" && group.tasks.length === 0) {
+          return; // Skip unassigned group if there are no unassigned tasks
+        }
+
         // User header with current coin balance if coin system is active
         const header = document.createElement("div");
         header.className = "small bright";
@@ -708,8 +767,10 @@ Module.register("MMM-Chores", {
         let headerText = group.person.name;
         
         if (this.config.usePointSystem && this.config.showCoinsOnMirror !== false) {
-          const currentCoins = group.person.points || 0;
-          headerText += ` 🪙${currentCoins}`;
+          if (group.person.name !== "Unassigned") {
+            const currentCoins = group.person.points || 0;
+            headerText += ` 🪙${currentCoins}`;
+          }
         }
         
         header.textContent = headerText;
@@ -848,14 +909,19 @@ Module.register("MMM-Chores", {
       wrapper.appendChild(redemptionsWrap);
     }
 
-    if (pendingRedemptions.length && visible.length) {
+    // Filter unassigned tasks unless the setting explicitly allows them
+    const filteredVisible = this.config.showUnassignedOnMirror
+      ? visible
+      : visible.filter(t => t.assignedTo);
+
+    if (pendingRedemptions.length && filteredVisible.length) {
       const divider = document.createElement("hr");
       divider.className = "redemptions-divider";
       divider.style.margin = "8px 0";
       wrapper.appendChild(divider);
     }
 
-    if (visible.length === 0) {
+    if (filteredVisible.length === 0) {
       const emptyEl = document.createElement("div");
       emptyEl.className = `${this.config.textMirrorSize} dimmed`;
       emptyEl.innerHTML = pendingRedemptions.length ? "" : "No tasks to show 🎉";
@@ -867,9 +933,9 @@ Module.register("MMM-Chores", {
 
     // Render tasks either grouped by user or as a flat list
     if (this.config.groupPerUserOnMirror) {
-      wrapper.appendChild(this.renderGrouped(visible));
+      wrapper.appendChild(this.renderGrouped(filteredVisible));
     } else {
-      wrapper.appendChild(this.renderFlat(visible));
+      wrapper.appendChild(this.renderFlat(filteredVisible));
     }
 
     if (this.config.showAnalyticsOnMirror && this.config.analyticsCards.length) {
