@@ -1335,6 +1335,9 @@ module.exports = NodeHelper.create({
     if (notification === "USER_TOGGLE_CHORE") {
       this.handleUserToggle(payload);
     }
+    if (notification === "USER_ASSIGN_CHORE") {
+      this.handleUserAssign(payload);
+    }
     if (notification === "VOICE_COMMAND") {
       this.handleVoiceCommand(payload);
     }
@@ -1732,6 +1735,30 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
       this.sendSocketNotification("CHORES_DATA", filtered);
     } catch (e) {
       Log.error("MMM-Chores: failed updating task", e);
+    }
+  },
+
+  async handleUserAssign({ id, personId, isRecurring }) {
+    try {
+      const body = { assignedTo: personId };
+      // For recurring tasks detach only this instance from the series so the
+      // remaining future instances stay unassigned.
+      if (isRecurring) {
+        body.recurring = "none";
+        body.seriesId = null;
+      }
+      const port = this.config.adminPort;
+      const headers = { "Content-Type": "application/json" };
+      if (this.config.login && this.internalToken) {
+        headers["x-auth-token"] = this.internalToken;
+      }
+      await fetchFn(`http://localhost:${port}/api/tasks/${id}`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify(body)
+      });
+    } catch (e) {
+      Log.error("MMM-Chores: failed assigning task", e);
     }
   },
 

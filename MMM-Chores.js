@@ -701,19 +701,11 @@ Module.register("MMM-Chores", {
   },
 
   assignTask(task, personId) {
-    const port = this.config.adminPort || 5003;
-    const body = { assignedTo: personId };
-    // For recurring tasks: detach this instance from the series so only
-    // this occurrence gets assigned (clear recurring on this instance only)
-    if (task.recurring && task.recurring !== "none") {
-      body.recurring = "none";
-      body.seriesId = null;
-    }
-    fetch(`http://localhost:${port}/api/tasks/${task.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body)
-    }).catch(err => console.error("MMM-Chores: assignTask failed", err));
+    this.sendSocketNotification("USER_ASSIGN_CHORE", {
+      id: task.id,
+      personId,
+      isRecurring: !!(task.recurring && task.recurring !== "none")
+    });
   },
 
   renderGrouped(visible) {
