@@ -429,6 +429,8 @@ function initSettingsForm(settings) {
   const showAnalytics = document.getElementById('settingsShowAnalytics');
   const showRewardsTab = document.getElementById('settingsShowRewardsTab');
   const showRewardsTabContainer = document.getElementById('settingsShowRewardsTabContainer');
+  const showRewardsOnMirror = document.getElementById('settingsShowRewardsOnMirror');
+  const showRewardsOnMirrorContainer = document.getElementById('settingsShowRewardsOnMirrorContainer');
   const showCoinsOnMirror = document.getElementById('settingsShowCoinsOnMirror');
   const showCoinsOnMirrorContainer = document.getElementById('settingsShowCoinsOnMirrorContainer');
   const showLevelOnMirror = document.getElementById('settingsShowLevelOnMirror');
@@ -499,6 +501,7 @@ function initSettingsForm(settings) {
   if (useAI) useAI.checked = settings.useAI !== false;
   if (showAnalytics) showAnalytics.checked = !!settings.showAnalyticsOnMirror;
   if (showRewardsTab) showRewardsTab.checked = settings.showRewardsTab !== false;
+  if (showRewardsOnMirror) showRewardsOnMirror.checked = !!settings.showRewardsOnMirror;
   if (showCoinsOnMirror) showCoinsOnMirror.checked = settings.showCoinsOnMirror !== false;
   if (showLevelOnMirror) showLevelOnMirror.checked = settings.showLevelOnMirror !== false;
   if (groupPerUserOnMirror) groupPerUserOnMirror.checked = !!settings.groupPerUserOnMirror;
@@ -523,6 +526,14 @@ function initSettingsForm(settings) {
       showRewardsTabContainer.style.display = '';
     } else {
       showRewardsTabContainer.style.display = 'none';
+    }
+  }
+
+  if (showRewardsOnMirrorContainer) {
+    if (currentSystem === 'coins') {
+      showRewardsOnMirrorContainer.style.display = '';
+    } else {
+      showRewardsOnMirrorContainer.style.display = 'none';
     }
   }
 
@@ -629,6 +640,7 @@ function initSettingsForm(settings) {
       showCoinsOnMirror: showCoinsOnMirror ? showCoinsOnMirror.checked : true,
       showLevelOnMirror: showLevelOnMirror ? showLevelOnMirror.checked : true,
       showRedeemedRewards: showRedeemedRewards ? showRedeemedRewards.checked : true,
+      showRewardsOnMirror: showRewardsOnMirror ? showRewardsOnMirror.checked : false,
       groupPerUserOnMirror: groupPerUserOnMirror ? groupPerUserOnMirror.checked : false,
       levelingEnabled: levelingEnabledValue,
       autoUpdate: autoUpdate ? autoUpdate.checked : false,
