@@ -54,6 +54,8 @@ The **Show past tasks** setting lets you toggle whether overdue tasks that are
 not yet completed should remain visible on the mirror. Completed past tasks are
 always hidden.<p>
 
+The **Show unassigned tasks on mirror** setting (`showUnassignedOnMirror`) controls whether tasks without an assigned person appear on the mirror. Defaults to `false`. When enabled, each unassigned task shows a touch-friendly **Assign…** dropdown on the right so any household member can claim it directly on the touchscreen. Assigning a recurring task this way only affects that single occurrence — the rest of the series stays unassigned.<p>
+
 *Update 2025-08-04: most settings are moved to admin webpage<p>
 
 > [!NOTE]

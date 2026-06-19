@@ -37,6 +37,7 @@ Module.register("MMM-Chores", {
     showRedeemedRewards: true,    // display redeemed rewards on mirror above chores when coin system is active
     usePointSystem: false,        // use point system instead of level system
     groupPerUserOnMirror: false,  // group tasks by user on mirror instead of showing a single list (only applies when showLevelOnMirror is false)
+    showUnassignedOnMirror: false, // show tasks without an assigned person on the mirror
     leveling: {
       enabled: true,
       mode: "years",
@@ -855,14 +856,19 @@ Module.register("MMM-Chores", {
       wrapper.appendChild(redemptionsWrap);
     }
 
-    if (pendingRedemptions.length && visible.length) {
+    // Filter unassigned tasks unless the setting explicitly allows them
+    const filteredVisible = this.config.showUnassignedOnMirror
+      ? visible
+      : visible.filter(t => t.assignedTo);
+
+    if (pendingRedemptions.length && filteredVisible.length) {
       const divider = document.createElement("hr");
       divider.className = "redemptions-divider";
       divider.style.margin = "8px 0";
       wrapper.appendChild(divider);
     }
 
-    if (visible.length === 0) {
+    if (filteredVisible.length === 0) {
       const emptyEl = document.createElement("div");
       emptyEl.className = `${this.config.textMirrorSize} dimmed`;
       emptyEl.innerHTML = pendingRedemptions.length ? "" : "No tasks to show 🎉";
@@ -874,9 +880,9 @@ Module.register("MMM-Chores", {
 
     // Render tasks either grouped by user or as a flat list
     if (this.config.groupPerUserOnMirror) {
-      wrapper.appendChild(this.renderGrouped(visible));
+      wrapper.appendChild(this.renderGrouped(filteredVisible));
     } else {
-      wrapper.appendChild(this.renderFlat(visible));
+      wrapper.appendChild(this.renderFlat(filteredVisible));
     }
 
     if (this.config.showAnalyticsOnMirror && this.config.analyticsCards.length) {
