@@ -48,6 +48,8 @@ const TASK_SERIES_FILTER_KEY = 'mmm-chores-series-filter';
 let showTaskSeriesRootsOnly = localStorage.getItem(TASK_SERIES_FILTER_KEY) === '1';
 const TASK_GROUP_FILTER_KEY = 'mmm-chores-group-filter';
 let showTaskGroupByPerson = localStorage.getItem(TASK_GROUP_FILTER_KEY) === '1';
+const DONE_CUTOFF_KEY = 'mmm-chores-done-cutoff';
+let doneCutoffDays = localStorage.getItem(DONE_CUTOFF_KEY) ?? '7';
 const personRewardsModalEl = document.getElementById('personRewardsModal');
 const personRewardTitlesContainer = document.getElementById('personRewardTitlesContainer');
 const personRewardTitleInputs = [];
@@ -1789,6 +1791,19 @@ function setLanguage(lang) {
     }
   }
 
+  const doneCutoffSelect = document.getElementById('tasksDoneCutoff');
+  if (doneCutoffSelect) {
+    doneCutoffSelect.value = doneCutoffDays;
+    if (!doneCutoffSelect.dataset.bound) {
+      doneCutoffSelect.addEventListener('change', (e) => {
+        doneCutoffDays = e.target.value;
+        localStorage.setItem(DONE_CUTOFF_KEY, doneCutoffDays);
+        renderTasks();
+      });
+      doneCutoffSelect.dataset.bound = 'true';
+    }
+  }
+
   const analyticsHeader = document.getElementById("analyticsHeader");
   if (analyticsHeader) analyticsHeader.textContent = t.analyticsTitle;
   const addChartSelect = document.getElementById("addChartSelect");
@@ -2328,6 +2343,17 @@ function renderTasks() {
 
   const recurringTasks = activeTasks.filter(task => task.recurring && task.recurring !== 'none'); // only keep recurring entries
   let visibleTasks = showTaskSeriesRootsOnly ? recurringTasks : activeTasks;
+
+  if (doneCutoffDays === 'none') {
+    visibleTasks = visibleTasks.filter(t => !t.done);
+  } else if (doneCutoffDays !== '') {
+    const cutoff = parseInt(doneCutoffDays, 10);
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - cutoff);
+    visibleTasks = visibleTasks.filter(t =>
+      !t.done || !t.finished || new Date(t.finished) >= cutoffDate
+    );
+  }
 
   if ((showMyTasksOnly || userPermission === 'regular') && currentPersonId) {
     visibleTasks = visibleTasks.filter(task => task.assignedTo === currentPersonId);
