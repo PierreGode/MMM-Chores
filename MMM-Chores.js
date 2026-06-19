@@ -797,17 +797,15 @@ Module.register("MMM-Chores", {
         const catalogueWrap = document.createElement("div");
         catalogueWrap.className = "rewards-catalogue";
 
-        catalogueRewards.forEach(reward => {
+        catalogueRewards.sort((a, b) => a.pointCost - b.pointCost).forEach(reward => {
           const item = document.createElement("span");
           item.className = `rewards-catalogue-item ${this.config.textMirrorSize}`;
-          item.textContent = reward.name;
-
           const cost = document.createElement("span");
           cost.className = "coin-badge";
-          cost.textContent = `🪙${reward.pointCost}`;
+          cost.textContent = reward.pointCost + " 🪙";
 
-          item.appendChild(document.createTextNode(" "));
           item.appendChild(cost);
+          item.appendChild(document.createTextNode(" " + reward.name));
           catalogueWrap.appendChild(item);
         });
 
