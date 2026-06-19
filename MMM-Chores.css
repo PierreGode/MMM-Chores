@@ -160,6 +160,24 @@
   cursor: default;
 }
 
+/* Reward catalogue shown at top of mirror */
+.MMM-Chores .rewards-catalogue {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.MMM-Chores .rewards-catalogue-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
 .MMM-Chores .voice-transcript {
   margin-top: 8px;
   padding: 5px 10px;

@@ -35,6 +35,7 @@ Module.register("MMM-Chores", {
     showCoinsOnMirror: true,      // display coin balances next to assignees when coin system is active
     showLevelOnMirror: true,      // display level badge next to assignees when level system is active
     showRedeemedRewards: true,    // display redeemed rewards on mirror above chores when coin system is active
+    showRewardsOnMirror: false,   // display reward catalogue (name + cost) at the top of the mirror
     usePointSystem: false,        // use point system instead of level system
     groupPerUserOnMirror: false,  // group tasks by user on mirror instead of showing a single list (only applies when showLevelOnMirror is false)
     showUnassignedOnMirror: false, // show tasks without an assigned person on the mirror
@@ -129,6 +130,10 @@ Module.register("MMM-Chores", {
     }
     if (notification === "REDEMPTIONS_UPDATE") {
       this.redemptions = Array.isArray(payload) ? payload : [];
+      this.updateDom();
+    }
+    if (notification === "REWARDS_UPDATE") {
+      this.rewards = Array.isArray(payload) ? payload : [];
       this.updateDom();
     }
     if (notification === "PEOPLE_UPDATE") {
@@ -841,6 +846,36 @@ Module.register("MMM-Chores", {
       note.className = "small bright";
       note.innerHTML = this.titleChangeMessage;
       wrapper.appendChild(note);
+    }
+
+    // Reward catalogue — shown above everything else when enabled
+    if (this.config.usePointSystem && this.config.showRewardsOnMirror) {
+      const catalogueRewards = (this.rewards || []).filter(r => r.active !== false);
+      if (catalogueRewards.length) {
+        const catalogueWrap = document.createElement("div");
+        catalogueWrap.className = "rewards-catalogue";
+
+        catalogueRewards.forEach(reward => {
+          const item = document.createElement("span");
+          item.className = `rewards-catalogue-item ${this.config.textMirrorSize}`;
+          item.textContent = reward.name;
+
+          const cost = document.createElement("span");
+          cost.className = "coin-badge";
+          cost.textContent = `🪙${reward.pointCost}`;
+
+          item.appendChild(document.createTextNode(" "));
+          item.appendChild(cost);
+          catalogueWrap.appendChild(item);
+        });
+
+        wrapper.appendChild(catalogueWrap);
+
+        const divider = document.createElement("hr");
+        divider.className = "redemptions-divider";
+        divider.style.margin = "8px 0";
+        wrapper.appendChild(divider);
+      }
     }
 
     const showRedeemed = this.config.usePointSystem && this.config.showRedeemedRewards !== false;

@@ -806,6 +806,7 @@ async function broadcastTasks(helper) {
   helper.sendSocketNotification("LEVEL_INFO", getLevelInfo(helper.config || {}));
   helper.sendSocketNotification("PEOPLE_UPDATE", people);
   helper.sendSocketNotification("REDEMPTIONS_UPDATE", coinStore.redemptions || []);
+  helper.sendSocketNotification("REWARDS_UPDATE", (coinStore.rewards || []).filter(r => r.active !== false));
   const ok = saveData();
   Log.log(`broadcastTasks: saveData returned ${ok}`);
   return ok;
@@ -2569,28 +2570,31 @@ Task Rules (Points): ${taskRulesSummary || "none"}.`;
       
       coinStore.rewards.push(newReward);
       saveData();
+      self.sendSocketNotification("REWARDS_UPDATE", coinStore.rewards.filter(r => r.active !== false));
       res.status(201).json(newReward);
     });
-    
+
     app.put("/api/rewards/:id", requireWrite, (req, res) => {
       const id = parseInt(req.params.id, 10);
       const reward = coinStore.rewards.find(r => r.id === id);
       if (!reward) return res.status(404).json({ error: "Reward not found" });
-      
+
       Object.entries(req.body).forEach(([key, val]) => {
         if (val !== undefined && val !== null) {
           reward[key] = val;
         }
       });
-      
+
       saveData();
+      self.sendSocketNotification("REWARDS_UPDATE", coinStore.rewards.filter(r => r.active !== false));
       res.json(reward);
     });
-    
+
     app.delete("/api/rewards/:id", requireWrite, (req, res) => {
       const id = parseInt(req.params.id, 10);
       coinStore.rewards = coinStore.rewards.filter(r => r.id !== id);
       saveData();
+      self.sendSocketNotification("REWARDS_UPDATE", coinStore.rewards.filter(r => r.active !== false));
       res.json({ success: true });
     });
 
