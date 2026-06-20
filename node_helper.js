@@ -1770,6 +1770,11 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
       // For recurring tasks detach only this instance from the series so the
       // remaining future instances stay unassigned.
       if (isRecurring) {
+        // Let's ensure the next recurring instance is created.
+        withRecurringTaskLock(() => {
+          ensureRecurringInstancesUpToToday();
+        });
+        // Now destroy the recurrence on this instance
         body.recurring = "none";
         body.seriesId = null;
       }
