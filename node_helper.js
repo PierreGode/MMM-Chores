@@ -1775,10 +1775,13 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
       // For recurring tasks detach only this instance from the series so the
       // remaining future instances stay unassigned.
       if (isRecurring) {
-        // Let's ensure the next recurring instance is created.
-        withRecurringTaskLock(() => {
-          ensureRecurringInstancesUpToToday();
-        });
+        // Let's ensure the next unassigned recurring instance is created.
+        // Any date further than the task date is fine, to ensure recurrence.
+        // If it turns out to already exist createRecurringInstanceFromTask will handle it
+        const task = tasks.find(t => t.id === id);
+        const nextDate = getNextDate(task.date, task.recurring);
+        await withRecurringTaskLock(() => {createRecurringInstanceFromTask(task, nextDate);});
+        
         // Now destroy the recurrence on this instance
         body.recurring = "none";
         body.seriesId = null;
