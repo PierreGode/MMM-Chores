@@ -1062,10 +1062,10 @@ function ensureRecurringInstancesUpToToday() {
     const dateSet = new Set(seriesTasks.map(t => t.date));
     const lastTask = seriesTasks[seriesTasks.length - 1];
     if (!lastTask || !lastTask.date) return;
-    // If there is a task beyond today (deleted or not), we consider that the recurrence is ensured
-    if (lastTask.date > today) return;
-    // If the last task is exactly on today we still need to forward the recurrence, but not if it is a deleted task
-    if (lastTask.date === today && lastTask.deleted) return;
+    // If there is up to today (deleted or not), we consider that the recurrence is ensured
+    if (lastTask.date >= today) return;
+    // If the last task is deleted, no further recurrence is needed
+    if (lastTask.deleted) return;
 
     let candidateDate = lastTask.date;
     let safety = 0;
@@ -1080,6 +1080,7 @@ function ensureRecurringInstancesUpToToday() {
     if (candidateDate <= lastTask.date) return;
     if (dateSet.has(candidateDate)) return;
 
+    // Not calling through withRecurringTaskLock since this function should already be called with a lock
     const newTask = createRecurringInstanceFromTask(lastTask, candidateDate);
     if (newTask) {
       Log.log(`ensureRecurringInstancesUpToToday: created new recurring instance ${newTask.id} for series ${newTask.seriesId} on ${newTask.date}`);
