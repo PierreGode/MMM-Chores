@@ -1026,6 +1026,8 @@ function ensureRecurringInstancesUpToToday() {
   const today = getLocalISO(new Date()).slice(0, 10);
   const seriesMap = new Map();
 
+  Log.log(`ensureRecurringInstancesUpToToday: scanning ${tasks.length} tasks for recurring series`);
+
   tasks.forEach(task => {
     if (!task || task.deleted) return;
     if (!task.recurring || task.recurring === "none") return;
@@ -1051,6 +1053,7 @@ function ensureRecurringInstancesUpToToday() {
   let createdCount = 0;
 
   seriesMap.forEach(entry => {
+    Log.log(`ensureRecurringInstancesUpToToday: processing series ${entry.tasks[0]?.seriesId}:${entry.tasks[0]?.name}`);
     const seriesTasks = entry.tasks
       .filter(task => task && task.date)
       .sort((a, b) => getSortableDateKey(a.date).localeCompare(getSortableDateKey(b.date)));
@@ -1068,16 +1071,18 @@ function ensureRecurringInstancesUpToToday() {
     let safety = 0;
     while (candidateDate < today && safety < 730) {
       const nextDate = getNextDate(candidateDate, entry.recurrence);
-      if (!nextDate || nextDate === candidateDate) break;
+      if (!nextDate) break;
       candidateDate = nextDate;
       safety += 1;
     }
+    Log.log(`ensureRecurringInstancesUpToToday: next candidate${candidateDate}`);
 
     if (candidateDate <= lastTask.date) return;
     if (dateSet.has(candidateDate)) return;
 
     const newTask = createRecurringInstanceFromTask(lastTask, candidateDate);
     if (newTask) {
+      Log.log(`ensureRecurringInstancesUpToToday: created new recurring instance ${newTask.id} for series ${newTask.seriesId} on ${newTask.date}`);
       createdCount += 1;
     }
   });
