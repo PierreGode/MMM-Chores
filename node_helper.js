@@ -116,6 +116,7 @@ const DEFAULT_PUSHOVER_CONFIG_ERROR = "Please set pushoverApiKey and pushoverUse
 let settings = {};
 let autoUpdateTimer = null;
 let reminderTimer = null;
+let midnightBroadcastTimer = null;
 let lastGeneratedTaskId = 0;
 
 // ═══════════════════════════════════════════════════════════════════════════════════
@@ -457,6 +458,38 @@ function scheduleReminder(self) {
       sendPushover(self, settings, `${header}\n${list}`);
     }
     scheduleReminder(self);
+  }, delay);
+}
+
+/**
+ * scheduleMidnightBroadcast(self)
+ *
+ * Schedules a daily broadcastTasks() call at 00:01 so that recurring task instances
+ * for the new day are created automatically without requiring user interaction.
+ *
+ * Without this, ensureRecurringInstancesUpToToday() only runs when a user action
+ * triggers broadcastTasks() (admin REST call, toggle, mirror reload). On an idle
+ * overnight system the mirror would show stale data until the first interaction.
+ *
+ * Pattern: identical to scheduleAutoUpdate / scheduleReminder — compute delay to next
+ * target time, set timeout, reschedule from inside the callback.
+ *
+ * @param {Object} self - NodeHelper instance (passed through to broadcastTasks)
+ */
+function scheduleMidnightBroadcast(self) {
+  if (midnightBroadcastTimer) clearTimeout(midnightBroadcastTimer);
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(0, 1, 0, 0); // 00:01 — ensures date has rolled over before recurring check
+  if (next <= now) {
+    next.setDate(next.getDate() + 1);
+  }
+  const delay = next - now;
+  Log.log(`Midnight broadcast scheduled for ${next.toString()}`);
+  midnightBroadcastTimer = setTimeout(() => {
+    midnightBroadcastTimer = null;
+    broadcastTasks(self).catch(err => Log.error("midnightBroadcast failed", err));
+    scheduleMidnightBroadcast(self);
   }, delay);
 }
 
@@ -806,6 +839,7 @@ async function broadcastTasks(helper) {
   helper.sendSocketNotification("LEVEL_INFO", getLevelInfo(helper.config || {}));
   helper.sendSocketNotification("PEOPLE_UPDATE", people);
   helper.sendSocketNotification("REDEMPTIONS_UPDATE", coinStore.redemptions || []);
+  helper.sendSocketNotification("REWARDS_UPDATE", (coinStore.rewards || []).filter(r => r.active !== false));
   const ok = saveData();
   Log.log(`broadcastTasks: saveData returned ${ok}`);
   return ok;
@@ -900,26 +934,54 @@ function getNextDate(dateStr, recurring) {
  * createRecurringInstanceFromTask(templateTask, date)
  * 
  * Factory function that creates a new recurring task instance from a template task.
- * This function has a critical side effect: it mutates the global `tasks` array by pushing
- * the new task. Therefore, it MUST ONLY be called from within withRecurringTaskLock().
+ * This function is CRITICAL to recurring task integrity and has guards against duplication:
+ *   1. Checks if instance already exists (same name, assignedTo, date)
+ *   2. Mutates the global `tasks` array by pushing the new task
+ * 
+ * MUST ONLY be called from within withRecurringTaskLock() to prevent race conditions.
+ * Callers:
+ *   - ensureRecurringInstancesUpToToday() - called within lock ✓
+ *   - PUT /api/tasks/:id handler - MUST wrap call in withRecurringTaskLock() ✓ (line ~2089)
+ * 
+ * Duplicate Prevention:
+ *   - Checks if (name, assignedTo, date) tuple already exists before creating
+ *   - This prevents duplicates from both concurrent calls and multiple code paths
+ *   - Example: User marks yesterday's daily task done → PUT tries to create today's instance
+ *     But ensureRecurringInstancesUpToToday also calculates today → duplicate prevented here
  * 
  * @param {Object} templateTask - The recurring task template to use as a blueprint
  *                               Must have: name, assignedTo, recurring, points, autoPointsRule
  * @param {String} date - The target date for this instance (format: YYYY-MM-DD)
  * 
- * @returns {Object|null} - The newly created task object, or null if inputs are invalid
+ * @returns {Object|null} - The newly created task object, or null if:
+ *                          - Inputs are invalid
+ *                          - Instance already exists for this date
  * 
  * Side Effects (GUARDED BY LOCK):
  *   - Calls ensureTaskSeriesMetadata(templateTask) - may add metadata to template
- *   - Calls tasks.push(newTask) - mutates global tasks array
+ *   - Calls tasks.push(newTask) - mutates global tasks array ONLY if no duplicate
  *   - Calls autoAssignTaskPoints(newTask) - may modify newTask.points
  * 
  * Example:
  *   const instance = createRecurringInstanceFromTask(weeklyCleanTask, '2026-06-12');
- *   // instance is now also in the global tasks array
+ *   // instance is now also in the global tasks array (or null if duplicate)
  */
 function createRecurringInstanceFromTask(templateTask, date) {
   if (!templateTask || !date) return null;
+  
+  // Duplicate prevention: check if a task with same name, assignedTo, and date already exists
+  const duplicateExists = tasks.some(t => 
+    t.name === templateTask.name &&
+    t.assignedTo === (templateTask.assignedTo || null) &&
+    t.date === date &&
+    !t.deleted
+  );
+  
+  if (duplicateExists) {
+    Log.log(`createRecurringInstanceFromTask: Skipping duplicate - "${templateTask.name}" for ${templateTask.assignedTo || 'unassigned'} on ${date}`);
+    return null;
+  }
+  
   ensureTaskSeriesMetadata(templateTask);
 
   const newTask = {
@@ -960,18 +1022,29 @@ function createRecurringInstanceFromTask(templateTask, date) {
  * Algorithm:
  *   1. Build a map of recurring series, grouping all tasks by seriesId
  *   2. For each series, find the most recent task
- *   3. If that task's date is before today, calculate the next date(s) that should exist
+ *   3. If that task's date is before today, calculate the next date beyond today
  *   4. Check if those dates already exist (prevent duplicates)
  *   5. Create missing instances
  * 
- * THE DUPLICATE PREVENTION LOGIC:
- *   The dateSet check at line 994 is what prevents duplicates:
- *     const dateSet = new Set(seriesTasks.map(t => t.date));
- *     if (dateSet.has(candidateDate)) return;  // Skip if date already exists
- *   
- *   This check relies on the tasks array being in a consistent state during execution.
- *   WITHOUT the lock, multiple concurrent callers can build stale dateSet values, both
- *   calculating the same candidateDate and both creating instances.
+ * THE DUPLICATE / RECREATION PREVENTION LOGIC:
+ *   seriesTasks includes both deleted and non-deleted tasks. This means dateSet covers
+ *   all dates that have ever existed in the series. Two guards rely on this:
+ *
+ *   1. if (lastTask.date >= today) return;
+ *      If the series has any task on or after today — deleted or not — it is already
+ *      "ensured": either today's instance exists, or the user explicitly deleted it.
+ *      Either way, we must not create a new one.
+ *
+ *   2. if (dateSet.has(candidateDate)) return;
+ *      Theoretically unreachable after guard 1, but kept as a safety net given the
+ *      history of bugs in this area. Prevents recreation if the early-exit is ever
+ *      bypassed.
+ *
+ *   Without both of these checks covering deleted tasks, deleting a recurring instance
+ *   would cause it to be immediately recreated on the next broadcastTasks() call.
+ *
+ *   The lock prevents a separate class of duplicate: concurrent callers building stale
+ *   dateSet values and both creating the same instance.
  * 
  * @returns {Number} - Count of new recurring task instances created
  * 
@@ -986,6 +1059,8 @@ function ensureRecurringInstancesUpToToday() {
   const today = getLocalISO(new Date()).slice(0, 10);
   const seriesMap = new Map();
 
+  Log.log(`ensureRecurringInstancesUpToToday: scanning ${tasks.length} tasks for recurring series`);
+
   tasks.forEach(task => {
     if (!task || task.deleted) return;
     if (!task.recurring || task.recurring === "none") return;
@@ -997,33 +1072,51 @@ function ensureRecurringInstancesUpToToday() {
     seriesMap.get(seriesId).tasks.push(task);
   });
 
+  // Also push deleted tasks into the series so their dates appear in dateSet.
+  tasks.forEach(task => {
+    if (!task || !task.deleted) return;
+    if (!task.recurring || task.recurring === "none") return;
+    if (!task.date) return;
+    const seriesId = getSeriesId(task);
+    if (seriesMap.has(seriesId)) {
+      seriesMap.get(seriesId).tasks.push(task);
+    }
+  });
+
   let createdCount = 0;
 
   seriesMap.forEach(entry => {
+    Log.log(`ensureRecurringInstancesUpToToday: processing series ${entry.tasks[0]?.seriesId}:${entry.tasks[0]?.name}`);
     const seriesTasks = entry.tasks
-      .filter(task => task && !task.deleted && task.date)
+      .filter(task => task && task.date)
       .sort((a, b) => getSortableDateKey(a.date).localeCompare(getSortableDateKey(b.date)));
     if (!seriesTasks.length) return;
 
     const dateSet = new Set(seriesTasks.map(t => t.date));
     const lastTask = seriesTasks[seriesTasks.length - 1];
     if (!lastTask || !lastTask.date) return;
+    // If there is up to today (deleted or not), we consider that the recurrence is ensured
     if (lastTask.date >= today) return;
+    // If the last task is deleted, no further recurrence is needed
+    if (lastTask.deleted) return;
 
     let candidateDate = lastTask.date;
     let safety = 0;
     while (candidateDate < today && safety < 730) {
       const nextDate = getNextDate(candidateDate, entry.recurrence);
-      if (!nextDate || nextDate === candidateDate) break;
+      if (!nextDate) break;
       candidateDate = nextDate;
       safety += 1;
     }
+    Log.log(`ensureRecurringInstancesUpToToday: next candidate${candidateDate}`);
 
     if (candidateDate <= lastTask.date) return;
     if (dateSet.has(candidateDate)) return;
 
+    // Not calling through withRecurringTaskLock since this function should already be called with a lock
     const newTask = createRecurringInstanceFromTask(lastTask, candidateDate);
     if (newTask) {
+      Log.log(`ensureRecurringInstancesUpToToday: created new recurring instance ${newTask.id} for series ${newTask.seriesId} on ${newTask.date}`);
       createdCount += 1;
     }
   });
@@ -1238,6 +1331,7 @@ module.exports = NodeHelper.create({
       scheduleAutoUpdate();
     }
     scheduleReminder(this);
+    scheduleMidnightBroadcast(this);
   },
 
   socketNotificationReceived(notification, payload) {
@@ -1260,6 +1354,8 @@ module.exports = NodeHelper.create({
         showPast: previousSettings.showPast ?? payload.showPast,
         showAnalyticsOnMirror: previousSettings.showAnalyticsOnMirror ?? payload.showAnalyticsOnMirror,
         groupPerUserOnMirror: previousSettings.groupPerUserOnMirror ?? payload.groupPerUserOnMirror ?? false,
+        showUnassignedOnMirror: previousSettings.showUnassignedOnMirror ?? payload.showUnassignedOnMirror ?? false,
+        showDeleteOnMirror: previousSettings.showDeleteOnMirror ?? payload.showDeleteOnMirror ?? false,
         useAI: previousSettings.useAI ?? payload.useAI,
         chatbotEnabled: previousSettings.chatbotEnabled ?? payload.chatbotEnabled ?? false,
         chatbotVoice: previousSettings.chatbotVoice ?? payload.chatbotVoice ?? "nova",
@@ -1292,6 +1388,7 @@ module.exports = NodeHelper.create({
       });
       saveData();
       scheduleReminder(this);
+      scheduleMidnightBroadcast(this);
       if (!this.server) {
         this.initServer(payload.adminPort);
       } else {
@@ -1305,6 +1402,12 @@ module.exports = NodeHelper.create({
     }
     if (notification === "USER_TOGGLE_CHORE") {
       this.handleUserToggle(payload);
+    }
+    if (notification === "USER_ASSIGN_CHORE") {
+      this.handleUserAssign(payload);
+    }
+    if (notification === "USER_DELETE_CHORE") {
+      this.handleUserDelete(payload);
     }
     if (notification === "VOICE_COMMAND") {
       this.handleVoiceCommand(payload);
@@ -1706,6 +1809,106 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
     }
   },
 
+  /**
+   * handleUserDelete({ id })
+   *
+   * Socket notification handler that soft-deletes a single task instance when
+   * the user taps the delete button on the mirror. Only rendered for assigned,
+   * not-done, past tasks (filtering enforced in frontend renderTaskItem).
+   *
+   * Recurring safety: if the task belongs to an active recurring series, this
+   * handler first ensures the next future instance exists before soft-deleting.
+   * Without this step, deleting the chronologically last instance causes
+   * ensureRecurringInstancesUpToToday() to halt series generation (it returns
+   * early when lastTask.deleted is true — see ensureRecurringInstancesUpToToday).
+   *
+   * Flow:
+   *   1. Look up task server-side (payload only carries id)
+   *   2. If recurring and seriesId is set, compute next date with getNextDate()
+   *      and call createRecurringInstanceFromTask() inside withRecurringTaskLock()
+   *      (idempotent if the instance already exists)
+   *   3. Call DELETE /api/tasks/:id — sets task.deleted = true and calls
+   *      broadcastTasks() internally, which pushes CHORES_DATA to all clients
+   *
+   * No explicit re-fetch or broadcast needed — the DELETE endpoint already calls
+   * broadcastTasks() (unlike handleUserToggle which re-fetches manually).
+   *
+   * @param {Object} payload - { id: number }
+   * @returns {Promise<void>}
+   *
+   * Side effects: may push a new task into tasks[] via createRecurringInstanceFromTask;
+   *   triggers broadcastTasks() → saveData() via the DELETE endpoint.
+   *
+   * Callers:
+   *   socketNotificationReceived — "USER_DELETE_CHORE" notification
+   */
+  async handleUserDelete({ id }) {
+    try {
+      const task = tasks.find(t => t.id === id);
+      if (!task) {
+        Log.warn("MMM-Chores: handleUserDelete — task not found:", id);
+        return;
+      }
+
+      // Recurring safety: ensure the next instance exists before deleting this one
+      // so that ensureRecurringInstancesUpToToday() does not halt the series.
+      if (task.recurring && task.recurring !== "none" && task.seriesId) {
+        const nextDate = getNextDate(task.date, task.recurring);
+        if (nextDate) {
+          await withRecurringTaskLock(() => {
+            createRecurringInstanceFromTask(task, nextDate);
+          });
+        }
+      }
+
+      const port = this.config.adminPort;
+      const headers = {};
+      if (this.config.login && this.internalToken) {
+        headers["x-auth-token"] = this.internalToken;
+      }
+      await fetchFn(`http://localhost:${port}/api/tasks/${id}`, {
+        method: "DELETE",
+        headers
+      });
+      // broadcastTasks() is called inside DELETE /api/tasks/:id;
+      // CHORES_DATA is automatically pushed to all clients.
+    } catch (e) {
+      Log.error("MMM-Chores: failed deleting task", e);
+    }
+  },
+
+  async handleUserAssign({ id, personId, isRecurring }) {
+    try {
+      const body = { assignedTo: personId };
+      // For recurring tasks detach only this instance from the series so the
+      // remaining future instances stay unassigned.
+      if (isRecurring) {
+        // Let's ensure the next unassigned recurring instance is created.
+        // Any date further than the task date is fine, to ensure recurrence.
+        // If it turns out to already exist createRecurringInstanceFromTask will handle it
+        const task = tasks.find(t => t.id === id);
+        const nextDate = getNextDate(task.date, task.recurring);
+        await withRecurringTaskLock(() => {createRecurringInstanceFromTask(task, nextDate);});
+        
+        // Now destroy the recurrence on this instance
+        body.recurring = "none";
+        body.seriesId = null;
+      }
+      const port = this.config.adminPort;
+      const headers = { "Content-Type": "application/json" };
+      if (this.config.login && this.internalToken) {
+        headers["x-auth-token"] = this.internalToken;
+      }
+      await fetchFn(`http://localhost:${port}/api/tasks/${id}`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify(body)
+      });
+    } catch (e) {
+      Log.error("MMM-Chores: failed assigning task", e);
+    }
+  },
+
   initServer(port) {
     if (this.server) {
       // Server already running; nothing to do.
@@ -2019,16 +2222,22 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
       }
 
       // When a recurring task is marked complete, create the next instance.
+      // CRITICAL: Wrap in lock to protect createRecurringInstanceFromTask call.
+      // This ensures:
+      //   1. Duplicate check in createRecurringInstanceFromTask runs atomically
+      //   2. No race between PUT handler and ensureRecurringInstancesUpToToday
+      //   3. Tasks array mutations are serialized
+      // 
       // IMPORTANT: Only create instances for FUTURE dates (after today).
-      // Today's instance should already exist from ensureRecurringInstancesUpToToday()
-      // which runs with the lock during broadcastTasks(). If we create for today here,
-      // we'd create a duplicate because broadcastTasks() calls ensureRecurringInstancesUpToToday()
-      // immediately after, and both would try to create the same instance.
+      // Today's instance should be created by ensureRecurringInstancesUpToToday() which
+      // runs with the lock during broadcastTasks() immediately after this block.
       if (!prevDone && task.done && task.recurring && task.recurring !== "none") {
         const nextDate = getNextDate(task.date, task.recurring);
         const today = getLocalISO(new Date()).slice(0, 10);
         if (nextDate && nextDate > today) {
-          createRecurringInstanceFromTask(task, nextDate);
+          await withRecurringTaskLock(() => {
+            createRecurringInstanceFromTask(task, nextDate);
+          });
         }
       }
 
@@ -2507,28 +2716,31 @@ Task Rules (Points): ${taskRulesSummary || "none"}.`;
       
       coinStore.rewards.push(newReward);
       saveData();
+      self.sendSocketNotification("REWARDS_UPDATE", coinStore.rewards.filter(r => r.active !== false));
       res.status(201).json(newReward);
     });
-    
+
     app.put("/api/rewards/:id", requireWrite, (req, res) => {
       const id = parseInt(req.params.id, 10);
       const reward = coinStore.rewards.find(r => r.id === id);
       if (!reward) return res.status(404).json({ error: "Reward not found" });
-      
+
       Object.entries(req.body).forEach(([key, val]) => {
         if (val !== undefined && val !== null) {
           reward[key] = val;
         }
       });
-      
+
       saveData();
+      self.sendSocketNotification("REWARDS_UPDATE", coinStore.rewards.filter(r => r.active !== false));
       res.json(reward);
     });
-    
+
     app.delete("/api/rewards/:id", requireWrite, (req, res) => {
       const id = parseInt(req.params.id, 10);
       coinStore.rewards = coinStore.rewards.filter(r => r.id !== id);
       saveData();
+      self.sendSocketNotification("REWARDS_UPDATE", coinStore.rewards.filter(r => r.active !== false));
       res.json({ success: true });
     });
 

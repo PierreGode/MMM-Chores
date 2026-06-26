@@ -157,7 +157,8 @@ const LANGUAGES = {
     showRewardsTabLabel: "Show Rewards tab",
     showCoinsOnMirrorLabel: "Show coins on mirror",
     showLevelOnMirrorLabel: "Show level on mirror",
-    
+    showDeleteOnMirrorLabel: "Show delete button on mirror",
+
     // Settings Modal - Level System
     levelSystemSettingsTitle: "Level System Settings",
     configureLevelTitlesBtn: "Configure Level Titles & Rewards",
@@ -405,7 +406,8 @@ const LANGUAGES = {
     showRewardsTabLabel: "Visa fliken Belöningar",
     showCoinsOnMirrorLabel: "Visa mynt på spegeln",
     showLevelOnMirrorLabel: "Visa nivå på spegeln",
-    
+    showDeleteOnMirrorLabel: "Visa raderingsknapp på spegeln",
+
     // AI Chatbot
     chatbotToggleLabel: "Aktivera AI-chatbot i admin",
     chatbotToggleHelp: "Visa en chattruta med text- och mikrofonstöd på instrumentpanelen.",
@@ -665,7 +667,8 @@ const LANGUAGES = {
     showRewardsTabLabel: "Afficher l'onglet Récompenses",
     showCoinsOnMirrorLabel: "Afficher les pièces sur le miroir",
     showLevelOnMirrorLabel: "Afficher le niveau sur le miroir",
-    
+    showDeleteOnMirrorLabel: "Afficher le bouton de suppression sur le miroir",
+
     // Chatbot IA
     chatbotToggleLabel: "Activer le chatbot IA dans l'admin",
     chatbotToggleHelp: "Afficher une boîte de discussion avec support texte et microphone sur le tableau de bord.",
@@ -924,6 +927,7 @@ const LANGUAGES = {
     displaySettingsTitle: "Configuración de pantalla",
     showRewardsTabLabel: "Mostrar pestaña de Recompensas",
     showLevelOnMirrorLabel: "Mostrar nivel en el espejo",
+    showDeleteOnMirrorLabel: "Mostrar botón de eliminación en el espejo",
     showCoinsOnMirrorLabel: "Mostrar monedas en el espejo",
     
     // Chatbot de IA
@@ -1185,7 +1189,8 @@ const LANGUAGES = {
     showRewardsTabLabel: "Belohnungs-Tab anzeigen",
     showCoinsOnMirrorLabel: "Münzen auf dem Spiegel anzeigen",
     showLevelOnMirrorLabel: "Level auf dem Spiegel anzeigen",
-    
+    showDeleteOnMirrorLabel: "Löschen-Schaltfläche auf dem Spiegel anzeigen",
+
     // KI-Chatbot
     chatbotToggleLabel: "KI-Chatbot im Admin aktivieren",
     chatbotToggleHelp: "Zeige eine Chatbox mit Text- und Mikrofonunterstützung auf dem Dashboard.",
@@ -1444,7 +1449,8 @@ const LANGUAGES = {
     showRewardsTabLabel: "Mostra scheda Ricompense",
     showCoinsOnMirrorLabel: "Mostra monete sullo specchio",
     showLevelOnMirrorLabel: "Mostra livello sullo specchio",
-    
+    showDeleteOnMirrorLabel: "Mostra pulsante elimina sullo specchio",
+
     // Chatbot IA
     chatbotToggleLabel: "Abilita chatbot IA nell'admin",
     chatbotToggleHelp: "Mostra una casella di chat con supporto testo e microfono nella dashboard.",
@@ -1702,8 +1708,9 @@ const LANGUAGES = {
     displaySettingsTitle: "Weergave-instellingen",
     showRewardsTabLabel: "Toon tabblad Beloningen",
     showLevelOnMirrorLabel: "Toon niveau op spiegel",
+    showDeleteOnMirrorLabel: "Verwijderknop op spiegel tonen",
     showCoinsOnMirrorLabel: "Toon munten op spiegel",
-    
+
     // AI-chatbot
     chatbotToggleLabel: "Schakel AI-chatbot in admin in",
     chatbotToggleHelp: "Toon een chatbox met tekst- en microfoonondersteuning op het dashboard.",
@@ -1961,8 +1968,9 @@ const LANGUAGES = {
     displaySettingsTitle: "Ustawienia wyświetlania",
     showRewardsTabLabel: "Pokaż kartę Nagrody",
     showLevelOnMirrorLabel: "Pokaż poziom na lustrze",
+    showDeleteOnMirrorLabel: "Pokaż przycisk usuwania na lustrze",
     showCoinsOnMirrorLabel: "Pokaż monety na lustrze",
-    
+
     // Chatbot AI
     chatbotToggleLabel: "Włącz chatbot AI w panelu admina",
     chatbotToggleHelp: "Pokaż okno czatu z obsługą tekstu i mikrofonu na pulpicie nawigacyjnym.",
@@ -2219,7 +2227,8 @@ const LANGUAGES = {
     showRewardsTabLabel: "显示奖励标签",
     showCoinsOnMirrorLabel: "在镜子上显示金币",
     showLevelOnMirrorLabel: "在镜子上显示等级",
-    
+    showDeleteOnMirrorLabel: "在镜子上显示删除按钮",
+
     // AI 聊天机器人
     chatbotToggleLabel: "在管理后台启用 AI 聊天机器人",
     chatbotToggleHelp: "在仪表板上显示支持文本和麦克风的聊天框。",
@@ -2476,7 +2485,8 @@ const LANGUAGES = {
     showRewardsTabLabel: "إظهار علامة تبويب المكافآت",
     showCoinsOnMirrorLabel: "إظهار العملات على المرآة",
     showLevelOnMirrorLabel: "إظهار المستوى على المرآة",
-    
+    showDeleteOnMirrorLabel: "إظهار زر الحذف على المرآة",
+
     // روبوت الدردشة بالذكاء الاصطناعي
     chatbotToggleLabel: "تمكين روبوت الدردشة بالذكاء الاصطناعي في المسؤول",
     chatbotToggleHelp: "إظهار مربع دردشة مع دعم النص والميكروفون على لوحة القيادة.",

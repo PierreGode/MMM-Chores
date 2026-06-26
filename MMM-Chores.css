@@ -6,6 +6,10 @@
 }
 
 /* Header styling */
+.MMM-Chores .medium {
+  font-size: 1.25em;
+}
+
 .MMM-Chores .large {
   font-size: 1.5em;
   margin-bottom: 10px;
@@ -22,7 +26,6 @@
 .MMM-Chores li {
   display: flex;
   margin-bottom: 8px;
-  font-size: 0.9em;
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
@@ -130,6 +133,85 @@
     opacity: 0.7;
     transform: scale(1.05);
   }
+}
+
+/* Assign dropdown on unassigned tasks */
+.MMM-Chores .assign-select {
+  flex-shrink: 0;
+  margin-left: 10px;
+  padding: 6px 10px;
+  min-width: 100px;
+  font-size: 0.85em;
+  background: rgba(255, 255, 255, 0.1);
+  color: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  cursor: pointer;
+  /* Larger tap target for touchscreens */
+  min-height: 36px;
+  appearance: auto;
+}
+
+.MMM-Chores .assign-select:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.MMM-Chores .assign-select:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Delete button for past assigned not-done tasks (showDeleteOnMirror) */
+.MMM-Chores .chore-delete-btn {
+  flex-shrink: 0;
+  margin-left: 10px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 4px 8px;
+  font-size: 0.9em;
+  background: rgba(255, 60, 60, 0.15);
+  color: rgba(255, 120, 120, 0.9);
+  border: 1px solid rgba(255, 80, 80, 0.4);
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.MMM-Chores .chore-delete-btn:hover,
+.MMM-Chores .chore-delete-btn:focus {
+  background: rgba(255, 60, 60, 0.35);
+  border-color: rgba(255, 80, 80, 0.7);
+}
+
+.MMM-Chores .chore-delete-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* Reward catalogue shown at top of mirror */
+.MMM-Chores .rewards-catalogue {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.MMM-Chores .rewards-catalogue-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  white-space: nowrap;
 }
 
 .MMM-Chores .voice-transcript {

@@ -48,6 +48,8 @@ const TASK_SERIES_FILTER_KEY = 'mmm-chores-series-filter';
 let showTaskSeriesRootsOnly = localStorage.getItem(TASK_SERIES_FILTER_KEY) === '1';
 const TASK_GROUP_FILTER_KEY = 'mmm-chores-group-filter';
 let showTaskGroupByPerson = localStorage.getItem(TASK_GROUP_FILTER_KEY) === '1';
+const DONE_CUTOFF_KEY = 'mmm-chores-done-cutoff';
+let doneCutoffDays = localStorage.getItem(DONE_CUTOFF_KEY) ?? '7';
 const personRewardsModalEl = document.getElementById('personRewardsModal');
 const personRewardTitlesContainer = document.getElementById('personRewardTitlesContainer');
 const personRewardTitleInputs = [];
@@ -429,12 +431,16 @@ function initSettingsForm(settings) {
   const showAnalytics = document.getElementById('settingsShowAnalytics');
   const showRewardsTab = document.getElementById('settingsShowRewardsTab');
   const showRewardsTabContainer = document.getElementById('settingsShowRewardsTabContainer');
+  const showRewardsOnMirror = document.getElementById('settingsShowRewardsOnMirror');
+  const showRewardsOnMirrorContainer = document.getElementById('settingsShowRewardsOnMirrorContainer');
   const showCoinsOnMirror = document.getElementById('settingsShowCoinsOnMirror');
   const showCoinsOnMirrorContainer = document.getElementById('settingsShowCoinsOnMirrorContainer');
   const showLevelOnMirror = document.getElementById('settingsShowLevelOnMirror');
   const showLevelOnMirrorContainer = document.getElementById('settingsShowLevelOnMirrorContainer');
   const groupPerUserOnMirror = document.getElementById('settingsGroupPerUserOnMirror');
   const groupPerUserOnMirrorContainer = document.getElementById('settingsGroupPerUserOnMirrorContainer');
+  const showUnassignedOnMirror = document.getElementById('settingsShowUnassignedOnMirror');
+  const showDeleteOnMirror = document.getElementById('settingsShowDeleteOnMirror');
   const showRedeemedRewards = document.getElementById('settingsShowRedeemedRewards');
   const showRedeemedRewardsContainer = document.getElementById('settingsShowRedeemedRewardsContainer');
   // levelEnable moved to top
@@ -499,9 +505,12 @@ function initSettingsForm(settings) {
   if (useAI) useAI.checked = settings.useAI !== false;
   if (showAnalytics) showAnalytics.checked = !!settings.showAnalyticsOnMirror;
   if (showRewardsTab) showRewardsTab.checked = settings.showRewardsTab !== false;
+  if (showRewardsOnMirror) showRewardsOnMirror.checked = !!settings.showRewardsOnMirror;
   if (showCoinsOnMirror) showCoinsOnMirror.checked = settings.showCoinsOnMirror !== false;
   if (showLevelOnMirror) showLevelOnMirror.checked = settings.showLevelOnMirror !== false;
   if (groupPerUserOnMirror) groupPerUserOnMirror.checked = !!settings.groupPerUserOnMirror;
+  if (showUnassignedOnMirror) showUnassignedOnMirror.checked = !!settings.showUnassignedOnMirror;
+  if (showDeleteOnMirror) showDeleteOnMirror.checked = !!settings.showDeleteOnMirror;
   if (levelEnable) levelEnable.checked = settings.levelingEnabled !== false;
   if (autoUpdate) autoUpdate.checked = !!settings.autoUpdate;
   if (chatbotEnabledToggle) {
@@ -523,6 +532,14 @@ function initSettingsForm(settings) {
       showRewardsTabContainer.style.display = '';
     } else {
       showRewardsTabContainer.style.display = 'none';
+    }
+  }
+
+  if (showRewardsOnMirrorContainer) {
+    if (currentSystem === 'coins') {
+      showRewardsOnMirrorContainer.style.display = '';
+    } else {
+      showRewardsOnMirrorContainer.style.display = 'none';
     }
   }
 
@@ -629,7 +646,10 @@ function initSettingsForm(settings) {
       showCoinsOnMirror: showCoinsOnMirror ? showCoinsOnMirror.checked : true,
       showLevelOnMirror: showLevelOnMirror ? showLevelOnMirror.checked : true,
       showRedeemedRewards: showRedeemedRewards ? showRedeemedRewards.checked : true,
+      showRewardsOnMirror: showRewardsOnMirror ? showRewardsOnMirror.checked : false,
       groupPerUserOnMirror: groupPerUserOnMirror ? groupPerUserOnMirror.checked : false,
+      showUnassignedOnMirror: showUnassignedOnMirror ? showUnassignedOnMirror.checked : false,
+      showDeleteOnMirror: showDeleteOnMirror ? showDeleteOnMirror.checked : false,
       levelingEnabled: levelingEnabledValue,
       autoUpdate: autoUpdate ? autoUpdate.checked : false,
       chatbotEnabled: (useAI ? useAI.checked : false) && (chatbotEnabledToggle ? chatbotEnabledToggle.checked : false),
@@ -1789,6 +1809,19 @@ function setLanguage(lang) {
     }
   }
 
+  const doneCutoffSelect = document.getElementById('tasksDoneCutoff');
+  if (doneCutoffSelect) {
+    doneCutoffSelect.value = doneCutoffDays;
+    if (!doneCutoffSelect.dataset.bound) {
+      doneCutoffSelect.addEventListener('change', (e) => {
+        doneCutoffDays = e.target.value;
+        localStorage.setItem(DONE_CUTOFF_KEY, doneCutoffDays);
+        renderTasks();
+      });
+      doneCutoffSelect.dataset.bound = 'true';
+    }
+  }
+
   const analyticsHeader = document.getElementById("analyticsHeader");
   if (analyticsHeader) analyticsHeader.textContent = t.analyticsTitle;
   const addChartSelect = document.getElementById("addChartSelect");
@@ -2329,6 +2362,17 @@ function renderTasks() {
   const recurringTasks = activeTasks.filter(task => task.recurring && task.recurring !== 'none'); // only keep recurring entries
   let visibleTasks = showTaskSeriesRootsOnly ? recurringTasks : activeTasks;
 
+  if (doneCutoffDays === 'none') {
+    visibleTasks = visibleTasks.filter(t => !t.done);
+  } else if (doneCutoffDays !== '') {
+    const cutoff = parseInt(doneCutoffDays, 10);
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - cutoff);
+    visibleTasks = visibleTasks.filter(t =>
+      !t.done || !t.finished || new Date(t.finished) >= cutoffDate
+    );
+  }
+
   if ((showMyTasksOnly || userPermission === 'regular') && currentPersonId) {
     visibleTasks = visibleTasks.filter(task => task.assignedTo === currentPersonId);
   }
@@ -2815,7 +2859,7 @@ document.getElementById('editTaskForm').addEventListener('submit', async e => {
 
 async function updateTask(id, changes) {
   Object.keys(changes).forEach(key => {
-    if (changes[key] === null) changes[key] = undefined;
+    if (changes[key] === null && key !== "assignedTo") changes[key] = undefined;
   });
   await authFetch(`/api/tasks/${id}`, {
     method: "PUT",
