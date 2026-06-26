@@ -116,6 +116,7 @@ const DEFAULT_PUSHOVER_CONFIG_ERROR = "Please set pushoverApiKey and pushoverUse
 let settings = {};
 let autoUpdateTimer = null;
 let reminderTimer = null;
+let midnightBroadcastTimer = null;
 let lastGeneratedTaskId = 0;
 
 // ═══════════════════════════════════════════════════════════════════════════════════
@@ -457,6 +458,38 @@ function scheduleReminder(self) {
       sendPushover(self, settings, `${header}\n${list}`);
     }
     scheduleReminder(self);
+  }, delay);
+}
+
+/**
+ * scheduleMidnightBroadcast(self)
+ *
+ * Schedules a daily broadcastTasks() call at 00:01 so that recurring task instances
+ * for the new day are created automatically without requiring user interaction.
+ *
+ * Without this, ensureRecurringInstancesUpToToday() only runs when a user action
+ * triggers broadcastTasks() (admin REST call, toggle, mirror reload). On an idle
+ * overnight system the mirror would show stale data until the first interaction.
+ *
+ * Pattern: identical to scheduleAutoUpdate / scheduleReminder — compute delay to next
+ * target time, set timeout, reschedule from inside the callback.
+ *
+ * @param {Object} self - NodeHelper instance (passed through to broadcastTasks)
+ */
+function scheduleMidnightBroadcast(self) {
+  if (midnightBroadcastTimer) clearTimeout(midnightBroadcastTimer);
+  const now = new Date();
+  const next = new Date(now);
+  next.setHours(0, 1, 0, 0); // 00:01 — ensures date has rolled over before recurring check
+  if (next <= now) {
+    next.setDate(next.getDate() + 1);
+  }
+  const delay = next - now;
+  Log.log(`Midnight broadcast scheduled for ${next.toString()}`);
+  midnightBroadcastTimer = setTimeout(() => {
+    midnightBroadcastTimer = null;
+    broadcastTasks(self).catch(err => Log.error("midnightBroadcast failed", err));
+    scheduleMidnightBroadcast(self);
   }, delay);
 }
 
@@ -1298,6 +1331,7 @@ module.exports = NodeHelper.create({
       scheduleAutoUpdate();
     }
     scheduleReminder(this);
+    scheduleMidnightBroadcast(this);
   },
 
   socketNotificationReceived(notification, payload) {
@@ -1353,6 +1387,7 @@ module.exports = NodeHelper.create({
       });
       saveData();
       scheduleReminder(this);
+      scheduleMidnightBroadcast(this);
       if (!this.server) {
         this.initServer(payload.adminPort);
       } else {
