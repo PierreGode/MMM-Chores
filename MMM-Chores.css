@@ -163,6 +163,39 @@
   cursor: default;
 }
 
+/* Delete button for past assigned not-done tasks (showDeleteOnMirror) */
+.MMM-Chores .chore-delete-btn {
+  flex-shrink: 0;
+  margin-left: 10px;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 4px 8px;
+  font-size: 0.9em;
+  background: rgba(255, 60, 60, 0.15);
+  color: rgba(255, 120, 120, 0.9);
+  border: 1px solid rgba(255, 80, 80, 0.4);
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.MMM-Chores .chore-delete-btn:hover,
+.MMM-Chores .chore-delete-btn:focus {
+  background: rgba(255, 60, 60, 0.35);
+  border-color: rgba(255, 80, 80, 0.7);
+}
+
+.MMM-Chores .chore-delete-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
 /* Reward catalogue shown at top of mirror */
 .MMM-Chores .rewards-catalogue {
   display: flex;

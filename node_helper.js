@@ -1355,6 +1355,7 @@ module.exports = NodeHelper.create({
         showAnalyticsOnMirror: previousSettings.showAnalyticsOnMirror ?? payload.showAnalyticsOnMirror,
         groupPerUserOnMirror: previousSettings.groupPerUserOnMirror ?? payload.groupPerUserOnMirror ?? false,
         showUnassignedOnMirror: previousSettings.showUnassignedOnMirror ?? payload.showUnassignedOnMirror ?? false,
+        showDeleteOnMirror: previousSettings.showDeleteOnMirror ?? payload.showDeleteOnMirror ?? false,
         useAI: previousSettings.useAI ?? payload.useAI,
         chatbotEnabled: previousSettings.chatbotEnabled ?? payload.chatbotEnabled ?? false,
         chatbotVoice: previousSettings.chatbotVoice ?? payload.chatbotVoice ?? "nova",
@@ -1404,6 +1405,9 @@ module.exports = NodeHelper.create({
     }
     if (notification === "USER_ASSIGN_CHORE") {
       this.handleUserAssign(payload);
+    }
+    if (notification === "USER_DELETE_CHORE") {
+      this.handleUserDelete(payload);
     }
     if (notification === "VOICE_COMMAND") {
       this.handleVoiceCommand(payload);
@@ -1802,6 +1806,74 @@ Return JSON only: {"action": "ACTION_NAME", "params": {...}, "response": "natura
       this.sendSocketNotification("CHORES_DATA", filtered);
     } catch (e) {
       Log.error("MMM-Chores: failed updating task", e);
+    }
+  },
+
+  /**
+   * handleUserDelete({ id })
+   *
+   * Socket notification handler that soft-deletes a single task instance when
+   * the user taps the delete button on the mirror. Only rendered for assigned,
+   * not-done, past tasks (filtering enforced in frontend renderTaskItem).
+   *
+   * Recurring safety: if the task belongs to an active recurring series, this
+   * handler first ensures the next future instance exists before soft-deleting.
+   * Without this step, deleting the chronologically last instance causes
+   * ensureRecurringInstancesUpToToday() to halt series generation (it returns
+   * early when lastTask.deleted is true — see ensureRecurringInstancesUpToToday).
+   *
+   * Flow:
+   *   1. Look up task server-side (payload only carries id)
+   *   2. If recurring and seriesId is set, compute next date with getNextDate()
+   *      and call createRecurringInstanceFromTask() inside withRecurringTaskLock()
+   *      (idempotent if the instance already exists)
+   *   3. Call DELETE /api/tasks/:id — sets task.deleted = true and calls
+   *      broadcastTasks() internally, which pushes CHORES_DATA to all clients
+   *
+   * No explicit re-fetch or broadcast needed — the DELETE endpoint already calls
+   * broadcastTasks() (unlike handleUserToggle which re-fetches manually).
+   *
+   * @param {Object} payload - { id: number }
+   * @returns {Promise<void>}
+   *
+   * Side effects: may push a new task into tasks[] via createRecurringInstanceFromTask;
+   *   triggers broadcastTasks() → saveData() via the DELETE endpoint.
+   *
+   * Callers:
+   *   socketNotificationReceived — "USER_DELETE_CHORE" notification
+   */
+  async handleUserDelete({ id }) {
+    try {
+      const task = tasks.find(t => t.id === id);
+      if (!task) {
+        Log.warn("MMM-Chores: handleUserDelete — task not found:", id);
+        return;
+      }
+
+      // Recurring safety: ensure the next instance exists before deleting this one
+      // so that ensureRecurringInstancesUpToToday() does not halt the series.
+      if (task.recurring && task.recurring !== "none" && task.seriesId) {
+        const nextDate = getNextDate(task.date, task.recurring);
+        if (nextDate) {
+          await withRecurringTaskLock(() => {
+            createRecurringInstanceFromTask(task, nextDate);
+          });
+        }
+      }
+
+      const port = this.config.adminPort;
+      const headers = {};
+      if (this.config.login && this.internalToken) {
+        headers["x-auth-token"] = this.internalToken;
+      }
+      await fetchFn(`http://localhost:${port}/api/tasks/${id}`, {
+        method: "DELETE",
+        headers
+      });
+      // broadcastTasks() is called inside DELETE /api/tasks/:id;
+      // CHORES_DATA is automatically pushed to all clients.
+    } catch (e) {
+      Log.error("MMM-Chores: failed deleting task", e);
     }
   },
 

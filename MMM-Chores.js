@@ -39,6 +39,7 @@ Module.register("MMM-Chores", {
     usePointSystem: false,        // use point system instead of level system
     groupPerUserOnMirror: false,  // group tasks by user on mirror instead of showing a single list (only applies when showLevelOnMirror is false)
     showUnassignedOnMirror: false, // show tasks without an assigned person on the mirror
+    showDeleteOnMirror: false,     // show delete button on mirror for past assigned not-done tasks
     leveling: {
       enabled: true,
       mode: "years",
@@ -702,6 +703,30 @@ Module.register("MMM-Chores", {
       li.appendChild(select);
     }
 
+    // Delete button for past assigned not-done tasks (showDeleteOnMirror)
+    if (this.config.showDeleteOnMirror && task.assignedTo && !task.done) {
+      const parts = typeof task.date === "string" ? task.date.split("-").map(Number) : [];
+      const tDate = parts.length === 3
+        ? new Date(parts[0], parts[1] - 1, parts[2])
+        : new Date(task.date);
+      tDate.setHours(0, 0, 0, 0);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (tDate < today) {
+        const delBtn = document.createElement("button");
+        delBtn.className = "chore-delete-btn";
+        delBtn.title = "Delete task";
+        delBtn.setAttribute("aria-label", "Delete task");
+        delBtn.textContent = "✕";
+        delBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          delBtn.disabled = true;
+          this.deleteTask(task);
+        });
+        li.appendChild(delBtn);
+      }
+    }
+
     return li;
   },
 
@@ -711,6 +736,24 @@ Module.register("MMM-Chores", {
       personId,
       isRecurring: !!(task.recurring && task.recurring !== "none")
     });
+  },
+
+  /**
+   * deleteTask(task)
+   *
+   * Sends a socket notification to the backend to soft-delete a single task
+   * instance from the mirror. The backend resolves the task's recurring status
+   * server-side and ensures a future instance exists before deleting, so the
+   * series is never terminated unintentionally.
+   *
+   * MUST NOT call the REST API directly — uses socket notification per the
+   * MMM-Chores architecture constraint (CLAUDE.md).
+   *
+   * @param {Object} task - Task object to delete (must have .id)
+   * @returns {void}
+   */
+  deleteTask(task) {
+    this.sendSocketNotification("USER_DELETE_CHORE", { id: task.id });
   },
 
   renderGrouped(visible) {
